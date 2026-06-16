@@ -30,7 +30,7 @@ const DEFAULT_SETTINGS = {
   casual_leave_quota: 7,
   leave_approval_sla_hours: 48,
   face_recognition_sensitivity: 50,
-  theme_color: '#0ea5e9',
+  theme_color: '#6366F1',
   employee_id_prefix: '',
 };
 
@@ -481,8 +481,8 @@ export default function AdminSettings() {
           <div className="space-y-2 max-w-[200px]">
             <Label>Theme Color</Label>
             <div className="flex gap-2">
-              <Input type="color" className="h-9 w-12 p-0 border-none bg-transparent" value={form.theme_color ?? '#0ea5e9'} onChange={(e) => update('theme_color', e.target.value)} />
-              <Input value={form.theme_color ?? '#0ea5e9'} onChange={(e) => update('theme_color', e.target.value)} />
+              <Input type="color" className="h-9 w-12 p-0 border-none bg-transparent" value={form.theme_color ?? '#6366F1'} onChange={(e) => update('theme_color', e.target.value)} />
+              <Input value={form.theme_color ?? '#6366F1'} onChange={(e) => update('theme_color', e.target.value)} />
             </div>
           </div>
         </Card>

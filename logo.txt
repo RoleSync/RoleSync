@@ -1,0 +1,33 @@
+I will check the core colors defined in `src/index.css` to provide the exact HSL and Hex values that coordinate with the logo's gradients.
+
+Viewed index.css:1-105
+
+The primary gradient color codes for the new **RoleSync** logo and the coordinating user interface themes are:
+
+### 🎨 Logo Gradient Colors
+* **Vibrant Indigo (Start):**
+  * **Hex:** `#6366F1`
+  * **RGB:** `rgb(99, 102, 241)`
+  * **HSL:** `hsl(243, 82%, 67%)`
+* **Vibrant Violet/Purple (Middle):**
+  * **Hex:** `#8B5CF6`
+  * **RGB:** `rgb(139, 92, 246)`
+  * **HSL:** `hsl(258, 90%, 66%)`
+* **Electric Blue (Accents):**
+  * **Hex:** `#3B82F6`
+  * **RGB:** `rgb(59, 130, 246)`
+  * **HSL:** `hsl(217, 91%, 60%)`
+
+---
+
+### 🖥️ Coordinating UI Colors (from `index.css`)
+* **Primary Theme Color (Light Mode):**
+  * **Hex:** `#043270`
+  * **RGB:** `rgb(4, 50, 112)`
+  * **HSL:** `hsl(212, 93%, 23%)`
+* **Primary Theme Color (Dark Mode / High-Tech Glow):**
+  * **Hex:** `#3B82F6`
+  * **RGB:** `rgb(59, 130, 246)`
+  * **HSL:** `hsl(212, 80%, 55%)`
+* **Accent/Highlight Glows:**
+  * **Hex:** `#6366F1` / `#A855F7`

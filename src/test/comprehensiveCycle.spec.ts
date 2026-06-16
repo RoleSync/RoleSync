@@ -15,9 +15,9 @@ test('comprehensive admin and employee cycle testing', async ({ page }) => {
   await page.goto('http://localhost:8080/login');
   
   // Search for company
-  await page.fill('#company', 'TechnoML');
-  await page.waitForSelector('button:has-text("TechnoML")', { timeout: 10000 });
-  await page.click('button:has-text("TechnoML")');
+  await page.fill('#company', 'RoleSync');
+  await page.waitForSelector('button:has-text("RoleSync")', { timeout: 10000 });
+  await page.click('button:has-text("RoleSync")');
   await page.waitForSelector('#login-email', { timeout: 10000 });
 
   // Click on "Sign up" button to switch modes
@@ -48,9 +48,9 @@ test('comprehensive admin and employee cycle testing', async ({ page }) => {
 
   // ── STEP 2: LOG IN AS ADMINISTRATOR ──
   await page.goto('http://localhost:8080/login');
-  await page.fill('#company', 'TechnoML');
-  await page.waitForSelector('button:has-text("TechnoML")', { timeout: 10000 });
-  await page.click('button:has-text("TechnoML")');
+  await page.fill('#company', 'RoleSync');
+  await page.waitForSelector('button:has-text("RoleSync")', { timeout: 10000 });
+  await page.click('button:has-text("RoleSync")');
   await page.waitForSelector('#login-email', { timeout: 10000 });
 
   // Fill in administrator details
@@ -188,9 +188,9 @@ test('comprehensive admin and employee cycle testing', async ({ page }) => {
   // ── STEP 5: LOG IN AS EMPLOYEE ──
   console.log(`Logging in as new employee: ${employeeEmail}`);
   await page.goto('http://localhost:8080/login');
-  await page.fill('#company', 'TechnoML');
-  await page.waitForSelector('button:has-text("TechnoML")', { timeout: 10000 });
-  await page.click('button:has-text("TechnoML")');
+  await page.fill('#company', 'RoleSync');
+  await page.waitForSelector('button:has-text("RoleSync")', { timeout: 10000 });
+  await page.click('button:has-text("RoleSync")');
   await page.waitForSelector('#login-email', { timeout: 10000 });
 
   await page.fill('#login-email', employeeEmail);

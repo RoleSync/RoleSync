@@ -1,4 +1,4 @@
-# TechnoML - Intelligent Management System
+# RoleSync - Intelligent Management System
 
 TODO: Document your project here
 

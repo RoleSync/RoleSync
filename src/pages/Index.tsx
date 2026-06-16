@@ -13,6 +13,7 @@ import {
   Zap,
   LayoutDashboard
 } from 'lucide-react';
+import { RoleSyncLogo } from '@/components/RoleSyncLogo';
 
 export default function Index() {
   const navigate = useNavigate();
@@ -22,11 +23,8 @@ export default function Index() {
       {/* Navigation */}
       <nav className="fixed top-0 w-full z-50 border-b border-white/5 bg-slate-950/50 backdrop-blur-xl">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
-              <Zap className="h-5 w-5 text-white fill-current" />
-            </div>
-            <span className="text-xl font-heading font-bold tracking-tight">TechnoML</span>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+            <RoleSyncLogo size={64} />
           </div>
           <div className="flex items-center gap-4">
             <Button variant="ghost" className="text-slate-300 hover:text-white" onClick={() => navigate('/login')}>
@@ -66,9 +64,9 @@ export default function Index() {
           <div className="mt-16 relative rounded-2xl border border-white/10 bg-slate-900/50 p-2 shadow-2xl animate-in zoom-in-95 duration-1000 delay-500">
             <div className="rounded-xl overflow-hidden aspect-video border border-white/5">
               <img 
-                src="/technoml_hero_banner.png" 
-                alt="TechnoML Dashboard" 
-                className="w-full h-full object-cover"
+                src="/logo.png" 
+                alt="RoleSync Dashboard" 
+                className="w-full h-full object-contain p-8"
               />
             </div>
           </div>
@@ -123,11 +121,10 @@ export default function Index() {
       {/* Footer */}
       <footer className="py-12 border-t border-white/5 bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2">
-            <Zap className="h-5 w-5 text-primary" />
-            <span className="font-heading font-bold">TechnoML</span>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
+            <RoleSyncLogo size={56} />
           </div>
-          <p className="text-slate-500 text-sm">© 2026 TechnoML Inc. All rights reserved.</p>
+          <p className="text-slate-500 text-sm">© 2026 RoleSync Inc. All rights reserved.</p>
           <div className="flex items-center gap-6 text-sm text-slate-400">
             <a href="#" className="hover:text-white transition-colors">Privacy</a>
             <a href="#" className="hover:text-white transition-colors">Terms</a>

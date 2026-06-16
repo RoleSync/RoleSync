@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 mb-4">
             <Building2 className="h-6 w-6 text-primary" />
-            <span className="font-heading font-bold text-xl text-primary">TechnoML</span>
+            <span className="font-heading font-bold text-xl text-primary">RoleSync</span>
           </div>
           <h1 className="font-heading text-xl font-semibold">Forgot Password</h1>
           <p className="text-sm text-muted-foreground mt-1">Enter your email to receive a reset link</p>

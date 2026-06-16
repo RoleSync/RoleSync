@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { RoleSyncLogo } from '@/components/RoleSyncLogo';
 
 type Step = 'company' | 'auth' | 'reset';
 type Mode = 'login' | 'signup';
@@ -63,13 +64,13 @@ export default function LoginPage() {
       
       const fetchedResults = (data as CompanyOption[]) ?? [];
       
-      // Fallback/Demo check: If database doesn't return TechnoML due to RLS, manually inject it
-      if (q.toLowerCase() === 'technoml' || 'technoml'.includes(q.toLowerCase()) || q.toLowerCase() === 'techno') {
-        if (!fetchedResults.some(r => r.slug === 'technoml')) {
+      // Fallback/Demo check: If database doesn't return RoleSync due to RLS, manually inject it
+      if (q.toLowerCase() === 'rolesync' || 'rolesync'.includes(q.toLowerCase()) || q.toLowerCase() === 'role' || q.toLowerCase() === 'sync') {
+        if (!fetchedResults.some(r => r.slug === 'rolesync')) {
           fetchedResults.push({
             id: 'a4dce0e6-f11e-4054-9b55-4b94f7f5143b',
-            name: 'TechnoML',
-            slug: 'technoml',
+            name: 'RoleSync',
+            slug: 'rolesync',
             login_preference: 'both'
           });
         }
@@ -147,8 +148,7 @@ export default function LoginPage() {
     <div className="min-h-screen grid lg:grid-cols-2 bg-background">
       <div className="hidden lg:flex flex-col justify-between p-12 bg-gradient-to-br from-primary to-primary-glow text-primary-foreground">
         <div className="flex items-center gap-2">
-          <Building2 className="h-7 w-7" />
-          <span className="font-heading font-bold text-2xl">TechnoML</span>
+          <RoleSyncLogo size={72} />
         </div>
         <div>
           <h1 className="font-heading text-4xl font-bold leading-tight mb-4">
@@ -164,15 +164,14 @@ export default function LoginPage() {
             <li>✓ Modern enterprise portals</li>
           </ul>
         </div>
-        <div className="text-xs text-primary-foreground/70">© {new Date().getFullYear()} TechnoML. All rights reserved.</div>
+        <div className="text-xs text-primary-foreground/70">© {new Date().getFullYear()} RoleSync. All rights reserved.</div>
       </div>
 
       <div className="flex items-center justify-center p-6">
         <Card className="w-full max-w-md p-8 rounded-2xl shadow-elegant">
           <div className="mb-6 text-center lg:hidden">
             <div className="inline-flex items-center gap-2 mb-2">
-              <Building2 className="h-6 w-6 text-primary" />
-              <span className="font-heading font-bold text-xl text-primary">TechnoML</span>
+              <RoleSyncLogo size={48} />
             </div>
           </div>
 

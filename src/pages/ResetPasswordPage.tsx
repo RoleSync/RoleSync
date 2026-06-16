@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { Building2, Lock, Loader2, CheckCircle } from 'lucide-react';
+import { RoleSyncLogo } from '@/components/RoleSyncLogo';
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -60,8 +61,7 @@ export default function ResetPasswordPage() {
       <Card className="w-full max-w-md p-8 rounded-2xl shadow-elegant">
         <div className="text-center mb-6">
           <div className="inline-flex items-center gap-2 mb-4">
-            <Building2 className="h-6 w-6 text-primary" />
-            <span className="font-heading font-bold text-xl text-primary">TechnoML</span>
+            <RoleSyncLogo size={64} />
           </div>
           <h1 className="font-heading text-xl font-semibold">Set New Password</h1>
         </div>

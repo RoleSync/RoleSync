@@ -18,37 +18,51 @@ import testimonial2 from "@/assets/testimonial-2.jpg";
 import testimonial3 from "@/assets/testimonial-3.jpg";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { RoleSyncLogo } from "@/components/RoleSyncLogo";
 
-/* ─── Navbar ─── */
 function Navbar() {
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
   const links = ["Features", "How It Works", "Pricing", "Testimonials", "FAQ"];
   return (
-    <nav className="w-full sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-[90%] xl:max-w-[1600px] items-center justify-between px-4 py-3 lg:px-8">
-        <div className="flex items-center gap-2">
-          <img src="/logo.png" alt="TechnoML" className="h-8 w-8" />
-          <span className="font-[Poppins] text-xl font-bold text-primary">TechnoML</span>
+    <nav className="w-full sticky top-0 z-50 border-b border-white/10 dark:border-white/5 bg-background/70 backdrop-blur-xl transition-all duration-300">
+      <div className="w-full flex items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+        <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate("/")}>
+          <RoleSyncLogo size={64} />
         </div>
-        <div className="hidden gap-6 md:flex">
+        <div className="hidden gap-8 md:flex">
           {links.map((l) => (
-            <a key={l} href={l === "Pricing" ? "/pricing" : `#${l.toLowerCase().replace(/ /g, "-")}`} className="text-sm font-medium text-muted-foreground transition hover:text-primary">{l}</a>
+            <a 
+              key={l} 
+              href={l === "Pricing" ? "/pricing" : `#${l.toLowerCase().replace(/ /g, "-")}`} 
+              className="relative py-1 text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-primary after:absolute after:bottom-0 after:left-0 after:h-[2px] after:w-0 hover:after:w-full after:bg-primary after:transition-all after:duration-300"
+            >
+              {l}
+            </a>
           ))}
         </div>
         <div className="hidden gap-3 md:flex">
-          <Button variant="outline" onClick={() => navigate("/login")}>Log In</Button>
-          <Button onClick={() => navigate("/login")}>Get Started Free</Button>
+          <Button variant="ghost" className="hover:bg-primary/10 transition-colors" onClick={() => navigate("/login")}>Log In</Button>
+          <Button className="rounded-full bg-gradient-to-r from-primary to-indigo-600 hover:from-primary/95 hover:to-indigo-600/95 shadow-md shadow-primary/10 hover:shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all" onClick={() => navigate("/login")}>Get Started Free</Button>
         </div>
-        <button className="md:hidden" onClick={() => setOpen(!open)}>{open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
+        <button className="md:hidden p-2 hover:bg-muted rounded-lg transition-colors" onClick={() => setOpen(!open)}>{open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}</button>
       </div>
       {open && (
-        <div className="flex flex-col gap-3 border-t border-border/60 bg-background p-4 md:hidden">
+        <div className="flex flex-col gap-3 border-t border-border/60 bg-background/95 backdrop-blur-lg p-4 md:hidden animate-in slide-in-from-top-4 duration-200">
           {links.map((l) => (
-            <a key={l} href={l === "Pricing" ? "/pricing" : `#${l.toLowerCase().replace(/ /g, "-")}`} className="text-sm font-medium text-muted-foreground" onClick={() => setOpen(false)}>{l}</a>
+            <a 
+              key={l} 
+              href={l === "Pricing" ? "/pricing" : `#${l.toLowerCase().replace(/ /g, "-")}`} 
+              className="px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-lg transition-colors" 
+              onClick={() => setOpen(false)}
+            >
+              {l}
+            </a>
           ))}
-          <Button variant="outline" className="w-full" onClick={() => navigate("/login")}>Log In</Button>
-          <Button className="w-full" onClick={() => navigate("/login")}>Get Started Free</Button>
+          <div className="flex flex-col gap-2 pt-2 border-t">
+            <Button variant="outline" className="w-full" onClick={() => { setOpen(false); navigate("/login"); }}>Log In</Button>
+            <Button className="w-full bg-gradient-to-r from-primary to-indigo-600" onClick={() => { setOpen(false); navigate("/login"); }}>Get Started Free</Button>
+          </div>
         </div>
       )}
     </nav>
@@ -60,13 +74,13 @@ function HeroSection() {
   const navigate = useNavigate();
   return (
     <section className="w-full relative overflow-hidden bg-gradient-to-br from-primary/5 via-background to-accent/30 py-16 lg:py-24">
-      <div className="mx-auto grid max-w-[90%] xl:max-w-[1600px] items-center gap-12 px-4 lg:grid-cols-2 lg:px-8">
+      <div className="w-full grid items-center gap-12 px-4 sm:px-6 lg:grid-cols-2 lg:px-8">
         <div className="space-y-6">
           <Badge variant="secondary" className="px-3 py-1 text-xs font-semibold">🚀 #1 Employee Management Platform in India</Badge>
           <h1 className="font-[Poppins] text-4xl font-bold leading-tight text-foreground lg:text-5xl xl:text-6xl">
             Smart <span className="text-primary">Employee Management</span> Software
           </h1>
-          <p className="max-w-lg text-lg text-muted-foreground">
+          <p className="w-full text-lg text-muted-foreground">
             Face-verified attendance, GPS geofencing, leave management, task tracking, real-time analytics — all in one powerful platform designed for modern Indian teams.
           </p>
           <div className="flex flex-wrap gap-3">
@@ -90,7 +104,7 @@ function HeroSection() {
           </div>
         </div>
         <div className="relative w-full">
-          <img src={heroDashboard} alt="TechnoML dashboard preview" width={1280} height={800} className="w-full rounded-2xl shadow-2xl ring-1 ring-border" />
+          <img src={heroDashboard} alt="RoleSync dashboard preview" width={1280} height={800} className="w-full rounded-2xl shadow-2xl ring-1 ring-border" />
         </div>
       </div>
     </section>
@@ -107,7 +121,7 @@ function StatsBar() {
   ];
   return (
     <section className="w-full border-y border-border/60 bg-card py-10">
-      <div className="mx-auto grid max-w-[90%] xl:max-w-[1400px] grid-cols-2 gap-8 px-4 lg:grid-cols-4 lg:px-8">
+      <div className="w-full grid grid-cols-2 gap-8 px-4 sm:px-6 lg:grid-cols-4 lg:px-8">
         {stats.map((s) => (
           <div key={s.label} className="flex flex-col items-center gap-1 text-center">
             <s.icon className="mb-1 h-6 w-6 text-primary" />
@@ -131,13 +145,13 @@ const FEATURE_PREVIEWS: Record<string, { title: string; bullets: string[] }> = {
       "📊 Admin sees a real-time attendance log with selfie thumbnails and location",
     ],
   },
-  "Tasks & Targets": {
-    title: "Task & Target Tracking Preview",
+  "GPS Live Map": {
+    title: "GPS Live Map Preview",
     bullets: [
-      "📋 Admin assigns tasks with priority (low/medium/high) and due dates",
-      "🎯 Monthly targets with progress tracking and completion percentage",
-      "🔗 Sub-task dependency chains — tasks locked until parent is completed",
-      "📑 CSV bulk upload for importing hundreds of tasks/targets at once",
+      "📍 View live location of all on-field employees on an interactive map",
+      "🛡️ Geofencing restricts check-ins strictly to designated office/site coordinates",
+      "🚫 Mock GPS detection instantly flags and blocks location-spoofing browser extensions",
+      "📊 History log showing exact location coordinates and verified distance from office"
     ],
   },
   "Leave Management": {
@@ -149,6 +163,24 @@ const FEATURE_PREVIEWS: Record<string, { title: string; bullets: string[] }> = {
       "✏️ Attendance corrections — employees can request fix for wrong punch times",
     ],
   },
+  "Tasks & Targets": {
+    title: "Task & Target Tracking Preview",
+    bullets: [
+      "📋 Admin assigns tasks with priority (low/medium/high) and due dates",
+      "🎯 Monthly targets with progress tracking and completion percentage",
+      "🔗 Sub-task dependency chains — tasks locked until parent is completed",
+      "📑 CSV bulk upload for importing hundreds of tasks/targets at once",
+    ],
+  },
+  "Enterprise Security": {
+    title: "Enterprise Security Preview",
+    bullets: [
+      "🔑 Secure Single Sign-On (SSO) and SAML integration for your enterprise credentials",
+      "📱 Two-Factor Authentication (2FA) via app or email ensures secure logins",
+      "🖥️ Active session manager tracks and allows admins to revoke rogue devices",
+      "🛡️ Failed login tracking automatically locks accounts after suspicious attempts"
+    ],
+  },
   "Admin Broadcasts": {
     title: "Admin Communication Preview",
     bullets: [
@@ -158,26 +190,116 @@ const FEATURE_PREVIEWS: Record<string, { title: string; bullets: string[] }> = {
       "📎 Rich text broadcasts with file attachments supported",
     ],
   },
+  "Reports & Analytics": {
+    title: "Reports & Analytics Preview",
+    bullets: [
+      "📊 Interactive dashboards showing company-wide attendance and tardiness trends",
+      "🧠 AI-powered analytics predict employee burnout and attrition risks",
+      "📥 Export custom PDF and Excel reports for payroll and performance auditing",
+      "📉 Detailed target achievement graphs filtered by department and month"
+    ],
+  },
+  "Team Chat": {
+    title: "Team Chat Preview",
+    bullets: [
+      "💬 Secure tenant-scoped real-time messaging for employees and teams",
+      "📢 Official 'Office Updates' channel separates announcement broadcasts from casual chat",
+      "🔒 Strict data isolation guarantees messages never leak outside your organization",
+      "📎 File and image attachments supported with cloud storage previews"
+    ],
+  },
+  "Kudos & Recognition": {
+    title: "Kudos & Recognition Preview",
+    bullets: [
+      "🌟 Peer-to-peer recognition wall to celebrate team accomplishments",
+      "🏆 Award badges like 'Star Employee', 'Helpful', 'MVP', and 'Innovator'",
+      "📊 Leaderboard displaying top kudos receivers each month",
+      "💬 Boost team morale and engagement through public appreciation comments"
+    ],
+  },
+  "Custom Roles & Permissions": {
+    title: "Custom Roles & Permissions Preview",
+    bullets: [
+      "🔑 Granular access matrix to define permissions for Super Admin, Admin, and Employee",
+      "🛡️ Restrict page access so employees only see their assigned tasks and profiles",
+      "⚙️ Delegate admin rights (e.g. only payroll management or only leave approvals)",
+      "📋 Complete security isolation matching organizational roles"
+    ],
+  },
+  "Payroll & Payslips": {
+    title: "Payroll & Payslips Preview",
+    bullets: [
+      "💰 Auto-generate monthly payslips based on attendance, overtime, and leave deductions",
+      "🇮🇳 Full compliance with Indian tax laws including EPF, ESI, and Professional Tax",
+      "📄 Employees can download PDF payslips directly from their profiles",
+      "🏦 Download bank-ready transfer registers/CSV sheets to execute salaries"
+    ],
+  },
+  "Approval Workflows": {
+    title: "Approval Workflows Preview",
+    bullets: [
+      "🔗 Multi-step custom approval chains for leaves, attendance corrections, and documents",
+      "⏱️ SLA tracking flags delayed decisions to keep operations running smoothly",
+      "📧 Instant email and in-app alerts sent to designated approvers",
+      "✏️ Complete history trail of who approved, rejected, or commented on requests"
+    ],
+  },
+  "White-Labeling": {
+    title: "White-Labeling Preview",
+    bullets: [
+      "🌐 Custom domains support to host the platform on your own URL (e.g. portal.company.com)",
+      "🎨 Custom branding including logos, color palettes, and custom email headers",
+      "🏢 Personalized interface that feels like your company's own proprietary tool",
+      "🔒 SSL certificates automatically provisioned for custom subdomains"
+    ],
+  },
+  "Audit Trails": {
+    title: "Audit Trails Preview",
+    bullets: [
+      "📜 Immutable, detailed log of every action taken in the system for complete compliance",
+      "🔍 Track who changed settings, approved leaves, edited payroll, or updated roles",
+      "💻 Captured IP addresses, browser user-agents, and timestamps for security",
+      "📊 Search and filter logs by date, actor, or event type for quick audits"
+    ],
+  },
+  "API & Webhooks": {
+    title: "API & Webhooks Preview",
+    bullets: [
+      "🔌 Developer settings to generate secure API keys for custom scripts",
+      "🔗 Real-time Webhooks notify external systems on check-ins, leaves, and new users",
+      "⚙️ Seamlessly integrate RoleSync with your existing ERP, CRM, or HR systems",
+      "📚 Fully documented REST API endpoints with interactive Swagger sandbox"
+    ],
+  },
+  "Multi-Tenant Architecture": {
+    title: "Multi-Tenant Architecture Preview",
+    bullets: [
+      "🏢 Advanced database isolation separating tenant data at the row level (RLS)",
+      "🔒 Strict storage bucket isolation ensures selfies and document security",
+      "🚀 Blazing-fast performance with scoped index lookups optimized per client company",
+      "🛡️ Complete guarantee that data is invisible to users outside your organization"
+    ],
+  },
 };
 
 /* ─── Features ─── */
 const FEATURES = [
   { icon: UserCheck, title: "Face Attendance", desc: "Selfie-based check-in with GPS dual-verification. Anti-spoofing liveness detection for fraud-proof attendance.", hasPreview: true },
-  { icon: MapPin, title: "GPS Live Map", desc: "Real-time live map of all employee locations. Restrict check-in to office geofence with configurable radius.", hasPreview: false },
+  { icon: MapPin, title: "GPS Live Map", desc: "Real-time live map of all employee locations. Restrict check-in to office geofence with configurable radius.", hasPreview: true },
   { icon: Calendar, title: "Leave Management", desc: "Apply, approve, and track leaves with multi-level approval chains, SLA countdown, and annual/sick/casual quotas.", hasPreview: true },
   { icon: Target, title: "Tasks & Targets", desc: "Assign tasks with priority & due dates. Monthly targets with sub-task dependency chains and progress tracking.", hasPreview: true },
-  { icon: ShieldCheck, title: "Enterprise Security", desc: "SSO/SAML integration, Two-Factor Authentication (2FA), and active session management.", hasPreview: false },
+  { icon: ShieldCheck, title: "Enterprise Security", desc: "SSO/SAML integration, Two-Factor Authentication (2FA), and active session management.", hasPreview: true },
   { icon: Send, title: "Admin Broadcasts", desc: "Top-down official communication channel with read receipts, acknowledgements, and file attachments.", hasPreview: true },
-  { icon: BarChart3, title: "Reports & Analytics", desc: "Company-wide attendance trends, performance metrics, payroll summaries, and predictive attrition insights.", hasPreview: false },
-  { icon: MessageSquare, title: "Team Chat", desc: "Real-time tenant-scoped messaging. Office Updates inbox keeps official comms separate from casual chat.", hasPreview: false },
-  { icon: Star, title: "Kudos & Recognition", desc: "Peer recognition wall with Star, Helpful, MVP badges — boost team morale and engagement.", hasPreview: false },
-  { icon: Lock, title: "Custom Roles & Permissions", desc: "Granular permission matrix to define exactly what your admins, managers, and employees can see and do.", hasPreview: false },
-  { icon: FileText, title: "Payroll & Payslips", desc: "Auto-generate payslips from salary, attendance, and deductions. Download PDF payslips each month.", hasPreview: false },
-  { icon: ArrowRight, title: "Approval Workflows", desc: "Configurable multi-step approval workflows for leaves, corrections, and custom requests.", hasPreview: false },
-  { icon: Globe, title: "White-Labeling", desc: "Custom domains, custom branding (logo, colors), and custom email templates for your organization.", hasPreview: false },
-  { icon: CheckCircle2, title: "Audit Trails", desc: "Immutable log of every action — approvals, settings changes, broadcasts — for full compliance.", hasPreview: false },
-  { icon: Zap, title: "API & Webhooks", desc: "Developer settings for generating API keys and webhooks to integrate with your existing tools.", hasPreview: false },
-  { icon: ShieldCheck, title: "Multi-Tenant Architecture", desc: "Strict data isolation with Row Level Security (RLS) ensuring your data is completely separated.", hasPreview: false },
+  { icon: BarChart3, title: "Reports & Analytics", desc: "Company-wide attendance trends, performance metrics, payroll summaries, and predictive attrition insights.", hasPreview: true },
+  { icon: MessageSquare, title: "Team Chat", desc: "Real-time tenant-scoped messaging. Office Updates inbox keeps official comms separate from casual chat.", hasPreview: true },
+  { icon: Star, title: "Kudos & Recognition", desc: "Peer recognition wall with Star, Helpful, MVP badges — boost team morale and engagement.", hasPreview: true },
+  { icon: Lock, title: "Custom Roles & Permissions", desc: "Granular permission matrix to define exactly what your admins, managers, and employees can see and do.", hasPreview: true },
+  { icon: FileText, title: "Payroll & Payslips", desc: "Auto-generate payslips from salary, attendance, and deductions. Download PDF payslips each month.", hasPreview: true },
+  { icon: ArrowRight, title: "Approval Workflows", desc: "Configurable multi-step approval workflows for leaves, corrections, and custom requests.", hasPreview: true },
+  { icon: Globe, title: "White-Labeling", desc: "Custom domains, custom branding (logo, colors), and custom email templates for your organization.", hasPreview: true },
+  { icon: CheckCircle2, title: "Audit Trails", desc: "Immutable log of every action — approvals, settings changes, broadcasts — for full compliance.", hasPreview: true },
+  { icon: Zap, title: "API & Webhooks", desc: "Developer settings for generating API keys and webhooks to integrate with your existing tools.", hasPreview: true },
+  { icon: ShieldCheck, title: "Multi-Tenant Architecture", desc: "Strict data isolation with Row Level Security (RLS) ensuring your data is completely separated.", hasPreview: true },
 ];
 
 function FeaturesSection() {
@@ -186,11 +308,11 @@ function FeaturesSection() {
 
   return (
     <section id="features" className="w-full bg-background py-16 lg:py-24">
-      <div className="mx-auto max-w-[90%] xl:max-w-[1600px] px-4 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
           <Badge variant="secondary" className="mb-3">Features</Badge>
           <h2 className="font-[Poppins] text-3xl font-bold text-foreground lg:text-4xl">Everything You Need to Manage Your Workforce</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-muted-foreground">From biometric attendance to payroll, TechnoML covers every aspect of employee management in one unified platform.</p>
+          <p className="mx-auto mt-3 w-full text-muted-foreground">From biometric attendance to payroll, RoleSync covers every aspect of employee management in one unified platform.</p>
         </div>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {FEATURES.map((f) => (
@@ -244,7 +366,7 @@ function HowItWorks() {
   ];
   return (
     <section id="how-it-works" className="w-full bg-accent/20 py-16 lg:py-24">
-      <div className="mx-auto max-w-[90%] xl:max-w-[1600px] px-4 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
           <Badge variant="secondary" className="mb-3">How It Works</Badge>
           <h2 className="font-[Poppins] text-3xl font-bold text-foreground lg:text-4xl">Get Started in 4 Simple Steps</h2>
@@ -276,7 +398,7 @@ function RoleComparison() {
   ];
   return (
     <section className="w-full bg-background py-16 lg:py-24">
-      <div className="mx-auto max-w-[90%] xl:max-w-[1400px] px-4 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="mb-10 text-center">
           <Badge variant="secondary" className="mb-3">Roles</Badge>
           <h2 className="font-[Poppins] text-3xl font-bold text-foreground lg:text-4xl">Built for Everyone</h2>
@@ -348,7 +470,7 @@ function PricingSection() {
   ];
   return (
     <section id="pricing" className="w-full bg-accent/20 py-16 lg:py-24">
-      <div className="mx-auto max-w-[90%] xl:max-w-[1600px] px-4 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
           <Badge variant="secondary" className="mb-3">Pricing</Badge>
           <h2 className="font-[Poppins] text-3xl font-bold text-foreground lg:text-4xl">Simple, Transparent Pricing</h2>
@@ -385,13 +507,13 @@ function PricingSection() {
 /* ─── Testimonials ─── */
 function TestimonialsSection() {
   const items = [
-    { img: testimonial1, name: "Rajesh Kumar", role: "CTO, TechBite Solutions (Bengaluru)", text: "TechnoML transformed our attendance process. Face verification eliminated buddy punching completely. The geofencing gives us peace of mind for remote offices across India." },
+    { img: testimonial1, name: "Rajesh Kumar", role: "CTO, TechBite Solutions (Bengaluru)", text: "RoleSync transformed our attendance process. Face verification eliminated buddy punching completely. The geofencing gives us peace of mind for remote offices across India." },
     { img: testimonial2, name: "Priya Sharma", role: "HR Head, ZenithWorks (New Delhi)", text: "We went from spreadsheets to a fully automated system in one day. The multi-level approval chains and real-time analytics saved our HR team hours every week." },
     { img: testimonial3, name: "Ananya Singh", role: "Director, CloudScale (Mumbai)", text: "The security features, granular roles, and audit logs made it an easy choice for our enterprise. It's the most robust multi-tenant system we've used." },
   ];
   return (
     <section id="testimonials" className="w-full bg-background py-16 lg:py-24">
-      <div className="mx-auto max-w-[90%] xl:max-w-[1600px] px-4 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center">
           <Badge variant="secondary" className="mb-3">Testimonials</Badge>
           <h2 className="font-[Poppins] text-3xl font-bold text-foreground lg:text-4xl">Trusted by Teams Across India</h2>
@@ -429,12 +551,12 @@ function FAQSection() {
     { q: "Is my company data secure?", a: "Absolutely. Each company has full tenant isolation with row-level security. All data is encrypted in transit and at rest. We follow SOC-2 security practices." },
     { q: "Can I import employee data in bulk?", a: "Yes. The CSV bulk upload feature lets you import employee targets, assignments, and more with preview and validation before saving." },
     { q: "Do you support multi-level leave approvals?", a: "Yes. You can configure approval chains with up to N steps — for example, Team Lead → Department Head → HR — all customizable per company." },
-    { q: "Do you support Indian tax and payroll compliance like EPF, ESI, and GST?", a: "Yes, absolutely! TechnoML is fully customized for Indian businesses. We support EPF, ESI, Professional Tax calculations, and automatically generate GST-compliant tax invoices for your subscription." },
+    { q: "Do you support Indian tax and payroll compliance like EPF, ESI, and GST?", a: "Yes, absolutely! RoleSync is fully customized for Indian businesses. We support EPF, ESI, Professional Tax calculations, and automatically generate GST-compliant tax invoices for your subscription." },
     { q: "What integrations do you support?", a: "We support SSO/SAML, calendar sync, payroll export, and API access. Enterprise plans include custom integration support." },
   ];
   return (
     <section id="faq" className="w-full bg-accent/20 py-16 lg:py-24">
-      <div className="mx-auto max-w-[90%] xl:max-w-[1100px] px-4 lg:px-8">
+      <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="mb-10 text-center">
           <Badge variant="secondary" className="mb-3">FAQ</Badge>
           <h2 className="font-[Poppins] text-3xl font-bold text-foreground lg:text-4xl">Frequently Asked Questions</h2>
@@ -468,13 +590,13 @@ function CTASection() {
       <div className="absolute -top-24 -left-24 h-96 w-96 rounded-full bg-primary/30 blur-3xl filter"></div>
       <div className="absolute -bottom-24 -right-24 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl filter"></div>
       
-      <div className="relative mx-auto max-w-[90%] xl:max-w-[1400px] px-4 text-center lg:px-8">
+      <div className="relative w-full px-4 text-center sm:px-6 lg:px-8">
         <div className="rounded-3xl border border-white/10 bg-white/5 p-8 backdrop-blur-md shadow-2xl lg:p-16">
           <h2 className="font-[Poppins] text-4xl font-extrabold text-white lg:text-5xl tracking-tight">
             Ready to Transform Your <span className="bg-gradient-to-r from-blue-400 to-primary bg-clip-text text-transparent">Workforce Management?</span>
           </h2>
-          <p className="mx-auto mt-6 max-w-2xl text-lg text-slate-300">
-            Join 500+ companies already using TechnoML to streamline attendance, leave, tasks, and team collaboration.
+          <p className="w-full mt-6 text-lg text-slate-300">
+            Join 500+ companies already using RoleSync to streamline attendance, leave, tasks, and team collaboration.
           </p>
           <div className="mt-10 flex flex-wrap justify-center gap-5">
             <Button 
@@ -503,6 +625,7 @@ function CTASection() {
 function Footer() {
   const [footerEmail, setFooterEmail] = useState("");
   const [sending, setSending] = useState(false);
+  const navigate = useNavigate();
 
   const handleFooterSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -527,21 +650,18 @@ function Footer() {
     { title: "Support", links: ["Help Center", "Contact", "Status", "Security", "Privacy Policy"] },
   ];
   return (
-    <footer className="w-full border-t border-border/40 bg-slate-50 pt-16 pb-8 dark:bg-background">
-      <div className="mx-auto grid max-w-[90%] xl:max-w-[1600px] gap-12 px-4 md:grid-cols-5 lg:px-8">
+    <footer className="w-full border-t border-border/40 bg-slate-50 pt-16 pb-8 dark:bg-background/95">
+      <div className="w-full grid gap-12 px-4 md:grid-cols-5 sm:px-6 lg:px-8">
         <div className="md:col-span-2">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary shadow-sm">
-               <Zap className="h-5 w-5 text-white" />
-            </div>
-            <span className="font-[Poppins] text-2xl font-bold text-slate-900 dark:text-white">TechnoML</span>
+          <div className="flex items-center gap-2 mb-4 cursor-pointer" onClick={() => navigate("/")}>
+            <RoleSyncLogo size={96} />
           </div>
-          <p className="mt-2 text-sm text-slate-600 dark:text-muted-foreground max-w-sm leading-relaxed">
-            Smart employee management for modern Indian businesses. Streamline attendance, tasks, and leave seamlessly.
+          <p className="mt-2 text-sm text-slate-600 dark:text-muted-foreground w-full leading-relaxed">
+            Smart employee management for modern Indian businesses. Streamline attendance, tasks, and leave seamlessly with RoleSync.
           </p>
           
           {/* Elegant Email signup */}
-          <div className="mt-8 max-w-md">
+          <div className="mt-8 w-full">
             <h4 className="mb-3 text-sm font-semibold text-slate-900 dark:text-foreground">Subscribe for Updates & Early Access</h4>
             <form onSubmit={handleFooterSignup} className="relative flex items-center shadow-sm">
               <div className="absolute left-3 text-slate-400">
@@ -552,12 +672,12 @@ function Footer() {
                 placeholder="your@company.com"
                 value={footerEmail}
                 onChange={(e) => setFooterEmail(e.target.value)}
-                className="h-12 w-full rounded-full border-slate-200 bg-white pl-10 pr-32 text-sm focus:border-primary focus:ring-primary dark:border-border/60 dark:bg-card"
+                className="h-12 w-full rounded-full border-slate-200 bg-white pl-10 pr-32 text-sm focus:border-primary focus:ring-primary dark:border-border/60 dark:bg-card transition-all"
               />
               <Button 
                 type="submit" 
                 disabled={sending} 
-                className="absolute right-1 h-10 rounded-full bg-primary px-6 font-medium text-white transition-all hover:bg-primary/90 hover:shadow-md"
+                className="absolute right-1 h-10 rounded-full bg-gradient-to-r from-primary to-indigo-600 px-6 font-medium text-white transition-all hover:bg-primary/90 hover:shadow-md hover:scale-[1.02] active:scale-[0.98]"
               >
                 {sending ? "Creating..." : "Subscribe"}
               </Button>
@@ -585,16 +705,16 @@ function Footer() {
         ))}
       </div>
       
-      <div className="mx-auto mt-16 max-w-[90%] xl:max-w-[1600px] border-t border-slate-200/60 px-4 pt-8 dark:border-border/40 lg:px-8">
+      <div className="w-full mt-16 border-t border-slate-200/60 px-4 pt-8 dark:border-border/40 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
           <p className="text-sm text-slate-500 dark:text-muted-foreground">
-            © {new Date().getFullYear()} TechnoML. All rights reserved.
+            © {new Date().getFullYear()} RoleSync. All rights reserved.
           </p>
           <div className="flex gap-4">
             {['Twitter', 'LinkedIn', 'GitHub'].map((social) => (
-              <a key={social} href="#" className="text-slate-400 hover:text-primary transition-colors">
+              <a key={social} href="#" className="text-slate-400 hover:text-primary transition-all duration-300 hover:scale-110" aria-label={social}>
                 <span className="sr-only">{social}</span>
-                <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center dark:bg-card">
+                <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center dark:bg-card border border-border/40 hover:border-primary/30 shadow-sm">
                   <div className="h-1.5 w-1.5 rounded-full bg-current"></div>
                 </div>
               </a>
@@ -624,7 +744,7 @@ function CompanySelector() {
 
   return (
     <section className="w-full bg-background py-12 lg:py-16">
-      <div className="mx-auto max-w-md px-4 text-center">
+      <div className="mx-auto w-full px-4 text-center">
         <Badge variant="secondary" className="mb-3">Get Started</Badge>
         <h2 className="mb-2 font-[Poppins] text-2xl font-bold text-foreground">Find Your Company</h2>
         <p className="mb-6 text-sm text-muted-foreground">Search for your organization to continue to login</p>

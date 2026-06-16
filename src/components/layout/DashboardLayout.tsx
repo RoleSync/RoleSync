@@ -97,7 +97,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     navigate('/');
   };
 
-  const themeColor = user?.company?.themeColor || '#0ea5e9';
+  const themeColor = user?.company?.themeColor || '#6366F1';
   const primaryHsl = hexToHsl(themeColor);
   const primaryForegroundHsl = getPrimaryForeground(themeColor);
 

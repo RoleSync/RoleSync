@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { CheckCircle2, ArrowLeft, Send } from "lucide-react";
 import { toast } from "sonner";
+import { RoleSyncLogo } from "@/components/RoleSyncLogo";
 
 const PLANS = [
   {
@@ -110,8 +111,10 @@ export default function PricingPage() {
     <div className="w-full min-h-screen bg-background">
       {/* Top nav */}
       <nav className="w-full sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur-md">
-        <div className="mx-auto flex max-w-[90%] xl:max-w-[1600px] items-center justify-between px-4 py-3 lg:px-8">
-          <Link to="/" className="font-[Poppins] text-xl font-bold text-primary">TechnoML</Link>
+        <div className="w-full flex items-center justify-between px-4 py-3 sm:px-6 lg:px-8">
+          <Link to="/" className="flex items-center gap-2 cursor-pointer">
+            <RoleSyncLogo size={64} />
+          </Link>
           <div className="flex gap-3">
             <Button variant="outline" onClick={() => navigate("/login")}>Log In</Button>
             <Button onClick={() => navigate("/login")}>Get Started</Button>
@@ -120,7 +123,7 @@ export default function PricingPage() {
       </nav>
 
       <section className="w-full py-16 lg:py-24">
-        <div className="mx-auto max-w-[90%] xl:max-w-[1600px] px-4 lg:px-8">
+        <div className="w-full px-4 sm:px-6 lg:px-8">
           <div className="mb-4">
             <Button variant="ghost" size="sm" onClick={() => navigate("/")} className="gap-1 text-muted-foreground">
               <ArrowLeft className="h-4 w-4" /> Back to Home

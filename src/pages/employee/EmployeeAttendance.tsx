@@ -40,15 +40,89 @@ export default function EmployeeAttendance() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const navigate = useNavigate();
+  const [syncing, setSyncing] = useState(false);
+
+  // Helper: Base64 Conversions
+  function blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  function base64ToBlob(base64: string): Blob {
+    const arr = base64.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/jpeg';
+    const bstr = atob(arr[1]);
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    return new Blob([u8arr], { type: mime });
+  }
+
+  // Helper: Local Storage Queue
+  function getOfflineQueue() {
+    try {
+      const q = localStorage.getItem('offline_attendance_queue');
+      return q ? JSON.parse(q) : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function saveOfflineQueue(queue: any[]) {
+    localStorage.setItem('offline_attendance_queue', JSON.stringify(queue));
+  }
+
+  // Helper: Anti-Fraud Mock GPS
+  function checkMockGPS(pos: GeolocationPosition): boolean {
+    try {
+      const proto = Object.getPrototypeOf(navigator.geolocation);
+      const isNative = proto.getCurrentPosition.toString().includes('[native code]');
+      if (!isNative) return true;
+    } catch (e) {}
+
+    if (pos.coords.accuracy === 0) return true;
+    if ((window as any).__mockgps || (navigator as any).mockLocation) return true;
+    return false;
+  }
 
   const loadData = useCallback(async () => {
     if (!user) return;
     const todayStr = new Date().toISOString().split('T')[0];
+    
+    // Check offline queue
+    const offlineQueue = getOfflineQueue();
+    const queuedToday = offlineQueue.find((item: any) => item.date === todayStr && item.user_id === user.id);
+
     const [t, h] = await Promise.all([
       supabase.from('attendance').select('*').eq('user_id', user.id).eq('date', todayStr).maybeSingle(),
       supabase.from('attendance').select('*').eq('user_id', user.id).order('date', { ascending: false }).limit(10),
     ]);
-    setToday(t.data); setHistory(h.data ?? []);
+
+    if (t.data) {
+      setToday(t.data);
+    } else if (queuedToday) {
+      setToday({
+        id: 'offline-queued',
+        user_id: user.id,
+        company_id: user.companyId,
+        date: todayStr,
+        check_in: queuedToday.check_in,
+        check_out: queuedToday.check_out,
+        status: queuedToday.status,
+        distance_m: queuedToday.distance_m,
+        is_offline_pending: true
+      });
+    } else {
+      setToday(null);
+    }
+
+    setHistory(h.data ?? []);
     // Load correction requests
     const { data: corrData } = await supabase
       .from('attendance_corrections' as any)
@@ -62,6 +136,90 @@ export default function EmployeeAttendance() {
   useEffect(() => { loadData(); }, [loadData]);
   useEffect(() => () => { streamRef.current?.getTracks().forEach((t) => t.stop()); }, []);
 
+  const syncOfflineQueue = useCallback(async () => {
+    if (!user || syncing || !navigator.onLine) return;
+    const queue = getOfflineQueue();
+    if (queue.length === 0) return;
+
+    setSyncing(true);
+    let successCount = 0;
+    const remainingQueue: any[] = [];
+
+    for (const item of queue) {
+      try {
+        let selfiePath = item.selfie_path;
+
+        if (item.selfie_base64 && !item.selfie_uploaded) {
+          const blob = base64ToBlob(item.selfie_base64);
+          const { error: upErr } = await supabase.storage.from('selfies').upload(selfiePath, blob, { contentType: 'image/jpeg' });
+          if (upErr && !upErr.message.includes('already exists')) {
+            throw upErr;
+          }
+          item.selfie_uploaded = true;
+        }
+
+        if (item.type === 'check_in') {
+          const { error: insErr } = await supabase.from('attendance').insert({
+            user_id: item.user_id,
+            company_id: item.company_id,
+            date: item.date,
+            check_in: item.check_in,
+            selfie_path: selfiePath,
+            latitude: item.latitude,
+            longitude: item.longitude,
+            distance_m: item.distance_m,
+            location_verified: item.location_verified,
+            status: item.status,
+          });
+          if (insErr && !insErr.message.includes('duplicate key')) throw insErr;
+        } else if (item.type === 'check_out') {
+          const { error: updErr } = await supabase.from('attendance')
+            .update({ check_out: item.check_out })
+            .eq('user_id', item.user_id)
+            .eq('date', item.date);
+          if (updErr) throw updErr;
+        } else if (item.type === 'check_in_out') {
+          const { error: insErr } = await supabase.from('attendance').insert({
+            user_id: item.user_id,
+            company_id: item.company_id,
+            date: item.date,
+            check_in: item.check_in,
+            check_out: item.check_out,
+            selfie_path: selfiePath,
+            latitude: item.latitude,
+            longitude: item.longitude,
+            distance_m: item.distance_m,
+            location_verified: item.location_verified,
+            status: item.status,
+          });
+          if (insErr && !insErr.message.includes('duplicate key')) throw insErr;
+        }
+
+        successCount++;
+      } catch (err) {
+        console.error('Failed to sync offline item:', err);
+        remainingQueue.push(item);
+      }
+    }
+
+    saveOfflineQueue(remainingQueue);
+    setSyncing(false);
+
+    if (successCount > 0) {
+      toast.success(`Synced ${successCount} offline attendance records successfully!`);
+      loadData();
+    }
+  }, [user, syncing, loadData]);
+
+  useEffect(() => {
+    window.addEventListener('online', syncOfflineQueue);
+    return () => window.removeEventListener('online', syncOfflineQueue);
+  }, [syncOfflineQueue]);
+
+  useEffect(() => {
+    if (user) syncOfflineQueue();
+  }, [user, syncOfflineQueue]);
+
   function stopCamera() {
     streamRef.current?.getTracks().forEach((t) => t.stop());
     streamRef.current = null;
@@ -72,6 +230,16 @@ export default function EmployeeAttendance() {
     if (!settings) { setError('Settings not loaded'); setStep('idle'); return; }
     try {
       const pos = await getCurrentPosition();
+
+      // Anti-Fraud Mock GPS detection
+      const isMocked = checkMockGPS(pos);
+      if (isMocked) {
+        setError('Location spoofing/Mock GPS provider detected. Please disable mock location tools or extensions.');
+        setStep('idle');
+        toast.error('Location verification failed: Mock GPS detected.');
+        return;
+      }
+
       const dist = haversineMeters(pos.coords.latitude, pos.coords.longitude, settings.office_latitude, settings.office_longitude);
       const verified = dist <= settings.geofence_radius_m;
       setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude, distance: dist, verified });
@@ -109,18 +277,59 @@ export default function EmployeeAttendance() {
   async function submit() {
     if (!user || !photoBlob || !position || !settings) return;
     setStep('submitting');
+    
+    const todayDate = new Date();
+    const dateStr = todayDate.toISOString().split('T')[0];
+    const filename = `${user.id}/${dateStr}-${Date.now()}.jpg`;
+
+    const [h, m] = settings.work_start_time.split(':').map(Number);
+    const cutoff = new Date(todayDate); cutoff.setHours(h, m + settings.late_threshold_minutes, 0, 0);
+    const status = todayDate > cutoff ? 'late' : 'present';
+    if (!user.companyId) {
+      toast.error('No company associated with this account');
+      setStep('preview');
+      return;
+    }
+
+    if (!navigator.onLine) {
+      try {
+        const base64Photo = await blobToBase64(photoBlob);
+        const queue = getOfflineQueue();
+        queue.push({
+          type: 'check_in',
+          user_id: user.id,
+          company_id: user.companyId,
+          date: dateStr,
+          check_in: todayDate.toISOString(),
+          selfie_path: filename,
+          selfie_base64: base64Photo,
+          selfie_uploaded: false,
+          latitude: position.lat,
+          longitude: position.lng,
+          distance_m: Math.round(position.distance),
+          location_verified: true,
+          status,
+        });
+        saveOfflineQueue(queue);
+        toast.info('You are offline. Attendance cached locally and will sync when online.');
+        
+        if (photoUrl) URL.revokeObjectURL(photoUrl);
+        setPhotoBlob(null); setPhotoUrl(null);
+        await loadData();
+        setStep('idle');
+        setShowMoodDialog(true);
+      } catch (err) {
+        toast.error('Failed to cache attendance locally.');
+        setStep('preview');
+      }
+      return;
+    }
+
     try {
-      const today = new Date();
-      const dateStr = today.toISOString().split('T')[0];
-      const filename = `${user.id}/${dateStr}-${Date.now()}.jpg`;
       const { error: upErr } = await supabase.storage.from('selfies').upload(filename, photoBlob, { contentType: 'image/jpeg' });
       if (upErr) throw upErr;
-      const [h, m] = settings.work_start_time.split(':').map(Number);
-      const cutoff = new Date(today); cutoff.setHours(h, m + settings.late_threshold_minutes, 0, 0);
-      const status = today > cutoff ? 'late' : 'present';
-      if (!user.companyId) throw new Error('No company associated with this account');
       const { error: insErr } = await supabase.from('attendance').insert({
-        user_id: user.id, company_id: user.companyId, date: dateStr, check_in: today.toISOString(),
+        user_id: user.id, company_id: user.companyId, date: dateStr, check_in: todayDate.toISOString(),
         selfie_path: filename, latitude: position.lat, longitude: position.lng,
         distance_m: Math.round(position.distance), location_verified: true, status,
       });
@@ -129,12 +338,39 @@ export default function EmployeeAttendance() {
       if (photoUrl) URL.revokeObjectURL(photoUrl);
       setPhotoBlob(null); setPhotoUrl(null);
       await loadData(); setStep('idle');
-      
-      // If it's a check-in (not a late check-in updating something, though currently we just insert),
-      // we show the mood dialog!
       setShowMoodDialog(true);
     } catch (e: any) {
-      toast.error(e?.message ?? 'Failed to submit'); setStep('preview');
+      console.warn('Online submission failed, caching offline:', e);
+      try {
+        const base64Photo = await blobToBase64(photoBlob);
+        const queue = getOfflineQueue();
+        queue.push({
+          type: 'check_in',
+          user_id: user.id,
+          company_id: user.companyId,
+          date: dateStr,
+          check_in: todayDate.toISOString(),
+          selfie_path: filename,
+          selfie_base64: base64Photo,
+          selfie_uploaded: false,
+          latitude: position.lat,
+          longitude: position.lng,
+          distance_m: Math.round(position.distance),
+          location_verified: true,
+          status,
+        });
+        saveOfflineQueue(queue);
+        toast.info('Connection issue. Attendance cached locally.');
+        
+        if (photoUrl) URL.revokeObjectURL(photoUrl);
+        setPhotoBlob(null); setPhotoUrl(null);
+        await loadData();
+        setStep('idle');
+        setShowMoodDialog(true);
+      } catch (err) {
+        toast.error('Failed to cache attendance locally.');
+        setStep('preview');
+      }
     }
   }
 
@@ -164,8 +400,53 @@ export default function EmployeeAttendance() {
 
   async function checkOut() {
     if (!user || !today) return;
+
+    if (today.is_offline_pending) {
+      const queue = getOfflineQueue();
+      const updatedQueue = queue.map((item: any) => {
+        if (item.date === today.date && item.user_id === user.id) {
+          return {
+            ...item,
+            type: item.type === 'check_in' ? 'check_in_out' : item.type,
+            check_out: new Date().toISOString()
+          };
+        }
+        return item;
+      });
+      saveOfflineQueue(updatedQueue);
+      toast.info('Checked out (Offline cached). Will sync when online.');
+      loadData();
+      return;
+    }
+
+    if (!navigator.onLine) {
+      const queue = getOfflineQueue();
+      queue.push({
+        type: 'check_out',
+        user_id: user.id,
+        date: today.date,
+        check_out: new Date().toISOString()
+      });
+      saveOfflineQueue(queue);
+      toast.info('Checked out (Offline cached). Will sync when online.');
+      loadData();
+      return;
+    }
+
     const { error } = await supabase.from('attendance').update({ check_out: new Date().toISOString() }).eq('id', today.id);
-    if (error) return toast.error(error.message);
+    if (error) {
+      const queue = getOfflineQueue();
+      queue.push({
+        type: 'check_out',
+        user_id: user.id,
+        date: today.date,
+        check_out: new Date().toISOString()
+      });
+      saveOfflineQueue(queue);
+      toast.info('Connection issue. Checkout cached offline.');
+      loadData();
+      return;
+    }
     toast.success('Checked out'); loadData();
   }
 
@@ -176,13 +457,32 @@ export default function EmployeeAttendance() {
           <h1 className="text-2xl font-heading font-bold">Attendance</h1>
           <p className="text-muted-foreground">Verify your location and capture a selfie to mark attendance</p>
         </div>
+        {getOfflineQueue().length > 0 && (
+          <div className="flex items-center justify-between p-3 rounded-xl bg-yellow-500/10 border border-yellow-500/20 text-yellow-600 dark:text-yellow-500 text-sm">
+            <span className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              You have {getOfflineQueue().length} offline attendance record(s) pending sync.
+            </span>
+            <Button size="sm" variant="outline" onClick={syncOfflineQueue} disabled={syncing} className="border-yellow-500/30 hover:bg-yellow-500/20 text-yellow-600 dark:text-yellow-500">
+              {syncing ? 'Syncing...' : 'Sync Now'}
+            </Button>
+          </div>
+        )}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="p-6">
             <h3 className="font-heading font-semibold mb-4">Today · {new Date().toLocaleDateString()}</h3>
             {today ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 rounded-xl bg-success/10">
-                  <div><p className="text-sm text-muted-foreground">Status</p><StatusBadge status={today.status === 'late' ? 'Late' : 'Present'} /></div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Status</p>
+                    <StatusBadge status={today.status === 'late' ? 'Late' : 'Present'} />
+                    {today.is_offline_pending && (
+                      <Badge variant="outline" className="ml-2 bg-yellow-500/10 text-yellow-500 border-yellow-500/20 animate-pulse text-[10px]">
+                        Offline Cache
+                      </Badge>
+                    )}
+                  </div>
                   <CheckCircle2 className="h-8 w-8 text-success" />
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">

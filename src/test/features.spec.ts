@@ -4,10 +4,10 @@ test('company admin login and features test', async ({ page }) => {
   // Go to the login page
   await page.goto('http://localhost:8080/login');
 
-  // Search for company 'TechnoML'
-  await page.fill('#company', 'TechnoML');
-  await page.waitForSelector('button:has-text("TechnoML")', { timeout: 10000 });
-  await page.click('button:has-text("TechnoML")');
+  // Search for company 'RoleSync'
+  await page.fill('#company', 'RoleSync');
+  await page.waitForSelector('button:has-text("RoleSync")', { timeout: 10000 });
+  await page.click('button:has-text("RoleSync")');
 
   // Wait for company selection and login fields to be visible
   await page.waitForSelector('#login-email', { timeout: 10000 });

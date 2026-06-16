@@ -110,7 +110,7 @@ export default function SuperAdminCompanies() {
   const [companyEmail, setCompanyEmail] = useState('');
   const [companyPhone, setCompanyPhone] = useState('');
   const [companyAddress, setCompanyAddress] = useState('');
-  const [companyThemeColor, setCompanyThemeColor] = useState('#0ea5e9');
+  const [companyThemeColor, setCompanyThemeColor] = useState('#6366F1');
   const [loginPreference, setLoginPreference] = useState<'email' | 'id' | 'both'>('both');
   const [idPrefix, setIdPrefix] = useState('');
   const [planType, setPlanType] = useState<'basic' | 'pro' | 'enterprise'>('basic');
@@ -121,7 +121,7 @@ export default function SuperAdminCompanies() {
   const [editSlug, setEditSlug] = useState('');
   const [editLogoFile, setEditLogoFile] = useState<File | null>(null);
   const [editLogoPreview, setEditLogoPreview] = useState<string | null>(null);
-  const [editThemeColor, setEditThemeColor] = useState('#0ea5e9');
+  const [editThemeColor, setEditThemeColor] = useState('#6366F1');
   const [editEmail, setEditEmail] = useState('');
   const [editPhone, setEditPhone] = useState('');
   const [editAddress, setEditAddress] = useState('');
@@ -453,7 +453,7 @@ export default function SuperAdminCompanies() {
       toast.success(`Company "${name}" created successfully!`);
       setName(''); setSlug(''); setOwnerEmail(''); setOwnerName(''); setOwnerPassword('');
       setLogoFile(null); setLogoPreview(null);
-      setCompanyEmail(''); setCompanyPhone(''); setCompanyAddress(''); setCompanyThemeColor('#0ea5e9');
+      setCompanyEmail(''); setCompanyPhone(''); setCompanyAddress(''); setCompanyThemeColor('#6366F1');
       setPlanType('basic');
       setOpen(false);
       load();
@@ -1228,7 +1228,7 @@ export default function SuperAdminCompanies() {
                       setEditSlug(c.slug);
                       setEditLogoFile(null);
                       setEditLogoPreview(null);
-                      setEditThemeColor((c as any).theme_color || '#0ea5e9');
+                      setEditThemeColor((c as any).theme_color || '#6366F1');
                       setEditEmail(c.email || '');
                       setEditPhone(c.phone || '');
                       setEditAddress(c.address || '');

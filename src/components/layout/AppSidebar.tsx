@@ -16,6 +16,7 @@ import {
 import { NavLink } from '@/components/NavLink';
 import { Button } from '@/components/ui/button';
 import { useCompanyFeatures } from '@/hooks/useCompanyFeatures';
+import { RoleSyncLogo } from '@/components/RoleSyncLogo';
 
 export function AppSidebar() {
   const { user } = useAuth();
@@ -106,16 +107,16 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel className="gap-2 px-1">
-            <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden">
+            <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0">
               {user?.company?.logoUrl ? (
                 <img src={supabase.storage.from('company-assets').getPublicUrl(user.company.logoUrl).data.publicUrl} alt="Logo" className="object-contain h-full w-full" />
               ) : (
-                <img src="/logo.png" alt="WorkWise" className="h-6 w-6" />
+                <RoleSyncLogo size={40} showText={false} />
               )}
             </div>
             {!collapsed && (
               <span className="font-heading font-bold text-primary truncate">
-                {user?.company?.name ?? 'WorkWise Hub'}
+                {user?.company?.name ?? 'RoleSync Hub'}
               </span>
             )}
           </SidebarGroupLabel>
@@ -162,18 +163,18 @@ export function AppSidebar() {
               </div>
             )}
 
-            <SidebarMenu>
+             <SidebarMenu>
               {menu.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
                       end={item.url === '/admin' || item.url === '/employee' || item.url === '/super-admin'}
-                      className="hover:bg-sidebar-accent/50"
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                      className="hover:bg-sidebar-accent/50 group flex items-center w-full px-3 py-2 rounded-md transition-all duration-200"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium border-l-2 border-primary shadow-sm"
                     >
-                      <item.icon className="mr-2 h-4 w-4" />
-                      {!collapsed && <span>{item.title}</span>}
+                      <item.icon className="mr-2 h-4 w-4 text-muted-foreground group-hover:text-primary transition-all duration-300 group-hover:scale-110" />
+                      {!collapsed && <span className="group-hover:translate-x-0.5 transition-transform duration-200">{item.title}</span>}
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

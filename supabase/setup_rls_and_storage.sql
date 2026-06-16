@@ -279,3 +279,321 @@ WITH CHECK (
     AND p.company_id::text = employee_moods.company_id::text
   )
 );
+
+-- ==========================================
+-- 3. ADDITIONAL TABLES RLS & MULTI-TENANT SECURITY
+-- ==========================================
+
+-- Companies Table
+ALTER TABLE public.companies ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow public read of companies" ON public.companies;
+DROP POLICY IF EXISTS "Allow owners/admins to update company" ON public.companies;
+
+CREATE POLICY "Allow public read of companies" ON public.companies 
+  FOR SELECT USING (true);
+
+CREATE POLICY "Allow owners/admins to update company" ON public.companies 
+  FOR UPDATE TO authenticated 
+  USING (
+    auth.uid() = owner_id 
+    OR EXISTS (
+      SELECT 1 FROM public.user_roles ur 
+      WHERE ur.user_id = auth.uid() 
+      AND ur.role = 'super_admin'
+    )
+  );
+
+-- Profiles Table
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow users/same-company select profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Allow self insert profiles" ON public.profiles;
+DROP POLICY IF EXISTS "Allow self/admin update profiles" ON public.profiles;
+
+CREATE POLICY "Allow users/same-company select profiles" ON public.profiles 
+  FOR SELECT TO authenticated 
+  USING (
+    auth.uid() = id 
+    OR company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+    OR EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'super_admin')
+  );
+
+CREATE POLICY "Allow self insert profiles" ON public.profiles 
+  FOR INSERT TO authenticated 
+  WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Allow self/admin update profiles" ON public.profiles 
+  FOR UPDATE TO authenticated 
+  USING (
+    auth.uid() = id 
+    OR (
+      company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+      AND EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'admin')
+    )
+    OR EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'super_admin')
+  );
+
+-- User Roles Table
+ALTER TABLE public.user_roles ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow self/company-admin select roles" ON public.user_roles;
+DROP POLICY IF EXISTS "Allow admin/super-admin manage roles" ON public.user_roles;
+
+CREATE POLICY "Allow self/company-admin select roles" ON public.user_roles 
+  FOR SELECT TO authenticated 
+  USING (
+    auth.uid() = user_id 
+    OR EXISTS (
+      SELECT 1 FROM public.profiles p 
+      WHERE p.id = user_roles.user_id 
+      AND p.company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+      AND EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'admin')
+    )
+    OR EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'super_admin')
+  );
+
+CREATE POLICY "Allow admin/super-admin manage roles" ON public.user_roles 
+  FOR ALL TO authenticated 
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p 
+      WHERE p.id = user_roles.user_id 
+      AND p.company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+      AND EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'admin')
+    )
+    OR EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'super_admin')
+  );
+
+-- Company Settings Table
+ALTER TABLE public.company_settings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow same-company read settings" ON public.company_settings;
+DROP POLICY IF EXISTS "Allow admin/super-admin update settings" ON public.company_settings;
+
+CREATE POLICY "Allow same-company read settings" ON public.company_settings 
+  FOR SELECT TO authenticated 
+  USING (
+    company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+    OR EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'super_admin')
+  );
+
+CREATE POLICY "Allow admin/super-admin update settings" ON public.company_settings 
+  FOR ALL TO authenticated 
+  USING (
+    (
+      company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+      AND EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'admin')
+    )
+    OR EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'super_admin')
+  );
+
+-- Company Features Table
+ALTER TABLE public.company_features ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow same-company read features" ON public.company_features;
+DROP POLICY IF EXISTS "Allow admin/super-admin update features" ON public.company_features;
+
+CREATE POLICY "Allow same-company read features" ON public.company_features 
+  FOR SELECT TO authenticated 
+  USING (
+    company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+    OR EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'super_admin')
+  );
+
+CREATE POLICY "Allow admin/super-admin update features" ON public.company_features 
+  FOR ALL TO authenticated 
+  USING (
+    (
+      company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+      AND EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'admin')
+    )
+    OR EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'super_admin')
+  );
+
+-- Tasks Table
+ALTER TABLE public.tasks ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow same-company read tasks" ON public.tasks;
+DROP POLICY IF EXISTS "Allow admin assign tasks" ON public.tasks;
+DROP POLICY IF EXISTS "Allow admin/assignee update tasks" ON public.tasks;
+
+CREATE POLICY "Allow same-company read tasks" ON public.tasks 
+  FOR SELECT TO authenticated 
+  USING (
+    company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+    OR EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'super_admin')
+  );
+
+CREATE POLICY "Allow admin assign tasks" ON public.tasks 
+  FOR INSERT TO authenticated 
+  WITH CHECK (
+    (
+      company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+      AND EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'admin')
+    )
+    OR EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'super_admin')
+  );
+
+CREATE POLICY "Allow admin/assignee update tasks" ON public.tasks 
+  FOR UPDATE TO authenticated 
+  USING (
+    assigned_to = auth.uid()
+    OR (
+      company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+      AND EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'admin')
+    )
+    OR EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'super_admin')
+  );
+
+-- Loan Targets Table
+ALTER TABLE public.loan_targets ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow self/admin read targets" ON public.loan_targets;
+DROP POLICY IF EXISTS "Allow admin manage targets" ON public.loan_targets;
+
+CREATE POLICY "Allow self/admin read targets" ON public.loan_targets 
+  FOR SELECT TO authenticated 
+  USING (
+    user_id = auth.uid()
+    OR (
+      company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+      AND EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'admin')
+    )
+    OR EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'super_admin')
+  );
+
+CREATE POLICY "Allow admin manage targets" ON public.loan_targets 
+  FOR ALL TO authenticated 
+  USING (
+    (
+      company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+      AND EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'admin')
+    )
+    OR EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'super_admin')
+  );
+
+-- Leave Requests Table
+ALTER TABLE public.leave_requests ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow self/admin read leaves" ON public.leave_requests;
+DROP POLICY IF EXISTS "Allow self create leaves" ON public.leave_requests;
+DROP POLICY IF EXISTS "Allow self/admin update leaves" ON public.leave_requests;
+
+CREATE POLICY "Allow self/admin read leaves" ON public.leave_requests 
+  FOR SELECT TO authenticated 
+  USING (
+    user_id = auth.uid()
+    OR (
+      company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+      AND EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role IN ('admin', 'super_admin'))
+    )
+  );
+
+CREATE POLICY "Allow self create leaves" ON public.leave_requests 
+  FOR INSERT TO authenticated 
+  WITH CHECK (
+    user_id = auth.uid() 
+    AND company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+  );
+
+CREATE POLICY "Allow self/admin update leaves" ON public.leave_requests 
+  FOR UPDATE TO authenticated 
+  USING (
+    user_id = auth.uid()
+    OR (
+      company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+      AND EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role IN ('admin', 'super_admin'))
+    )
+  );
+
+-- Kudos Table
+ALTER TABLE public.kudos ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow same-company select kudos" ON public.kudos;
+DROP POLICY IF EXISTS "Allow self insert kudos" ON public.kudos;
+
+CREATE POLICY "Allow same-company select kudos" ON public.kudos 
+  FOR SELECT TO authenticated 
+  USING (company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid()));
+
+CREATE POLICY "Allow self insert kudos" ON public.kudos 
+  FOR INSERT TO authenticated 
+  WITH CHECK (
+    from_user = auth.uid() 
+    AND company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+  );
+
+-- Helpdesk Tickets Table
+ALTER TABLE public.helpdesk_tickets ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow self/admin read tickets" ON public.helpdesk_tickets;
+DROP POLICY IF EXISTS "Allow self insert tickets" ON public.helpdesk_tickets;
+DROP POLICY IF EXISTS "Allow admin/assignee update tickets" ON public.helpdesk_tickets;
+
+CREATE POLICY "Allow self/admin read tickets" ON public.helpdesk_tickets 
+  FOR SELECT TO authenticated 
+  USING (
+    created_by = auth.uid()
+    OR assignee_id = auth.uid()
+    OR (
+      company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+      AND EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'admin')
+    )
+  );
+
+CREATE POLICY "Allow self insert tickets" ON public.helpdesk_tickets 
+  FOR INSERT TO authenticated 
+  WITH CHECK (
+    created_by = auth.uid()
+    AND company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+  );
+
+CREATE POLICY "Allow admin/assignee update tickets" ON public.helpdesk_tickets 
+  FOR UPDATE TO authenticated 
+  USING (
+    assignee_id = auth.uid()
+    OR (
+      company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+      AND EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'admin')
+    )
+  );
+
+-- Chat Channels Table
+ALTER TABLE public.chat_channels ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow same-company channels" ON public.chat_channels;
+
+CREATE POLICY "Allow same-company channels" ON public.chat_channels 
+  FOR ALL TO authenticated 
+  USING (company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid()));
+
+-- Chat Messages Table
+ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow same-company chat messages" ON public.chat_messages;
+
+CREATE POLICY "Allow same-company chat messages" ON public.chat_messages 
+  FOR ALL TO authenticated 
+  USING (company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid()));
+
+-- Admin Permissions Table
+ALTER TABLE public.admin_permissions ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow same-company admins permissions" ON public.admin_permissions;
+
+CREATE POLICY "Allow same-company admins permissions" ON public.admin_permissions 
+  FOR ALL TO authenticated 
+  USING (company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid()));
+
+-- Audit Logs Table
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow same-company admins read audit logs" ON public.audit_logs;
+DROP POLICY IF EXISTS "Allow insert audit logs" ON public.audit_logs;
+
+CREATE POLICY "Allow same-company admins read audit logs" ON public.audit_logs 
+  FOR SELECT TO authenticated 
+  USING (
+    company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid())
+    AND EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'admin')
+  );
+
+CREATE POLICY "Allow insert audit logs" ON public.audit_logs 
+  FOR INSERT TO authenticated 
+  WITH CHECK (company_id = (SELECT company_id FROM public.profiles WHERE id = auth.uid()));
+
+-- Notifications Table
+ALTER TABLE public.notifications ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Allow self read/write notifications" ON public.notifications;
+
+CREATE POLICY "Allow self read/write notifications" ON public.notifications 
+  FOR ALL TO authenticated 
+  USING (user_id = auth.uid());
+
