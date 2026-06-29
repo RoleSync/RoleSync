@@ -64,7 +64,7 @@ export default function Index() {
           <div className="mt-16 relative rounded-2xl border border-white/10 bg-slate-900/50 p-2 shadow-2xl animate-in zoom-in-95 duration-1000 delay-500">
             <div className="rounded-xl overflow-hidden aspect-video border border-white/5">
               <img 
-                src="/logo.png" 
+                src="/logo.svg" 
                 alt="RoleSync Dashboard" 
                 className="w-full h-full object-contain p-8"
               />

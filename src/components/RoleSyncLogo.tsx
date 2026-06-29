@@ -18,7 +18,7 @@ export function RoleSyncLogo({
   return (
     <div className={`flex items-center gap-3 select-none ${className}`}>
       <img
-        src="/logo.png"
+        src="/logo.svg"
         alt="RoleSync Logo"
         width={size}
         height={size}

@@ -3,7 +3,7 @@
   "name": "RoleSync - Intelligent Management System",
   "icons": [
     {
-      "src": "/logo.png",
+      "src": "/logo.svg",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
