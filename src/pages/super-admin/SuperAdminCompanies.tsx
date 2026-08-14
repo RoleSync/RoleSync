@@ -967,10 +967,10 @@ export default function SuperAdminCompanies() {
                     return (
                       <div key={u.id} className="flex items-center justify-between p-4 rounded-xl border bg-muted/20">
                         <div className="min-w-0">
-                          <p className="font-semibold flex items-center gap-2">
+                          <div className="font-semibold flex items-center gap-2">
                             {u.full_name} 
                             {isOwner && <Badge className="bg-amber-500 hover:bg-amber-600 border-none flex items-center gap-1"><Shield className="h-3 w-3" /> Owner</Badge>}
-                          </p>
+                          </div>
                           <p className="text-xs text-muted-foreground">{u.email} · {u.job_title}</p>
                         </div>
                         <div className="flex flex-col items-end gap-2">

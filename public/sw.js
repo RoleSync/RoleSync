@@ -11,7 +11,7 @@ const ASSETS_TO_CACHE = [
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[Service Worker] Caching App Shell and static assets');
+      // console.log('[Service Worker] Caching App Shell and static assets');
       return cache.addAll(ASSETS_TO_CACHE);
     }).then(() => self.skipWaiting())
   );
@@ -24,7 +24,7 @@ self.addEventListener('activate', (event) => {
       return Promise.all(
         cacheNames.map((cache) => {
           if (cache !== CACHE_NAME) {
-            console.log('[Service Worker] Clearing old cache:', cache);
+            // console.log('[Service Worker] Clearing old cache:', cache);
             return caches.delete(cache);
           }
         })
@@ -64,8 +64,19 @@ self.addEventListener('fetch', (event) => {
           }
           // Fallback to home page if not found in cache
           if (event.request.mode === 'navigate') {
-            return caches.match('/index.html');
+            return caches.match('/index.html').then((indexResponse) => {
+              if (indexResponse) return indexResponse;
+              return new Response('Network error and offline fallback not available.', {
+                status: 503,
+                headers: { 'Content-Type': 'text/plain' },
+              });
+            });
           }
+          
+          return new Response('Network error or resource not cached', {
+            status: 408,
+            headers: { 'Content-Type': 'text/plain' },
+          });
         });
       })
   );

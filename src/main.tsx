@@ -6,7 +6,8 @@ import "./index.css";
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('/sw.js')
-      .then((reg) => console.log('Service Worker registered successfully:', reg.scope))
+      // .then((reg) => console.log('Service Worker registered successfully:', reg.scope))
+      .then((reg) => {}) // Silently register without logging
       .catch((err) => console.error('Service Worker registration failed:', err));
   });
 }

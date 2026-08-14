@@ -251,10 +251,10 @@ export default function AdminCommunication() {
 
                   {/* Direct Messages */}
                   <div>
-                    <p className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center justify-between">
+                    <div className="px-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center justify-between">
                       Direct Messages
                       <Badge variant="secondary" className="text-[10px]">{employees.length}</Badge>
-                    </p>
+                    </div>
                     <div className="space-y-0.5">
                       {filteredEmployees.map(emp => {
                         // Check if there are unread direct messages from this employee

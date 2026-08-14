@@ -433,7 +433,10 @@ export default function EmployeeAttendance() {
       return;
     }
 
-    const { error } = await supabase.from('attendance').update({ check_out: new Date().toISOString() }).eq('id', today.id);
+    const { error } = await supabase.from('attendance')
+      .update({ check_out: new Date().toISOString() })
+      .eq('user_id', user.id)
+      .eq('date', today.date);
     if (error) {
       const queue = getOfflineQueue();
       queue.push({
