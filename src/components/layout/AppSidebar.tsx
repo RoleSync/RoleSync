@@ -106,7 +106,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="gap-2 px-1">
+          <SidebarGroupLabel className="gap-2 px-1 mb-6 h-auto py-2">
             <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0">
               {user?.company?.logoUrl ? (
                 <img src={supabase.storage.from('company-assets').getPublicUrl(user.company.logoUrl).data.publicUrl} alt="Logo" className="object-contain h-full w-full" />

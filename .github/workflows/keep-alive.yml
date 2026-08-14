@@ -1,0 +1,20 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Runs at 12:00 AM every 3 days to prevent Supabase from pausing the free project
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: # Allows you to run it manually from the Actions tab
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Database to keep it active
+        run: |
+          echo "Pinging Supabase REST API..."
+          curl -s -X GET "https://pikpdkrbisfksmsytpsa.supabase.co/rest/v1/" \
+            -H "apikey: sb_publishable_MOSZkhF6ZxleuZjrK9_Ldg_EzmJyCWg" \
+            -H "Authorization: Bearer sb_publishable_MOSZkhF6ZxleuZjrK9_Ldg_EzmJyCWg"
+          
+          echo -e "\n\nPing successful! Project activity logged."

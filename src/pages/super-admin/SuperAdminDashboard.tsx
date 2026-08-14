@@ -24,21 +24,29 @@ export default function SuperAdminDashboard() {
       setLoading(true);
       
       const [
-        { count: companyCount },
-        { count: employeeCount },
-        { data: companies }
+        companyRes,
+        employeeRes,
+        companiesDataRes
       ] = await Promise.all([
         supabase.from('companies').select('*', { count: 'exact', head: true }),
         supabase.from('profiles').select('*', { count: 'exact', head: true }).eq('status', 'approved'),
         supabase.from('companies').select('plan_type, created_at')
       ]);
 
+      if (companyRes.error || employeeRes.error || companiesDataRes.error) {
+        console.error("SUPABASE ERROR:", companyRes.error, employeeRes.error, companiesDataRes.error);
+        alert("Database Error: " + JSON.stringify(companyRes.error || employeeRes.error || companiesDataRes.error));
+      }
+
       setStats({
-        totalCompanies: companyCount || 0,
-        totalEmployees: employeeCount || 0,
-        activeSubscriptions: (companies || []).filter(c => c.plan_type !== 'basic').length,
+        totalCompanies: companyRes.count || 0,
+        totalEmployees: employeeRes.count || 0,
+        activeSubscriptions: (companiesDataRes.data || []).filter(c => c.plan_type !== 'basic').length,
         pendingApprovals: 0 // Could fetch from a global queue if implemented
       });
+
+      // Process Tier Data
+      const companies = companiesDataRes.data;
 
       // Process Tier Data
       const tiers: Record<string, number> = { basic: 0, pro: 0, enterprise: 0 };

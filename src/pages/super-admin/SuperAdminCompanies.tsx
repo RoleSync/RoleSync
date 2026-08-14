@@ -237,7 +237,17 @@ export default function SuperAdminCompanies() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const { data: cs } = await supabase.from('companies').select('*').order('created_at', { ascending: false });
+      const { data: companiesData, error } = await supabase
+        .from('companies')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error("COMPANIES FETCH ERROR:", error);
+        alert("Database Error Fetching Companies: " + JSON.stringify(error));
+      }
+      
+      const cs = companiesData || [];
       
       // Efficiently count employees per company using a single query if possible, 
       // or map them if the list is small enough. For now, let's use the count feature.

