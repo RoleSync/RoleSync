@@ -62,6 +62,7 @@ import { Loader2 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useEffect, useRef } from "react";
 import { DashboardLayout } from "./components/layout/DashboardLayout";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 function NavigationDebugger() {
   const location = useLocation();
@@ -230,7 +231,9 @@ const App = () => (
       <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <AuthProvider>
           <NavigationDebugger />
-          <AppRoutes />
+          <ErrorBoundary>
+            <AppRoutes />
+          </ErrorBoundary>
           <PolicyUpdateGuard />
         </AuthProvider>
       </BrowserRouter>
