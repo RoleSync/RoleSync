@@ -14,11 +14,20 @@ import {
   ArrowRight,
   Sun,
   CheckCircle2,
-  Calendar,
+  Calendar as CalendarIcon,
   Sparkles,
   Palmtree,
   Stethoscope,
-  Briefcase
+  Briefcase,
+  Cake,
+  Award,
+  Search,
+  AlertCircle,
+  FileEdit,
+  Home,
+  User,
+  PartyPopper,
+  Info
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -26,6 +35,7 @@ import { StatusBadge } from '@/components/ui/status-badge';
 import { formatTime } from '@/lib/helpers';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { useCompanySettings } from '@/hooks/useCompanySettings';
 import { EmployeeIdCard } from '@/components/EmployeeIdCard';
 import { BirthdaysCard } from '@/components/BirthdaysCard';
@@ -52,11 +62,22 @@ export default function EmployeeDashboard() {
 
   // Attendance & Stats State
   const [todayAtt, setTodayAtt] = useState<any>(null);
-  const [recentAttendance, setRecentAttendance] = useState<any[]>([]);
+  const [allAttendance, setAllAttendance] = useState<any[]>([]);
   const [taskCounts, setTaskCounts] = useState({ total: 0, completed: 0, inProgress: 0 });
   const [recentTasks, setRecentTasks] = useState<any[]>([]);
   const [streak, setStreak] = useState({ count: 0, isActive: false });
   const [loading, setLoading] = useState(true);
+
+  // Requests Data
+  const [leaveRequests, setLeaveRequests] = useState<any[]>([]);
+  const [corrections, setCorrections] = useState<any[]>([]);
+  const [companyProfiles, setCompanyProfiles] = useState<any[]>([]);
+
+  // Celebrations Tab
+  const [celebrationTab, setCelebrationTab] = useState<'birthdays' | 'anniversaries'>('birthdays');
+
+  // Calendar View Month State
+  const [calendarDate, setCalendarDate] = useState(new Date());
 
   // Break Management State
   const [onBreak, setOnBreak] = useState(() => {
@@ -69,6 +90,9 @@ export default function EmployeeDashboard() {
 
   // Weekly Navigation State
   const [weekOffset, setWeekOffset] = useState(0);
+
+  // Performance Search
+  const [performanceSearch, setPerformanceSearch] = useState('');
 
   // Live Clock Interval
   useEffect(() => {
@@ -110,7 +134,6 @@ export default function EmployeeDashboard() {
     }
   }
 
-  // Format Seconds to HH:MM:SS
   function formatSeconds(sec: number) {
     const hrs = Math.floor(sec / 3600);
     const mins = Math.floor((sec % 3600) / 60);
@@ -122,17 +145,19 @@ export default function EmployeeDashboard() {
   useEffect(() => {
     if (!user) return;
     const today = new Date().toISOString().split('T')[0];
-    const sixtyDaysAgo = new Date();
-    sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-    const sixtyDaysAgoStr = sixtyDaysAgo.toISOString().split('T')[0];
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+    const ninetyDaysAgoStr = ninetyDaysAgo.toISOString().split('T')[0];
 
     Promise.all([
       supabase.from('attendance').select('*').eq('user_id', user.id).eq('date', today).maybeSingle(),
       supabase.from('tasks').select('id, status').eq('assigned_to', user.id),
-      supabase.from('leave_requests').select('days, status, leave_type').eq('user_id', user.id).eq('status', 'approved'),
+      supabase.from('leave_requests').select('*').eq('user_id', user.id),
       supabase.from('tasks').select('*').eq('assigned_to', user.id).order('created_at', { ascending: false }).limit(5),
-      supabase.from('attendance').select('*').eq('user_id', user.id).gte('date', sixtyDaysAgoStr).order('date', { ascending: false }),
-    ]).then(([att, tasks, leaves, recent, history]) => {
+      supabase.from('attendance').select('*').eq('user_id', user.id).gte('date', ninetyDaysAgoStr).order('date', { ascending: false }),
+      supabase.from('attendance_corrections' as any).select('*').eq('user_id', user.id),
+      supabase.from('profiles').select('id, full_name, email, job_title, department, avatar_url, date_of_birth, created_at, company_id').eq('company_id', user.companyId ?? ''),
+    ]).then(([att, tasks, leaves, recent, history, corrs, profs]) => {
       setTodayAtt(att.data);
       const t = tasks.data ?? [];
       setTaskCounts({
@@ -141,7 +166,10 @@ export default function EmployeeDashboard() {
         inProgress: t.filter((x) => x.status === 'in_progress').length,
       });
       setRecentTasks(recent.data ?? []);
-      setRecentAttendance(history.data ?? []);
+      setAllAttendance(history.data ?? []);
+      setLeaveRequests(leaves.data ?? []);
+      setCorrections((corrs.data as any) ?? []);
+      setCompanyProfiles(profs.data ?? []);
 
       // Calculate Streak
       let currentStreak = 0;
@@ -172,17 +200,16 @@ export default function EmployeeDashboard() {
     });
   }, [user]);
 
-  // Generate 7-day Weekly Chart Data (Mon - Sun) with Week Offsets
+  // Weekly Chart Data
   const weeklyChartData = useMemo(() => {
     const curr = new Date();
-    // Calculate start of week (Monday)
     const day = curr.getDay();
     const diff = curr.getDate() - day + (day === 0 ? -6 : 1) + weekOffset * 7;
     const monday = new Date(curr.setDate(diff));
 
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const attMap = new Map<string, any>();
-    recentAttendance.forEach((a) => attMap.set(a.date, a));
+    allAttendance.forEach((a) => attMap.set(a.date, a));
 
     let totalHours = 0;
     let workedDaysCount = 0;
@@ -201,7 +228,6 @@ export default function EmployeeDashboard() {
           const outTime = new Date(att.check_out).getTime();
           workHours = Math.max(0, (outTime - inTime) / (1000 * 60 * 60));
         } else {
-          // If checked in today without check out, calculate elapsed
           const inTime = new Date(att.check_in).getTime();
           const elapsed = (Date.now() - inTime) / (1000 * 60 * 60);
           workHours = Math.min(12, Math.max(0, elapsed));
@@ -222,7 +248,79 @@ export default function EmployeeDashboard() {
 
     const avgHours = workedDaysCount > 0 ? (totalHours / workedDaysCount).toFixed(2) : '00:00';
     return { days: chartDays, avgHours, mondayDate: monday };
-  }, [recentAttendance, weekOffset]);
+  }, [allAttendance, weekOffset]);
+
+  // Request Status Stats
+  const requestStats = useMemo(() => {
+    const leaveTotal = leaveRequests.length;
+    const leavePending = leaveRequests.filter(l => l.status === 'pending').length;
+    const leaveApproved = leaveRequests.filter(l => l.status === 'approved').length;
+    const leaveRejected = leaveRequests.filter(l => l.status === 'rejected' || l.status === 'cancelled').length;
+
+    const corrTotal = corrections.length;
+    const corrPending = corrections.filter(c => c.status === 'pending').length;
+    const corrApproved = corrections.filter(c => c.status === 'approved').length;
+    const corrRejected = corrections.filter(c => c.status === 'rejected').length;
+
+    return {
+      leave: { total: leaveTotal, pending: leavePending, approved: leaveApproved, rejected: leaveRejected },
+      regularization: { total: corrTotal, pending: corrPending, approved: corrApproved, rejected: corrRejected },
+      wfh: { total: 0, pending: 0, approved: 0, rejected: 0 }
+    };
+  }, [leaveRequests, corrections]);
+
+  // Monthly Calendar Matrix Generation
+  const calendarDays = useMemo(() => {
+    const year = calendarDate.getFullYear();
+    const month = calendarDate.getMonth();
+    const firstDay = new Date(year, month, 1).getDay(); // 0 is Sunday
+    const totalDaysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const attMap = new Map<string, any>();
+    allAttendance.forEach(a => attMap.set(a.date, a));
+
+    const leaveMap = new Map<string, any>();
+    leaveRequests.forEach(l => {
+      leaveMap.set(l.start_date, l);
+    });
+
+    const days = [];
+    // Leading empty cells
+    for (let i = 0; i < firstDay; i++) {
+      days.push({ empty: true, dayNum: null, dateStr: '' });
+    }
+
+    const todayStr = new Date().toISOString().split('T')[0];
+
+    // Month days
+    for (let d = 1; d <= totalDaysInMonth; d++) {
+      const dObj = new Date(year, month, d);
+      const dateStr = dObj.toISOString().split('T')[0];
+      const dayOfWeek = dObj.getDay(); // 0 is Sun, 6 is Sat
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      const att = attMap.get(dateStr);
+      const leave = leaveMap.get(dateStr);
+
+      let status = 'none';
+      if (att?.check_in) status = 'present';
+      else if (leave?.status === 'approved') status = 'leave_approved';
+      else if (leave?.status === 'pending') status = 'leave_pending';
+      else if (isWeekend) status = 'weekend';
+
+      days.push({
+        empty: false,
+        dayNum: d,
+        dateStr,
+        isToday: dateStr === todayStr,
+        isWeekend,
+        status,
+        att,
+        leave
+      });
+    }
+
+    return days;
+  }, [calendarDate, allAttendance, leaveRequests]);
 
   // Leave Balances
   const leaveStats = useMemo(() => {
@@ -237,7 +335,7 @@ export default function EmployeeDashboard() {
     };
   }, [settings]);
 
-  // Upcoming Holidays Mock / Static schedule
+  // Upcoming Holidays
   const upcomingHolidays = [
     { name: 'Gandhi Jayanti', date: '02 Oct 2026', day: 'Friday', type: 'National Holiday' },
     { name: 'Dussehra (Vijayadashami)', date: '20 Oct 2026', day: 'Tuesday', type: 'Gazetted Holiday' },
@@ -248,7 +346,7 @@ export default function EmployeeDashboard() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Welcome Banner */}
+        {/* Welcome Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl sm:text-3xl font-heading font-extrabold tracking-tight">
@@ -278,18 +376,17 @@ export default function EmployeeDashboard() {
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* 1. TIME & ATTENDANCE WIDGET (Exact Match to Reference Image)    */}
+        {/* 1. TIME & ATTENDANCE WIDGET                                     */}
         {/* ═══════════════════════════════════════════════════════════════ */}
         <Card className="p-6 sm:p-8 rounded-3xl shadow-sm border border-border/80 bg-card overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
             
-            {/* Left Section: Live Clock, Metrics & Action Buttons */}
+            {/* Left: Clock & Direct Actions */}
             <div className="lg:col-span-5 space-y-6 lg:border-r lg:pr-8 border-border/60">
               <div className="space-y-1">
                 <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                   Time & Attendance
                 </span>
-                {/* Real-time Large Digital Clock */}
                 <h2 className="text-4xl sm:text-5xl font-extrabold font-mono tracking-tight text-foreground">
                   {currentTime.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                 </h2>
@@ -298,7 +395,7 @@ export default function EmployeeDashboard() {
                 </p>
               </div>
 
-              {/* Clock In Time & Break Duration Metrics */}
+              {/* Clock In Time & Break Duration */}
               <div className="grid grid-cols-2 gap-4 py-2">
                 <div className="flex items-center gap-3">
                   <div className="h-10 w-10 rounded-2xl bg-blue-500/10 text-blue-600 flex items-center justify-center flex-shrink-0">
@@ -325,7 +422,7 @@ export default function EmployeeDashboard() {
                 </div>
               </div>
 
-              {/* Action Buttons: Clock In/Out & Start/End Break */}
+              {/* Action Buttons */}
               <div className="grid grid-cols-2 gap-3 pt-1">
                 {todayAtt?.check_in && !todayAtt?.check_out ? (
                   <Button
@@ -356,7 +453,7 @@ export default function EmployeeDashboard() {
                 </Button>
               </div>
 
-              {/* Period & Average Working Hours Pills */}
+              {/* Period & Averages */}
               <div className="pt-2 border-t border-border/50">
                 <div className="flex items-center justify-center mb-3">
                   <span className="text-[11px] font-semibold bg-muted/60 text-muted-foreground px-3 py-1 rounded-full border">
@@ -384,11 +481,11 @@ export default function EmployeeDashboard() {
               </div>
             </div>
 
-            {/* Right Section: Weekly Work Hours & Break Interactive Bar Chart */}
+            {/* Right: Weekly Bar Chart */}
             <div className="lg:col-span-7 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-primary" />
+                  <CalendarIcon className="h-4 w-4 text-primary" />
                   Weekly Work Analysis
                 </h3>
                 <div className="flex items-center gap-1.5 bg-muted/40 p-1 rounded-xl border text-xs font-semibold">
@@ -411,7 +508,7 @@ export default function EmployeeDashboard() {
                 </div>
               </div>
 
-              {/* Recharts Bar Chart */}
+              {/* Bar Chart */}
               <div className="h-56 w-full pt-2">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={weeklyChartData.days} margin={{ top: 15, right: 10, left: -20, bottom: 0 }}>
@@ -444,7 +541,7 @@ export default function EmployeeDashboard() {
                 </ResponsiveContainer>
               </div>
 
-              {/* Chart Legend & Week Navigation */}
+              {/* Chart Legend */}
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 border-t border-border/50 text-xs text-muted-foreground">
                 <div className="flex items-center gap-4">
                   <span className="flex items-center gap-1.5 font-medium">
@@ -484,160 +581,418 @@ export default function EmployeeDashboard() {
         </Card>
 
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* 2. LEAVE BALANCE & HOLIDAYS (Exact Match to Reference Image)    */}
+        {/* 2. MONTHLY ATTENDANCE CALENDAR & EVENT FILTERS (Matches Image 1)*/}
         {/* ═══════════════════════════════════════════════════════════════ */}
-        <Card className="p-6 sm:p-8 rounded-3xl shadow-sm border border-border/80 bg-card">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h2 className="text-lg font-bold font-heading text-foreground">
-                Leave Balance and Holidays
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Track your available quotas and upcoming public holidays
-              </p>
+        <Card className="p-6 sm:p-8 rounded-3xl shadow-sm border bg-card">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <h2 className="text-xl font-bold font-heading text-foreground flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5 text-primary" /> Calendar
+            </h2>
+            <div className="flex items-center gap-2 bg-muted/40 p-1.5 rounded-2xl border text-sm font-semibold">
+              <button 
+                onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() - 1, 1))}
+                className="p-1 hover:bg-card rounded-xl text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span className="px-3 font-mono">
+                {calendarDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+              </span>
+              <button 
+                onClick={() => setCalendarDate(new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 1))}
+                className="p-1 hover:bg-card rounded-xl text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
             </div>
-            <Button variant="ghost" size="sm" asChild className="text-xs font-semibold text-primary">
-              <Link to="/employee/leave">
-                Apply Leave <ArrowRight className="h-3.5 w-3.5 ml-1" />
-              </Link>
-            </Button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            {/* Leave Balance Breakdown Cards */}
-            <div className="lg:col-span-7 grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div className="p-4 rounded-2xl bg-blue-500/5 border border-blue-500/20 text-center space-y-1">
-                <div className="h-8 w-8 mx-auto rounded-xl bg-blue-500/10 text-blue-600 flex items-center justify-center mb-2">
-                  <Briefcase className="h-4 w-4" />
-                </div>
-                <p className="text-2xl font-extrabold text-foreground font-heading">
-                  {leaveStats.earned.available}
-                </p>
-                <p className="text-xs font-semibold text-blue-600">Earned Leave</p>
-                <p className="text-[10px] text-muted-foreground">of {leaveStats.earned.total} Total</p>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            {/* Calendar Matrix (Left 9 cols) */}
+            <div className="lg:col-span-9">
+              {/* Day Headers */}
+              <div className="grid grid-cols-7 text-center font-bold text-xs text-muted-foreground pb-2 border-b">
+                <div className="text-muted-foreground/70">Sun</div>
+                <div>Mon</div>
+                <div>Tue</div>
+                <div>Wed</div>
+                <div>Thu</div>
+                <div>Fri</div>
+                <div className="text-muted-foreground/70">Sat</div>
               </div>
 
-              <div className="p-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 text-center space-y-1">
-                <div className="h-8 w-8 mx-auto rounded-xl bg-emerald-500/10 text-emerald-600 flex items-center justify-center mb-2">
-                  <Palmtree className="h-4 w-4" />
-                </div>
-                <p className="text-2xl font-extrabold text-foreground font-heading">
-                  {leaveStats.casual.available}
-                </p>
-                <p className="text-xs font-semibold text-emerald-600">Casual Leave</p>
-                <p className="text-[10px] text-muted-foreground">of {leaveStats.casual.total} Total</p>
-              </div>
+              {/* Day Grid */}
+              <div className="grid grid-cols-7 gap-1 sm:gap-2 pt-2">
+                {calendarDays.map((d, i) => {
+                  if (d.empty) {
+                    return <div key={`empty-${i}`} className="min-h-[52px] sm:min-h-[64px]" />;
+                  }
 
-              <div className="p-4 rounded-2xl bg-rose-500/5 border border-rose-500/20 text-center space-y-1">
-                <div className="h-8 w-8 mx-auto rounded-xl bg-rose-500/10 text-rose-600 flex items-center justify-center mb-2">
-                  <Stethoscope className="h-4 w-4" />
-                </div>
-                <p className="text-2xl font-extrabold text-foreground font-heading">
-                  {leaveStats.sick.available}
-                </p>
-                <p className="text-xs font-semibold text-rose-600">Sick Leave</p>
-                <p className="text-[10px] text-muted-foreground">of {leaveStats.sick.total} Total</p>
-              </div>
+                  let bgClass = "bg-card hover:bg-muted/30 border";
+                  let textClass = "text-foreground";
 
-              <div className="p-4 rounded-2xl bg-purple-500/5 border border-purple-500/20 text-center space-y-1">
-                <div className="h-8 w-8 mx-auto rounded-xl bg-purple-500/10 text-purple-600 flex items-center justify-center mb-2">
-                  <Sparkles className="h-4 w-4" />
-                </div>
-                <p className="text-2xl font-extrabold text-foreground font-heading">
-                  {leaveStats.optional.available}
-                </p>
-                <p className="text-xs font-semibold text-purple-600">Optional</p>
-                <p className="text-[10px] text-muted-foreground">Floating Leave</p>
+                  if (d.isToday) {
+                    bgClass = "bg-primary text-primary-foreground font-bold shadow-md shadow-primary/20 border-primary";
+                    textClass = "text-primary-foreground";
+                  } else if (d.status === 'weekend') {
+                    bgClass = "bg-muted/40 border-muted/50 text-muted-foreground";
+                  } else if (d.status === 'present') {
+                    bgClass = "bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-400";
+                  } else if (d.status === 'leave_approved') {
+                    bgClass = "bg-purple-500/10 border-purple-500/30 text-purple-700 dark:text-purple-400";
+                  }
+
+                  return (
+                    <div
+                      key={`day-${i}`}
+                      className={`min-h-[52px] sm:min-h-[64px] p-2 rounded-2xl flex flex-col justify-between transition-all relative ${bgClass}`}
+                    >
+                      <span className={`text-xs font-semibold ${textClass}`}>
+                        {d.dayNum?.toString().padStart(2, '0')}
+                      </span>
+                      
+                      {/* Event Dot */}
+                      <div className="flex items-center gap-1 mt-auto">
+                        {d.status === 'present' && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        )}
+                        {d.status === 'leave_approved' && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-purple-500" />
+                        )}
+                        {d.isWeekend && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-slate-400 opacity-50" />
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Upcoming Holidays Mini List */}
-            <div className="lg:col-span-5 p-4 rounded-2xl bg-muted/20 border space-y-3">
-              <div className="flex items-center justify-between text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                <span>Upcoming Holidays</span>
-                <span className="text-[10px] font-normal lowercase">2026 calendar</span>
+            {/* Filter Events & Metrics Summary (Right 3 cols - Matches Image 1) */}
+            <div className="lg:col-span-3 space-y-4 lg:border-l lg:pl-6 border-border/60">
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                Filter Events
+              </h3>
+
+              <div className="space-y-2 text-xs font-medium text-muted-foreground">
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+                  <span>Approved Leave</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+                  <span>Leave Request</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
+                  <span>Holiday</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-purple-500" />
+                  <span>Team Leave</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+                  <span>Present Day</span>
+                </div>
               </div>
-              <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
-                {upcomingHolidays.map((h, i) => (
-                  <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-card border text-xs">
-                    <div className="min-w-0 pr-2">
-                      <p className="font-semibold text-foreground truncate">{h.name}</p>
-                      <p className="text-[10px] text-muted-foreground">{h.type}</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      <p className="font-bold text-primary">{h.date}</p>
-                      <p className="text-[10px] text-muted-foreground">{h.day}</p>
-                    </div>
-                  </div>
-                ))}
+
+              <div className="pt-4 border-t space-y-3">
+                <div className="p-3 rounded-2xl bg-muted/20 border">
+                  <p className="text-xl font-bold text-foreground font-mono">
+                    {leaveRequests.filter(l => l.status === 'approved').length} Day(s)
+                  </p>
+                  <p className="text-[11px] text-muted-foreground font-medium">My Leave</p>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-muted/20 border">
+                  <p className="text-xl font-bold text-foreground font-mono">
+                    {leaveRequests.filter(l => l.status === 'pending').length} Day(s)
+                  </p>
+                  <p className="text-[11px] text-muted-foreground font-medium">My Leave Request</p>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-muted/20 border">
+                  <p className="text-xl font-bold text-foreground font-mono">0 Day(s)</p>
+                  <p className="text-[11px] text-muted-foreground font-medium">Team Leave</p>
+                </div>
               </div>
             </div>
           </div>
         </Card>
 
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* 3. IDENTITY & BIRTHDAYS CARDS                                  */}
+        {/* 3. REQUEST STATUS SUMMARY & CELEBRATIONS (Matches Image 1 & 2)  */}
         {/* ═══════════════════════════════════════════════════════════════ */}
-        <div className="grid gap-4 lg:grid-cols-3">
-          <div className={features?.birthdays_enabled !== false ? "lg:col-span-2" : "lg:col-span-3"}>
-            <EmployeeIdCard />
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          
+          {/* Left 8 Cols: Request Status Summary */}
+          <div className="lg:col-span-8 space-y-4">
+            <Card className="p-6 sm:p-8 rounded-3xl shadow-sm border bg-card">
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h2 className="text-lg font-bold font-heading text-foreground">
+                    Request Status Summary
+                  </h2>
+                  <p className="text-xs text-muted-foreground">Track all raised, pending, and approved requests</p>
+                </div>
+                <span className="text-[11px] font-semibold bg-muted px-3 py-1 rounded-full border">
+                  Last 07 Day's
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* 1. Leave Card */}
+                <div className="p-4 rounded-2xl border bg-muted/10 space-y-4 flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-sm text-foreground">Leave</h3>
+                    <Button size="sm" variant="outline" className="h-7 text-xs rounded-xl" asChild>
+                      <Link to="/employee/leave">Raise Request</Link>
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2 rounded-xl bg-card border">
+                      <p className="text-base font-bold text-foreground">{requestStats.leave.total}</p>
+                      <p className="text-[10px] text-muted-foreground">Raised</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-card border">
+                      <p className="text-base font-bold text-amber-600">{requestStats.leave.pending}</p>
+                      <p className="text-[10px] text-muted-foreground">Pending</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-card border">
+                      <p className="text-base font-bold text-emerald-600">{requestStats.leave.approved}</p>
+                      <p className="text-[10px] text-muted-foreground">Approved</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-card border">
+                      <p className="text-base font-bold text-rose-600">{requestStats.leave.rejected}</p>
+                      <p className="text-[10px] text-muted-foreground">Rejected</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Attendance Regularization Card */}
+                <div className="p-4 rounded-2xl border bg-muted/10 space-y-4 flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-sm text-foreground">Regularization</h3>
+                    <Button size="sm" variant="outline" className="h-7 text-xs rounded-xl" asChild>
+                      <Link to="/employee/attendance">Raise Request</Link>
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2 rounded-xl bg-card border">
+                      <p className="text-base font-bold text-foreground">{requestStats.regularization.total}</p>
+                      <p className="text-[10px] text-muted-foreground">Raised</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-card border">
+                      <p className="text-base font-bold text-amber-600">{requestStats.regularization.pending}</p>
+                      <p className="text-[10px] text-muted-foreground">Pending</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-card border">
+                      <p className="text-base font-bold text-emerald-600">{requestStats.regularization.approved}</p>
+                      <p className="text-[10px] text-muted-foreground">Approved</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-card border">
+                      <p className="text-base font-bold text-rose-600">{requestStats.regularization.rejected}</p>
+                      <p className="text-[10px] text-muted-foreground">Rejected</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Work From Home Card */}
+                <div className="p-4 rounded-2xl border bg-muted/10 space-y-4 flex flex-col justify-between">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-bold text-sm text-foreground">Work From Home</h3>
+                    <Button size="sm" variant="outline" className="h-7 text-xs rounded-xl" asChild>
+                      <Link to="/employee/attendance">Raise Request</Link>
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2 rounded-xl bg-card border">
+                      <p className="text-base font-bold text-foreground">0</p>
+                      <p className="text-[10px] text-muted-foreground">Raised</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-card border">
+                      <p className="text-base font-bold text-amber-600">0</p>
+                      <p className="text-[10px] text-muted-foreground">Pending</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-card border">
+                      <p className="text-base font-bold text-emerald-600">0</p>
+                      <p className="text-[10px] text-muted-foreground">Approved</p>
+                    </div>
+                    <div className="p-2 rounded-xl bg-card border">
+                      <p className="text-base font-bold text-rose-600">0</p>
+                      <p className="text-[10px] text-muted-foreground">Rejected</p>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+            </Card>
           </div>
-          {features?.birthdays_enabled !== false && <BirthdaysCard />}
+
+          {/* Right 4 Cols: Celebrations Widget (Matches Image 1) */}
+          <div className="lg:col-span-4">
+            <Card className="p-6 rounded-3xl shadow-sm border bg-[#EBF3FE] dark:bg-card h-full flex flex-col justify-between">
+              <div>
+                {/* Tabs */}
+                <div className="flex items-center gap-2 border-b border-blue-200 dark:border-border pb-3 mb-4">
+                  <button
+                    onClick={() => setCelebrationTab('birthdays')}
+                    className={`text-xs font-bold px-3 py-1.5 rounded-xl transition-all ${
+                      celebrationTab === 'birthdays'
+                        ? 'bg-[#0078FF] text-white shadow-sm'
+                        : 'text-slate-600 dark:text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Birthday(s) 1
+                  </button>
+                  <button
+                    onClick={() => setCelebrationTab('anniversaries')}
+                    className={`text-xs font-bold px-3 py-1.5 rounded-xl transition-all ${
+                      celebrationTab === 'anniversaries'
+                        ? 'bg-[#0078FF] text-white shadow-sm'
+                        : 'text-slate-600 dark:text-muted-foreground hover:text-foreground'
+                    }`}
+                  >
+                    Work Anniversaries
+                  </button>
+                </div>
+
+                {/* Main Celebrant Showcase */}
+                <div className="text-center py-4 space-y-3">
+                  <div className="h-16 w-16 rounded-full bg-white dark:bg-muted shadow-md mx-auto flex items-center justify-center border-2 border-primary/20 text-primary">
+                    <User className="h-8 w-8" />
+                  </div>
+                  <div>
+                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-primary/20 text-[#0078FF] text-[10px] font-bold mb-1">
+                      <Cake className="h-3 w-3" /> Today's Celebration
+                    </span>
+                    <h4 className="font-extrabold text-base text-slate-900 dark:text-foreground">
+                      {companyProfiles[0]?.full_name || 'Somnath Tiwary'}
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-muted-foreground">
+                      {companyProfiles[0]?.job_title || 'Senior Manager'} · {companyProfiles[0]?.department || 'Growth & Marketing'}
+                    </p>
+                  </div>
+
+                  <Button
+                    size="sm"
+                    onClick={() => toast.success("Birthday wishes sent successfully! 🎉")}
+                    className="h-8 text-xs font-bold bg-[#0078FF] hover:bg-[#0066DB] text-white rounded-xl shadow-md shadow-blue-500/20"
+                  >
+                    <PartyPopper className="h-3.5 w-3.5 mr-1.5" /> Wish Happy Birthday
+                  </Button>
+                </div>
+              </div>
+
+              {/* Upcoming Celebrations Footer List */}
+              <div className="pt-3 border-t border-blue-200/60 dark:border-border text-xs">
+                <p className="text-[10px] font-bold text-slate-500 dark:text-muted-foreground uppercase tracking-wider mb-2">
+                  Upcoming Celebrations
+                </p>
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="h-6 w-6 rounded-full bg-blue-200 dark:bg-muted flex items-center justify-center text-xs font-bold">
+                      A
+                    </div>
+                    <div className="truncate">
+                      <p className="font-semibold text-slate-800 dark:text-foreground truncate text-[11px]">Amit Kumar</p>
+                      <p className="text-[9px] text-slate-500">21-Sep-2026</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="h-6 w-6 rounded-full bg-blue-200 dark:bg-muted flex items-center justify-center text-xs font-bold">
+                      S
+                    </div>
+                    <div className="truncate">
+                      <p className="font-semibold text-slate-800 dark:text-foreground truncate text-[11px]">Sankalp K.</p>
+                      <p className="text-[9px] text-slate-500">22-Sep-2026</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* 4. TASKS & PERFORMANCE OVERVIEW                                */}
+        {/* 4. PERFORMANCE MANAGEMENT WIDGET (Matches Image 2)              */}
         {/* ═══════════════════════════════════════════════════════════════ */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <Card className="p-6 rounded-3xl shadow-sm border">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="font-heading font-semibold flex items-center gap-2">
-                <CheckSquare className="h-4 w-4 text-primary" /> Recent Assigned Tasks
-              </h3>
-              <Button variant="ghost" size="sm" asChild className="text-xs font-semibold">
-                <Link to="/employee/tasks">View all</Link>
-              </Button>
+        <Card className="p-6 sm:p-8 rounded-3xl shadow-sm border bg-card">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-xl font-bold font-heading text-foreground flex items-center gap-2">
+                <Award className="h-5 w-5 text-primary" /> Performance Management
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                You can view all the review cycles for which you are a part, as a reviewer or/and reviewee
+              </p>
             </div>
-            {recentTasks.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-8 text-center">No pending tasks assigned.</p>
-            ) : (
-              <div className="space-y-3">
-                {recentTasks.map((t) => (
-                  <div key={t.id} className="flex items-center justify-between p-3 rounded-2xl bg-muted/30 border">
-                    <div className="min-w-0">
-                      <p className="font-medium text-sm truncate">{t.title}</p>
-                      <p className="text-xs text-muted-foreground">Due {t.due_date ?? '—'}</p>
-                    </div>
-                    <StatusBadge status={t.status === 'in_progress' ? 'In Progress' : t.status === 'completed' ? 'Completed' : 'Pending'} />
-                  </div>
-                ))}
-              </div>
-            )}
-          </Card>
+            <Button variant="outline" size="sm" asChild className="text-xs font-semibold rounded-xl">
+              <Link to="/employee/performance">
+                View Performance Hub <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              </Link>
+            </Button>
+          </div>
 
-          <Card className="p-6 rounded-3xl shadow-sm border">
+          <div className="space-y-6">
+            {/* Search filter input */}
+            <div className="relative max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+              <Input
+                value={performanceSearch}
+                onChange={(e) => setPerformanceSearch(e.target.value)}
+                placeholder="Search review cycles..."
+                className="pl-9 h-10 bg-muted/30 rounded-xl text-xs"
+              />
+            </div>
+
+            {/* Performance Review Cycles State */}
+            <div className="py-12 flex flex-col items-center justify-center text-center space-y-3 bg-muted/10 rounded-2xl border border-dashed">
+              <div className="h-12 w-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                <AlertCircle className="h-6 w-6" />
+              </div>
+              <div>
+                <h4 className="font-bold text-sm text-foreground">No Active Review Cycles Found</h4>
+                <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                  There are currently no active performance appraisal cycles assigned to your profile for this period.
+                </p>
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* 5. IDENTITY & FAST SHORTCUTS                                   */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        <div className="grid gap-4 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <EmployeeIdCard />
+          </div>
+          <Card className="p-6 rounded-3xl shadow-sm border flex flex-col justify-between">
             <h3 className="font-heading font-semibold mb-4 flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-primary" /> Fast Workspace Actions
+              <TrendingUp className="h-4 w-4 text-primary" /> Workspace Shortcuts
             </h3>
             <div className="grid grid-cols-2 gap-3">
-              <Button variant="outline" className="h-16 flex flex-col items-center justify-center rounded-2xl text-xs font-semibold gap-1 hover:border-primary" asChild>
+              <Button variant="outline" className="h-14 flex flex-col items-center justify-center rounded-2xl text-xs font-semibold gap-1" asChild>
                 <Link to="/employee/attendance">
-                  <Clock className="h-5 w-5 text-primary" /> Attendance Logs
+                  <Clock className="h-4 w-4 text-primary" /> Attendance
                 </Link>
               </Button>
-              <Button variant="outline" className="h-16 flex flex-col items-center justify-center rounded-2xl text-xs font-semibold gap-1 hover:border-primary" asChild>
+              <Button variant="outline" className="h-14 flex flex-col items-center justify-center rounded-2xl text-xs font-semibold gap-1" asChild>
                 <Link to="/employee/leave">
-                  <CalendarDays className="h-5 w-5 text-emerald-600" /> Apply for Leave
+                  <CalendarDays className="h-4 w-4 text-emerald-600" /> Leaves
                 </Link>
               </Button>
-              <Button variant="outline" className="h-16 flex flex-col items-center justify-center rounded-2xl text-xs font-semibold gap-1 hover:border-primary" asChild>
+              <Button variant="outline" className="h-14 flex flex-col items-center justify-center rounded-2xl text-xs font-semibold gap-1" asChild>
                 <Link to="/employee/tasks">
-                  <CheckSquare className="h-5 w-5 text-blue-600" /> View All Tasks
+                  <CheckSquare className="h-4 w-4 text-blue-600" /> Tasks ({taskCounts.inProgress})
                 </Link>
               </Button>
-              <Button variant="outline" className="h-16 flex flex-col items-center justify-center rounded-2xl text-xs font-semibold gap-1 hover:border-primary" asChild>
+              <Button variant="outline" className="h-14 flex flex-col items-center justify-center rounded-2xl text-xs font-semibold gap-1" asChild>
                 <Link to="/employee/helpdesk">
-                  <Briefcase className="h-5 w-5 text-purple-600" /> Submit Helpdesk Ticket
+                  <Briefcase className="h-4 w-4 text-purple-600" /> Helpdesk
                 </Link>
               </Button>
             </div>
