@@ -56,7 +56,8 @@ export default function EmployeeInbox() {
   // Realtime
   useEffect(() => {
     if (!user?.companyId) return;
-    const channel = supabase.channel('emp-inbox')
+    const channelName = `emp-inbox-${user.companyId}-${user.id}`;
+    const channel = supabase.channel(channelName)
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
@@ -66,7 +67,7 @@ export default function EmployeeInbox() {
         () => loadMessages()
       ).subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [user?.companyId, loadMessages]);
+  }, [user?.companyId, user?.id, loadMessages]);
 
   useEffect(() => {
     // Scroll to bottom of chat when messages change

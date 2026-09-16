@@ -34,7 +34,8 @@ export function PolicyUpdateGuard() {
     checkPolicies();
     
     // Also listen for new broadcasts
-    const channel = supabase.channel('policy-updates')
+    const channelName = `policy-updates-${user.id}`;
+    const channel = supabase.channel(channelName)
       .on('postgres_changes', { 
         event: 'INSERT', 
         schema: 'public', 
@@ -48,7 +49,7 @@ export function PolicyUpdateGuard() {
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [user]);
+  }, [user?.id]);
 
   async function handleAcknowledge() {
     if (!pendingPolicy) return;

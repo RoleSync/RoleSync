@@ -72,7 +72,8 @@ export default function AdminCommunication() {
   // Realtime
   useEffect(() => {
     if (!user?.companyId) return;
-    const channel = supabase.channel('admin-msgs')
+    const channelName = `admin-msgs-${user.companyId}`;
+    const channel = supabase.channel(channelName)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'admin_messages', filter: `company_id=eq.${user.companyId}` },
         () => loadData()
       ).subscribe();

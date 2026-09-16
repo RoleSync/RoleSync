@@ -227,6 +227,7 @@ function notifyAll(f: CompanyFeatures | null) {
 }
 
 function ensureRealtimeChannel(companyId: string, onRefresh: () => void) {
+  if (!companyId) return;
   if (realtimeChannel && realtimeCompanyId === companyId) return; // already set up
 
   const channelName = `company-features-${companyId}`;
@@ -236,20 +237,17 @@ function ensureRealtimeChannel(companyId: string, onRefresh: () => void) {
     try {
       supabase.removeChannel(realtimeChannel);
     } catch (e) {
-      console.warn('Error removing channel:', e);
+      // ignore
     }
     realtimeChannel = null;
   }
 
-  // Force-remove any pre-existing channel with this name in Supabase's client cache
-  // to avoid adding callbacks to already subscribed channels after HMR resets module variables.
-  try {
-    const existing = supabase.channel(channelName);
-    if (existing) {
-      supabase.removeChannel(existing);
-    }
-  } catch (e) {
-    console.warn('Error cleaning up existing channel cache:', e);
+  // Check if supabase client already has this channel cached
+  const existing = supabase.getChannels().find(ch => ch.topic === `realtime:${channelName}`);
+  if (existing) {
+    realtimeChannel = existing;
+    realtimeCompanyId = companyId;
+    return;
   }
 
   realtimeCompanyId = companyId;
