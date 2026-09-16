@@ -2,19 +2,33 @@ name: Keep Supabase Alive
 
 on:
   schedule:
-    # Runs at 12:00 AM every 3 days to prevent Supabase from pausing the free project
+    # Runs at 12:00 AM every 3 days to keep the free Supabase project active
     - cron: '0 0 */3 * *'
-  workflow_dispatch: # Allows you to run it manually from the Actions tab
+  workflow_dispatch: # Allows manual trigger from GitHub Actions tab
 
 jobs:
   ping-supabase:
     runs-on: ubuntu-latest
     steps:
-      - name: Ping Database to keep it active
+      - name: Ping Supabase Database & Auth
         run: |
+          SUPABASE_URL="https://pikpdkrbisfksmsytpsa.supabase.co"
+          API_KEY="sb_publishable_MOSZkhF6ZxleuZjrK9_Ldg_EzmJyCWg"
+
+          echo "Pinging Supabase Auth Health..."
+          AUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$SUPABASE_URL/auth/v1/health" || echo "failed")
+          echo "Auth health status: $AUTH_STATUS"
+
           echo "Pinging Supabase REST API..."
-          curl -s -X GET "https://pikpdkrbisfksmsytpsa.supabase.co/rest/v1/" \
-            -H "apikey: sb_publishable_MOSZkhF6ZxleuZjrK9_Ldg_EzmJyCWg" \
-            -H "Authorization: Bearer sb_publishable_MOSZkhF6ZxleuZjrK9_Ldg_EzmJyCWg"
-          
-          echo -e "\n\nPing successful! Project activity logged."
+          REST_STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 "$SUPABASE_URL/rest/v1/companies?select=id&limit=1" \
+            -H "apikey: $API_KEY" \
+            -H "Authorization: Bearer $API_KEY" || echo "failed")
+          echo "REST API status: $REST_STATUS"
+
+          if [ "$AUTH_STATUS" = "failed" ] && [ "$REST_STATUS" = "failed" ]; then
+            echo "ERROR: Could not resolve or connect to $SUPABASE_URL."
+            echo "If your project is paused, please click 'Restore project' in the Supabase Dashboard."
+            exit 1
+          fi
+
+          echo "Activity ping successful! Project kept alive."

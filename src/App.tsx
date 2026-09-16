@@ -44,7 +44,6 @@ import AdminReports from "./pages/admin/AdminReports";
 import AdminSettings from "./pages/admin/AdminSettings";
 import SuperAdminDashboard from "./pages/super-admin/SuperAdminDashboard";
 import SuperAdminCompanies from "./pages/super-admin/SuperAdminCompanies";
-import NotFound from "./pages/NotFound";
 import BirthdaysPage from "./pages/BirthdaysPage";
 import AdminAIAnalytics from "./pages/admin/AdminAIAnalytics";
 import AdminIPWhitelist from "./pages/admin/AdminIPWhitelist";
