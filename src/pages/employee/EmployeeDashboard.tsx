@@ -27,7 +27,9 @@ import {
   Home,
   User,
   PartyPopper,
-  Info
+  Info,
+  Layers,
+  ChevronDown
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -78,6 +80,11 @@ export default function EmployeeDashboard() {
 
   // Calendar View Month State
   const [calendarDate, setCalendarDate] = useState(new Date());
+  const [selectedCalendarDay, setSelectedCalendarDay] = useState<any>(null);
+
+  // Leave Balance View Month State
+  const [leaveBalanceMonth, setLeaveBalanceMonth] = useState(new Date());
+  const [leaveCarouselIdx, setLeaveCarouselIdx] = useState(0);
 
   // Break Management State
   const [onBreak, setOnBreak] = useState(() => {
@@ -285,18 +292,16 @@ export default function EmployeeDashboard() {
     });
 
     const days = [];
-    // Leading empty cells
     for (let i = 0; i < firstDay; i++) {
       days.push({ empty: true, dayNum: null, dateStr: '' });
     }
 
     const todayStr = new Date().toISOString().split('T')[0];
 
-    // Month days
     for (let d = 1; d <= totalDaysInMonth; d++) {
       const dObj = new Date(year, month, d);
       const dateStr = dObj.toISOString().split('T')[0];
-      const dayOfWeek = dObj.getDay(); // 0 is Sun, 6 is Sat
+      const dayOfWeek = dObj.getDay();
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
       const att = attMap.get(dateStr);
       const leave = leaveMap.get(dateStr);
@@ -322,20 +327,26 @@ export default function EmployeeDashboard() {
     return days;
   }, [calendarDate, allAttendance, leaveRequests]);
 
-  // Leave Balances
-  const leaveStats = useMemo(() => {
+  // Dynamic Leave Quotas List
+  const leaveQuotasList = useMemo(() => {
     const casual = settings?.casual_leave_quota ?? 10;
     const sick = settings?.sick_leave_quota ?? 8;
     const earned = settings?.annual_leave_quota ?? 12;
-    return {
-      casual: { total: casual, available: casual - 2 },
-      sick: { total: sick, available: sick - 1 },
-      earned: { total: earned, available: earned - 3 },
-      optional: { total: 2, available: 2 }
-    };
-  }, [settings]);
 
-  // Upcoming Holidays
+    const usedCasual = leaveRequests.filter(l => l.leave_type === 'casual' && l.status === 'approved').reduce((s, l) => s + (l.days ?? 0), 0);
+    const usedSick = leaveRequests.filter(l => l.leave_type === 'sick' && l.status === 'approved').reduce((s, l) => s + (l.days ?? 0), 0);
+    const usedEarned = leaveRequests.filter(l => l.leave_type === 'annual' && l.status === 'approved').reduce((s, l) => s + (l.days ?? 0), 0);
+
+    return [
+      { name: 'Leave Without Pay', available: 0, total: 0, type: 'Unpaid' },
+      { name: 'Casual Leave', available: Math.max(0, casual - usedCasual), total: casual, type: 'Paid' },
+      { name: 'Sick Leave', available: Math.max(0, sick - usedSick), total: sick, type: 'Paid' },
+      { name: 'Earned Leave', available: Math.max(0, earned - usedEarned), total: earned, type: 'Paid' },
+      { name: 'Optional Leave', available: 2, total: 2, type: 'Floating' },
+    ];
+  }, [settings, leaveRequests]);
+
+  // Upcoming Holidays Schedule
   const upcomingHolidays = [
     { name: 'Gandhi Jayanti', date: '02 Oct 2026', day: 'Friday', type: 'National Holiday' },
     { name: 'Dussehra (Vijayadashami)', date: '20 Oct 2026', day: 'Tuesday', type: 'Gazetted Holiday' },
@@ -581,7 +592,111 @@ export default function EmployeeDashboard() {
         </Card>
 
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* 2. MONTHLY ATTENDANCE CALENDAR & EVENT FILTERS (Matches Image 1)*/}
+        {/* 2. LEAVE BALANCE & HOLIDAY (Exact Match to Screenshot 1)        */}
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        <Card className="p-6 sm:p-8 rounded-3xl shadow-sm border bg-card">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+            <div>
+              <h2 className="text-xl font-bold font-heading text-foreground">
+                Leave Balance and Holiday
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Track your available leave balance quotas and upcoming company holidays
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-2 bg-muted/40 p-1.5 rounded-2xl border text-sm font-semibold">
+              <button 
+                onClick={() => setLeaveBalanceMonth(new Date(leaveBalanceMonth.getFullYear(), leaveBalanceMonth.getMonth() - 1, 1))}
+                className="p-1 hover:bg-card rounded-xl text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <span className="px-3 font-mono">
+                {leaveBalanceMonth.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+              </span>
+              <button 
+                onClick={() => setLeaveBalanceMonth(new Date(leaveBalanceMonth.getFullYear(), leaveBalanceMonth.getMonth() + 1, 1))}
+                className="p-1 hover:bg-card rounded-xl text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            {/* Left: Leave Balance Carousel (Matches Screenshot 1) */}
+            <div className="lg:col-span-8 space-y-4">
+              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Leave Balance</p>
+              
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => setLeaveCarouselIdx(i => Math.max(0, i - 1))}
+                  disabled={leaveCarouselIdx === 0}
+                  className="h-10 w-10 rounded-2xl border bg-muted/30 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 transition-all flex-shrink-0"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
+                  {leaveQuotasList.slice(leaveCarouselIdx, leaveCarouselIdx + 2).map((item, idx) => (
+                    <div key={idx} className="p-5 rounded-2xl bg-muted/20 border text-center space-y-1">
+                      <p className="text-3xl font-extrabold text-foreground font-heading">
+                        {item.available.toString().padStart(2, '0')} <span className="text-sm font-semibold text-muted-foreground">Day(s)</span>
+                      </p>
+                      <p className="text-xs font-bold text-foreground">{item.name}</p>
+                      <p className="text-[10px] text-muted-foreground">({item.type} Quota)</p>
+                    </div>
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setLeaveCarouselIdx(i => Math.min(leaveQuotasList.length - 2, i + 1))}
+                  disabled={leaveCarouselIdx >= leaveQuotasList.length - 2}
+                  className="h-10 w-10 rounded-2xl border bg-muted/30 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 transition-all flex-shrink-0"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="pt-2 flex items-center justify-center">
+                <span className="text-[11px] font-semibold bg-muted px-3 py-1 rounded-full border">
+                  Period: Next 90 Day's
+                </span>
+              </div>
+            </div>
+
+            {/* Right: Upcoming Holidays (Matches Screenshot 1) */}
+            <div className="lg:col-span-4 p-5 rounded-2xl bg-muted/20 border space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-foreground">
+                  {upcomingHolidays.length.toString().padStart(2, '0')} Upcoming Holiday(s)
+                </p>
+                <Link to="/employee/leave" className="text-[11px] font-semibold text-primary hover:underline">
+                  View full calendar
+                </Link>
+              </div>
+
+              <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                {upcomingHolidays.map((h, i) => (
+                  <div key={i} className="flex items-center justify-between p-2.5 rounded-xl bg-card border text-xs">
+                    <div className="min-w-0 pr-2">
+                      <p className="font-semibold text-foreground truncate">{h.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{h.type}</p>
+                    </div>
+                    <div className="text-right flex-shrink-0">
+                      <p className="font-bold text-primary">{h.date}</p>
+                      <p className="text-[10px] text-muted-foreground">{h.day}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </Card>
+
+        {/* ═══════════════════════════════════════════════════════════════ */}
+        {/* 3. MONTHLY ATTENDANCE CALENDAR & EVENT FILTERS (Screenshot 2)   */}
         {/* ═══════════════════════════════════════════════════════════════ */}
         <Card className="p-6 sm:p-8 rounded-3xl shadow-sm border bg-card">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -610,7 +725,6 @@ export default function EmployeeDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Calendar Matrix (Left 9 cols) */}
             <div className="lg:col-span-9">
-              {/* Day Headers */}
               <div className="grid grid-cols-7 text-center font-bold text-xs text-muted-foreground pb-2 border-b">
                 <div className="text-muted-foreground/70">Sun</div>
                 <div>Mon</div>
@@ -621,7 +735,6 @@ export default function EmployeeDashboard() {
                 <div className="text-muted-foreground/70">Sat</div>
               </div>
 
-              {/* Day Grid */}
               <div className="grid grid-cols-7 gap-1 sm:gap-2 pt-2">
                 {calendarDays.map((d, i) => {
                   if (d.empty) {
@@ -632,8 +745,8 @@ export default function EmployeeDashboard() {
                   let textClass = "text-foreground";
 
                   if (d.isToday) {
-                    bgClass = "bg-primary text-primary-foreground font-bold shadow-md shadow-primary/20 border-primary";
-                    textClass = "text-primary-foreground";
+                    bgClass = "bg-[#0078FF] text-white font-bold shadow-md shadow-blue-500/20 border-[#0078FF]";
+                    textClass = "text-white";
                   } else if (d.status === 'weekend') {
                     bgClass = "bg-muted/40 border-muted/50 text-muted-foreground";
                   } else if (d.status === 'present') {
@@ -645,13 +758,13 @@ export default function EmployeeDashboard() {
                   return (
                     <div
                       key={`day-${i}`}
-                      className={`min-h-[52px] sm:min-h-[64px] p-2 rounded-2xl flex flex-col justify-between transition-all relative ${bgClass}`}
+                      onClick={() => setSelectedCalendarDay(d)}
+                      className={`min-h-[52px] sm:min-h-[64px] p-2 rounded-2xl flex flex-col justify-between transition-all cursor-pointer relative ${bgClass}`}
                     >
                       <span className={`text-xs font-semibold ${textClass}`}>
                         {d.dayNum?.toString().padStart(2, '0')}
                       </span>
                       
-                      {/* Event Dot */}
                       <div className="flex items-center gap-1 mt-auto">
                         {d.status === 'present' && (
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -669,7 +782,7 @@ export default function EmployeeDashboard() {
               </div>
             </div>
 
-            {/* Filter Events & Metrics Summary (Right 3 cols - Matches Image 1) */}
+            {/* Filter Events & Metrics Summary (Right 3 cols) */}
             <div className="lg:col-span-3 space-y-4 lg:border-l lg:pl-6 border-border/60">
               <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
                 Filter Events
@@ -693,7 +806,7 @@ export default function EmployeeDashboard() {
                   <span>Team Leave</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="h-2.5 w-2.5 rounded-full bg-primary" />
+                  <span className="h-2.5 w-2.5 rounded-full bg-[#0078FF]" />
                   <span>Present Day</span>
                 </div>
               </div>
@@ -723,11 +836,11 @@ export default function EmployeeDashboard() {
         </Card>
 
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* 3. REQUEST STATUS SUMMARY & CELEBRATIONS (Matches Image 1 & 2)  */}
+        {/* 4. REQUEST STATUS SUMMARY & CELEBRATIONS (Screenshot 2 & 3)     */}
         {/* ═══════════════════════════════════════════════════════════════ */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* Left 8 Cols: Request Status Summary */}
+          {/* Left 8 Cols: Request Status Summary with Circular Donut Rings */}
           <div className="lg:col-span-8 space-y-4">
             <Card className="p-6 sm:p-8 rounded-3xl shadow-sm border bg-card">
               <div className="flex items-center justify-between mb-6">
@@ -744,85 +857,159 @@ export default function EmployeeDashboard() {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 {/* 1. Leave Card */}
-                <div className="p-4 rounded-2xl border bg-muted/10 space-y-4 flex flex-col justify-between">
+                <div className="p-5 rounded-2xl border bg-muted/10 flex flex-col justify-between space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="font-bold text-sm text-foreground">Leave</h3>
                     <Button size="sm" variant="outline" className="h-7 text-xs rounded-xl" asChild>
                       <Link to="/employee/leave">Raise Request</Link>
                     </Button>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2 rounded-xl bg-card border">
-                      <p className="text-base font-bold text-foreground">{requestStats.leave.total}</p>
-                      <p className="text-[10px] text-muted-foreground">Raised</p>
+                  
+                  <div className="flex items-center gap-4">
+                    {/* Donut Progress Ring */}
+                    <div className="relative h-14 w-14 flex-shrink-0 flex items-center justify-center">
+                      <svg className="h-full w-full transform -rotate-90" viewBox="0 0 36 36">
+                        <path
+                          className="text-muted/30 stroke-current"
+                          strokeWidth="3.5"
+                          fill="none"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                        <path
+                          className="text-[#0078FF] stroke-current"
+                          strokeDasharray={`${requestStats.leave.total > 0 ? (requestStats.leave.approved / requestStats.leave.total) * 100 : 0}, 100`}
+                          strokeWidth="3.5"
+                          strokeLinecap="round"
+                          fill="none"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                      </svg>
+                      <span className="absolute text-[10px] font-bold font-mono">
+                        {requestStats.leave.total}
+                      </span>
                     </div>
-                    <div className="p-2 rounded-xl bg-card border">
-                      <p className="text-base font-bold text-amber-600">{requestStats.leave.pending}</p>
-                      <p className="text-[10px] text-muted-foreground">Pending</p>
-                    </div>
-                    <div className="p-2 rounded-xl bg-card border">
-                      <p className="text-base font-bold text-emerald-600">{requestStats.leave.approved}</p>
-                      <p className="text-[10px] text-muted-foreground">Approved</p>
-                    </div>
-                    <div className="p-2 rounded-xl bg-card border">
-                      <p className="text-base font-bold text-rose-600">{requestStats.leave.rejected}</p>
-                      <p className="text-[10px] text-muted-foreground">Rejected</p>
+
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs flex-1">
+                      <div>
+                        <p className="font-bold text-foreground text-sm leading-none">{requestStats.leave.total}</p>
+                        <p className="text-[10px] text-muted-foreground">Raised</p>
+                      </div>
+                      <div>
+                        <p className="font-bold text-amber-600 text-sm leading-none">{requestStats.leave.pending}</p>
+                        <p className="text-[10px] text-muted-foreground">Pending</p>
+                      </div>
+                      <div className="pt-1">
+                        <p className="font-bold text-emerald-600 text-sm leading-none">{requestStats.leave.approved}</p>
+                        <p className="text-[10px] text-muted-foreground">Approved</p>
+                      </div>
+                      <div className="pt-1">
+                        <p className="font-bold text-rose-600 text-sm leading-none">{requestStats.leave.rejected}</p>
+                        <p className="text-[10px] text-muted-foreground">Rejected</p>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* 2. Attendance Regularization Card */}
-                <div className="p-4 rounded-2xl border bg-muted/10 space-y-4 flex flex-col justify-between">
+                <div className="p-5 rounded-2xl border bg-muted/10 flex flex-col justify-between space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="font-bold text-sm text-foreground">Regularization</h3>
                     <Button size="sm" variant="outline" className="h-7 text-xs rounded-xl" asChild>
                       <Link to="/employee/attendance">Raise Request</Link>
                     </Button>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2 rounded-xl bg-card border">
-                      <p className="text-base font-bold text-foreground">{requestStats.regularization.total}</p>
-                      <p className="text-[10px] text-muted-foreground">Raised</p>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="relative h-14 w-14 flex-shrink-0 flex items-center justify-center">
+                      <svg className="h-full w-full transform -rotate-90" viewBox="0 0 36 36">
+                        <path
+                          className="text-muted/30 stroke-current"
+                          strokeWidth="3.5"
+                          fill="none"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                        <path
+                          className="text-[#0078FF] stroke-current"
+                          strokeDasharray={`${requestStats.regularization.total > 0 ? (requestStats.regularization.approved / requestStats.regularization.total) * 100 : 0}, 100`}
+                          strokeWidth="3.5"
+                          strokeLinecap="round"
+                          fill="none"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                      </svg>
+                      <span className="absolute text-[10px] font-bold font-mono">
+                        {requestStats.regularization.total}
+                      </span>
                     </div>
-                    <div className="p-2 rounded-xl bg-card border">
-                      <p className="text-base font-bold text-amber-600">{requestStats.regularization.pending}</p>
-                      <p className="text-[10px] text-muted-foreground">Pending</p>
-                    </div>
-                    <div className="p-2 rounded-xl bg-card border">
-                      <p className="text-base font-bold text-emerald-600">{requestStats.regularization.approved}</p>
-                      <p className="text-[10px] text-muted-foreground">Approved</p>
-                    </div>
-                    <div className="p-2 rounded-xl bg-card border">
-                      <p className="text-base font-bold text-rose-600">{requestStats.regularization.rejected}</p>
-                      <p className="text-[10px] text-muted-foreground">Rejected</p>
+
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs flex-1">
+                      <div>
+                        <p className="font-bold text-foreground text-sm leading-none">{requestStats.regularization.total}</p>
+                        <p className="text-[10px] text-muted-foreground">Raised</p>
+                      </div>
+                      <div>
+                        <p className="font-bold text-amber-600 text-sm leading-none">{requestStats.regularization.pending}</p>
+                        <p className="text-[10px] text-muted-foreground">Pending</p>
+                      </div>
+                      <div className="pt-1">
+                        <p className="font-bold text-emerald-600 text-sm leading-none">{requestStats.regularization.approved}</p>
+                        <p className="text-[10px] text-muted-foreground">Approved</p>
+                      </div>
+                      <div className="pt-1">
+                        <p className="font-bold text-rose-600 text-sm leading-none">{requestStats.regularization.rejected}</p>
+                        <p className="text-[10px] text-muted-foreground">Rejected</p>
+                      </div>
                     </div>
                   </div>
                 </div>
 
                 {/* 3. Work From Home Card */}
-                <div className="p-4 rounded-2xl border bg-muted/10 space-y-4 flex flex-col justify-between">
+                <div className="p-5 rounded-2xl border bg-muted/10 flex flex-col justify-between space-y-4">
                   <div className="flex items-center justify-between">
                     <h3 className="font-bold text-sm text-foreground">Work From Home</h3>
                     <Button size="sm" variant="outline" className="h-7 text-xs rounded-xl" asChild>
                       <Link to="/employee/attendance">Raise Request</Link>
                     </Button>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2 rounded-xl bg-card border">
-                      <p className="text-base font-bold text-foreground">0</p>
-                      <p className="text-[10px] text-muted-foreground">Raised</p>
+                  
+                  <div className="flex items-center gap-4">
+                    <div className="relative h-14 w-14 flex-shrink-0 flex items-center justify-center">
+                      <svg className="h-full w-full transform -rotate-90" viewBox="0 0 36 36">
+                        <path
+                          className="text-muted/30 stroke-current"
+                          strokeWidth="3.5"
+                          fill="none"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                        <path
+                          className="text-[#0078FF] stroke-current"
+                          strokeDasharray="0, 100"
+                          strokeWidth="3.5"
+                          strokeLinecap="round"
+                          fill="none"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                      </svg>
+                      <span className="absolute text-[10px] font-bold font-mono">0</span>
                     </div>
-                    <div className="p-2 rounded-xl bg-card border">
-                      <p className="text-base font-bold text-amber-600">0</p>
-                      <p className="text-[10px] text-muted-foreground">Pending</p>
-                    </div>
-                    <div className="p-2 rounded-xl bg-card border">
-                      <p className="text-base font-bold text-emerald-600">0</p>
-                      <p className="text-[10px] text-muted-foreground">Approved</p>
-                    </div>
-                    <div className="p-2 rounded-xl bg-card border">
-                      <p className="text-base font-bold text-rose-600">0</p>
-                      <p className="text-[10px] text-muted-foreground">Rejected</p>
+
+                    <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-xs flex-1">
+                      <div>
+                        <p className="font-bold text-foreground text-sm leading-none">0</p>
+                        <p className="text-[10px] text-muted-foreground">Raised</p>
+                      </div>
+                      <div>
+                        <p className="font-bold text-amber-600 text-sm leading-none">0</p>
+                        <p className="text-[10px] text-muted-foreground">Pending</p>
+                      </div>
+                      <div className="pt-1">
+                        <p className="font-bold text-emerald-600 text-sm leading-none">0</p>
+                        <p className="text-[10px] text-muted-foreground">Approved</p>
+                      </div>
+                      <div className="pt-1">
+                        <p className="font-bold text-rose-600 text-sm leading-none">0</p>
+                        <p className="text-[10px] text-muted-foreground">Rejected</p>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -831,11 +1018,10 @@ export default function EmployeeDashboard() {
             </Card>
           </div>
 
-          {/* Right 4 Cols: Celebrations Widget (Matches Image 1) */}
+          {/* Right 4 Cols: Celebrations Widget */}
           <div className="lg:col-span-4">
             <Card className="p-6 rounded-3xl shadow-sm border bg-[#EBF3FE] dark:bg-card h-full flex flex-col justify-between">
               <div>
-                {/* Tabs */}
                 <div className="flex items-center gap-2 border-b border-blue-200 dark:border-border pb-3 mb-4">
                   <button
                     onClick={() => setCelebrationTab('birthdays')}
@@ -916,7 +1102,7 @@ export default function EmployeeDashboard() {
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* 4. PERFORMANCE MANAGEMENT WIDGET (Matches Image 2)              */}
+        {/* 5. PERFORMANCE MANAGEMENT WIDGET (Screenshot 3)                 */}
         {/* ═══════════════════════════════════════════════════════════════ */}
         <Card className="p-6 sm:p-8 rounded-3xl shadow-sm border bg-card">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
@@ -936,7 +1122,6 @@ export default function EmployeeDashboard() {
           </div>
 
           <div className="space-y-6">
-            {/* Search filter input */}
             <div className="relative max-w-sm">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
@@ -947,7 +1132,6 @@ export default function EmployeeDashboard() {
               />
             </div>
 
-            {/* Performance Review Cycles State */}
             <div className="py-12 flex flex-col items-center justify-center text-center space-y-3 bg-muted/10 rounded-2xl border border-dashed">
               <div className="h-12 w-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
                 <AlertCircle className="h-6 w-6" />
@@ -963,7 +1147,7 @@ export default function EmployeeDashboard() {
         </Card>
 
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* 5. IDENTITY & FAST SHORTCUTS                                   */}
+        {/* 6. IDENTITY & WORKSPACE SHORTCUTS                              */}
         {/* ═══════════════════════════════════════════════════════════════ */}
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="lg:col-span-2">
@@ -981,7 +1165,7 @@ export default function EmployeeDashboard() {
               </Button>
               <Button variant="outline" className="h-14 flex flex-col items-center justify-center rounded-2xl text-xs font-semibold gap-1" asChild>
                 <Link to="/employee/leave">
-                  <CalendarDays className="h-4 w-4 text-emerald-600" /> Leaves
+                  <CalendarDays className="h-5 w-5 text-emerald-600" /> Leaves
                 </Link>
               </Button>
               <Button variant="outline" className="h-14 flex flex-col items-center justify-center rounded-2xl text-xs font-semibold gap-1" asChild>
