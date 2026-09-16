@@ -29,6 +29,7 @@ import EmployeeIntranet from "./pages/employee/EmployeeIntranet";
 import EmployeeSeparation from "./pages/employee/EmployeeSeparation";
 import EmployeeAlerts from "./pages/employee/EmployeeAlerts";
 import EmployeeCalendar from "./pages/employee/EmployeeCalendar";
+import EmployeePeople from "./pages/employee/EmployeePeople";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminTargets from "./pages/admin/AdminTargets";
 import AdminHelpdesk from "./pages/admin/AdminHelpdesk";
@@ -175,6 +176,7 @@ function AppRoutes() {
         <Route path="/employee/separation" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeeSeparation /></ProtectedRoute>} />
         <Route path="/employee/alerts" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeeAlerts /></ProtectedRoute>} />
         <Route path="/employee/calendar" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeeCalendar /></ProtectedRoute>} />
+        <Route path="/employee/people" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeePeople /></ProtectedRoute>} />
         <Route path="/employee/birthdays" element={<ProtectedRoute allow={['employee']}><BirthdaysPage /></ProtectedRoute>} />
 
         <Route path="/admin" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminDashboard /></ProtectedRoute>} />
@@ -183,6 +185,7 @@ function AppRoutes() {
         <Route path="/admin/separation" element={<ProtectedRoute allow={['admin', 'super_admin']}><EmployeeSeparation /></ProtectedRoute>} />
         <Route path="/admin/alerts" element={<ProtectedRoute allow={['admin', 'super_admin']}><EmployeeAlerts /></ProtectedRoute>} />
         <Route path="/admin/calendar" element={<ProtectedRoute allow={['admin', 'super_admin']}><EmployeeCalendar /></ProtectedRoute>} />
+        <Route path="/admin/people" element={<ProtectedRoute allow={['admin', 'super_admin']}><EmployeePeople /></ProtectedRoute>} />
         <Route path="/admin/targets" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminTargets /></ProtectedRoute>} />
         <Route path="/admin/employees" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminEmployees /></ProtectedRoute>} />
         <Route path="/admin/employees/:id" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminEmployeeDetail /></ProtectedRoute>} />

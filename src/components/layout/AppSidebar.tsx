@@ -56,6 +56,7 @@ export function AppSidebar() {
     { title: 'Performance', url: '/employee/performance', icon: TrendingUp, show: true },
     { title: 'My Separation', url: '/employee/separation', icon: UserMinus, show: true },
     { title: 'Intranet', url: '/employee/intranet', icon: Globe, show: true },
+    { title: 'People', url: '/employee/people', icon: Users, show: true },
     { title: 'Alerts', url: '/employee/alerts', icon: Bell, show: true },
     { title: 'My Calendar', url: '/employee/calendar', icon: CalendarDays, show: true },
     { title: 'Kudos', url: '/employee/kudos', icon: Award, show: isEnabled('kudos_enabled') },
@@ -69,6 +70,7 @@ export function AppSidebar() {
   const adminMenu = [
     { title: 'Dashboard', url: '/admin', icon: LayoutDashboard, show: true },
     { title: 'Employees', url: '/admin/employees', icon: Users, show: true },
+    { title: 'Org Chart & Directory', url: '/admin/people', icon: Users, show: true },
     { title: 'Settings', url: '/admin/settings', icon: Settings, show: true },
     { title: 'Attendance', url: '/admin/attendance', icon: Clock, show: true },
     { title: 'Live Map', url: '/admin/live-map', icon: MapPin, show: true },
