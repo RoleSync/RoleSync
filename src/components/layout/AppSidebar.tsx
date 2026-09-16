@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Clock, CheckSquare, CalendarDays, TrendingUp,
   User, Users, FileBarChart, Settings, Building2, Globe, Target, MapPin,
   Award, MessageSquare, LifeBuoy, ToggleLeft, GitBranch, Megaphone, Mail, HeartPulse, DollarSign, Shield, IdCard,
-  ArrowLeftRight, Receipt, UserMinus
+  ArrowLeftRight, Receipt, UserMinus, Bell
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
@@ -56,6 +56,7 @@ export function AppSidebar() {
     { title: 'Performance', url: '/employee/performance', icon: TrendingUp, show: true },
     { title: 'My Separation', url: '/employee/separation', icon: UserMinus, show: true },
     { title: 'Intranet', url: '/employee/intranet', icon: Globe, show: true },
+    { title: 'Alerts', url: '/employee/alerts', icon: Bell, show: true },
     { title: 'Kudos', url: '/employee/kudos', icon: Award, show: isEnabled('kudos_enabled') },
     { title: 'Chat', url: '/employee/chat', icon: MessageSquare, show: isEnabled('chat_enabled') },
     { title: 'Birthdays', url: '/employee/birthdays', icon: CalendarDays, show: isEnabled('birthdays_enabled') },
@@ -75,6 +76,7 @@ export function AppSidebar() {
     { title: 'Leave Requests', url: '/admin/leave', icon: CalendarDays, show: true },
     { title: 'Expense Approvals', url: '/admin/expenses', icon: Receipt, show: true },
     { title: 'Exit Management', url: '/admin/separation', icon: UserMinus, show: true },
+    { title: 'Alerts Center', url: '/admin/alerts', icon: Bell, show: true },
     { title: 'Intranet Wall', url: '/admin/intranet', icon: Globe, show: true },
     { title: 'Helpdesk', url: '/admin/helpdesk', icon: LifeBuoy, show: isEnabled('helpdesk_enabled') },
     { title: 'Chat', url: '/admin/chat', icon: MessageSquare, show: isEnabled('chat_enabled') },
