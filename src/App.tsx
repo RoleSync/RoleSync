@@ -24,6 +24,7 @@ import EmployeeKudos from "./pages/employee/EmployeeKudos";
 import EmployeeChat from "./pages/employee/EmployeeChat";
 import EmployeeInbox from "./pages/employee/EmployeeInbox";
 import EmployeeHelpdesk from "./pages/employee/EmployeeHelpdesk";
+import EmployeeExpenses from "./pages/employee/EmployeeExpenses";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminTargets from "./pages/admin/AdminTargets";
 import AdminHelpdesk from "./pages/admin/AdminHelpdesk";
@@ -165,9 +166,11 @@ function AppRoutes() {
         <Route path="/employee/chat" element={<ProtectedRoute allow={['employee']}><EmployeeChat /></ProtectedRoute>} />
         <Route path="/employee/inbox" element={<ProtectedRoute allow={['employee']}><EmployeeInbox /></ProtectedRoute>} />
         <Route path="/employee/helpdesk" element={<ProtectedRoute allow={['employee']}><EmployeeHelpdesk /></ProtectedRoute>} />
+        <Route path="/employee/expenses" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeeExpenses /></ProtectedRoute>} />
         <Route path="/employee/birthdays" element={<ProtectedRoute allow={['employee']}><BirthdaysPage /></ProtectedRoute>} />
 
         <Route path="/admin" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/admin/expenses" element={<ProtectedRoute allow={['admin', 'super_admin']}><EmployeeExpenses /></ProtectedRoute>} />
         <Route path="/admin/targets" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminTargets /></ProtectedRoute>} />
         <Route path="/admin/employees" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminEmployees /></ProtectedRoute>} />
         <Route path="/admin/employees/:id" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminEmployeeDetail /></ProtectedRoute>} />

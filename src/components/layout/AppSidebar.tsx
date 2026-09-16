@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Clock, CheckSquare, CalendarDays, TrendingUp,
   User, Users, FileBarChart, Settings, Building2, Globe, Target, MapPin,
   Award, MessageSquare, LifeBuoy, ToggleLeft, GitBranch, Megaphone, Mail, HeartPulse, DollarSign, Shield, IdCard,
-  ArrowLeftRight
+  ArrowLeftRight, Receipt
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
@@ -52,6 +52,7 @@ export function AppSidebar() {
     { title: 'Tasks', url: '/employee/tasks', icon: CheckSquare, show: isEnabled('tasks_enabled') },
     { title: 'My Targets', url: '/employee/targets', icon: Target, show: true },
     { title: 'Leave', url: '/employee/leave', icon: CalendarDays, show: true },
+    { title: 'Expenses', url: '/employee/expenses', icon: Receipt, show: true },
     { title: 'Performance', url: '/employee/performance', icon: TrendingUp, show: true },
     { title: 'Kudos', url: '/employee/kudos', icon: Award, show: isEnabled('kudos_enabled') },
     { title: 'Chat', url: '/employee/chat', icon: MessageSquare, show: isEnabled('chat_enabled') },
@@ -70,6 +71,7 @@ export function AppSidebar() {
     { title: 'Tasks', url: '/admin/tasks', icon: CheckSquare, show: isEnabled('tasks_enabled') },
     { title: 'Targets', url: '/admin/targets', icon: Target, show: true },
     { title: 'Leave Requests', url: '/admin/leave', icon: CalendarDays, show: true },
+    { title: 'Expense Approvals', url: '/admin/expenses', icon: Receipt, show: true },
     { title: 'Helpdesk', url: '/admin/helpdesk', icon: LifeBuoy, show: isEnabled('helpdesk_enabled') },
     { title: 'Chat', url: '/admin/chat', icon: MessageSquare, show: isEnabled('chat_enabled') },
     { title: 'Kudos', url: '/admin/kudos', icon: Award, show: isEnabled('kudos_enabled') },
