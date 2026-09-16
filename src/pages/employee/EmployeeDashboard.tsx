@@ -38,6 +38,7 @@ import { formatTime } from '@/lib/helpers';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCompanySettings } from '@/hooks/useCompanySettings';
 import { EmployeeIdCard } from '@/components/EmployeeIdCard';
 import { BirthdaysCard } from '@/components/BirthdaysCard';
