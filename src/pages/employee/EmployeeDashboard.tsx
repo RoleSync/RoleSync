@@ -845,7 +845,7 @@ export default function EmployeeDashboard() {
                         : 'text-slate-600 dark:text-muted-foreground hover:text-foreground'
                     }`}
                   >
-                    Birthday(s) 1
+                    Birthday(s) {companyProfiles.length > 0 ? 1 : 0}
                   </button>
                   <button
                     onClick={() => setCelebrationTab('anniversaries')}
@@ -861,57 +861,56 @@ export default function EmployeeDashboard() {
 
                 {/* Main Celebrant Showcase */}
                 <div className="text-center py-4 space-y-3">
-                  <div className="h-16 w-16 rounded-full bg-white dark:bg-muted shadow-md mx-auto flex items-center justify-center border-2 border-primary/20 text-primary">
-                    <User className="h-8 w-8" />
+                  <div className="h-16 w-16 rounded-full bg-white dark:bg-muted shadow-md mx-auto flex items-center justify-center border-2 border-primary/20 text-primary overflow-hidden">
+                    {companyProfiles[0]?.avatar_url ? (
+                      <img src={companyProfiles[0].avatar_url} alt={companyProfiles[0].full_name} className="h-full w-full object-cover" />
+                    ) : (
+                      <User className="h-8 w-8" />
+                    )}
                   </div>
                   <div>
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-primary/20 text-[#0078FF] text-[10px] font-bold mb-1">
-                      <Cake className="h-3 w-3" /> Today's Celebration
+                      <Cake className="h-3 w-3" /> Team Celebration
                     </span>
                     <h4 className="font-extrabold text-base text-slate-900 dark:text-foreground">
-                      {companyProfiles[0]?.full_name || 'Somnath Tiwary'}
+                      {companyProfiles[0]?.full_name || user?.name || 'Team Member'}
                     </h4>
                     <p className="text-xs text-slate-500 dark:text-muted-foreground">
-                      {companyProfiles[0]?.job_title || 'Senior Manager'} · {companyProfiles[0]?.department || 'Growth & Marketing'}
+                      {companyProfiles[0]?.job_title || user?.jobTitle || 'Employee'} · {companyProfiles[0]?.department || user?.department || user?.company?.name || 'RoleSync'}
                     </p>
                   </div>
 
                   <Button
                     size="sm"
-                    onClick={() => toast.success("Birthday wishes sent successfully! 🎉")}
+                    onClick={() => toast.success(`Celebration wishes sent to ${companyProfiles[0]?.full_name || user?.name}! 🎉`)}
                     className="h-8 text-xs font-bold bg-[#0078FF] hover:bg-[#0066DB] text-white rounded-xl shadow-md shadow-blue-500/20"
                   >
-                    <PartyPopper className="h-3.5 w-3.5 mr-1.5" /> Wish Happy Birthday
+                    <PartyPopper className="h-3.5 w-3.5 mr-1.5" /> Send Wishes
                   </Button>
                 </div>
               </div>
 
               {/* Upcoming Celebrations Footer List */}
-              <div className="pt-3 border-t border-blue-200/60 dark:border-border text-xs">
-                <p className="text-[10px] font-bold text-slate-500 dark:text-muted-foreground uppercase tracking-wider mb-2">
-                  Upcoming Celebrations
-                </p>
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="h-6 w-6 rounded-full bg-blue-200 dark:bg-muted flex items-center justify-center text-xs font-bold">
-                      A
-                    </div>
-                    <div className="truncate">
-                      <p className="font-semibold text-slate-800 dark:text-foreground truncate text-[11px]">Amit Kumar</p>
-                      <p className="text-[9px] text-slate-500">21-Sep-2026</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2 min-w-0">
-                    <div className="h-6 w-6 rounded-full bg-blue-200 dark:bg-muted flex items-center justify-center text-xs font-bold">
-                      S
-                    </div>
-                    <div className="truncate">
-                      <p className="font-semibold text-slate-800 dark:text-foreground truncate text-[11px]">Sankalp K.</p>
-                      <p className="text-[9px] text-slate-500">22-Sep-2026</p>
-                    </div>
+              {companyProfiles.length > 1 && (
+                <div className="pt-3 border-t border-blue-200/60 dark:border-border text-xs">
+                  <p className="text-[10px] font-bold text-slate-500 dark:text-muted-foreground uppercase tracking-wider mb-2">
+                    Company Colleagues
+                  </p>
+                  <div className="flex items-center justify-between gap-2">
+                    {companyProfiles.slice(1, 3).map((prof) => (
+                      <div key={prof.id} className="flex items-center gap-2 min-w-0">
+                        <div className="h-6 w-6 rounded-full bg-blue-200 dark:bg-muted flex items-center justify-center text-xs font-bold">
+                          {prof.full_name?.charAt(0)?.toUpperCase() ?? 'U'}
+                        </div>
+                        <div className="truncate">
+                          <p className="font-semibold text-slate-800 dark:text-foreground truncate text-[11px]">{prof.full_name}</p>
+                          <p className="text-[9px] text-slate-500 truncate">{prof.department || 'Team'}</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
+              )}
             </Card>
           </div>
         </div>

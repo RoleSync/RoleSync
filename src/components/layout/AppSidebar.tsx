@@ -121,6 +121,24 @@ export function AppSidebar() {
             )}
           </SidebarGroupLabel>
           <SidebarGroupContent>
+            {/* Real Logged-in Staff Member Details */}
+            {!collapsed && user && (
+              <div className="px-3 py-2.5 mb-2 mx-1 rounded-2xl bg-muted/30 border flex items-center gap-3">
+                <div className="h-9 w-9 rounded-xl bg-primary text-primary-foreground flex items-center justify-center font-bold text-sm overflow-hidden flex-shrink-0">
+                  {user.avatarUrl ? (
+                    <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+                  ) : (
+                    user.name?.charAt(0)?.toUpperCase() ?? 'U'
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="font-bold text-xs truncate text-foreground leading-tight">{user.name}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{user.jobTitle || (user.role === 'admin' ? 'Administrator' : 'Employee')}</p>
+                  <p className="text-[10px] text-primary font-medium truncate">{user.department || user.company?.name || 'RoleSync'}</p>
+                </div>
+              </div>
+            )}
+
             {/* View Switcher for Admins/Owners */}
             {(user?.role === 'admin' || user?.isOwner) && !collapsed && (
               <div className="px-3 py-2 mb-2 border-b">
