@@ -75,7 +75,7 @@ export default function EmployeeAlerts() {
             .eq('assigned_to', user.id)
             .order('created_at', { ascending: false })
             .limit(10),
-          supabase.from('leaves')
+          supabase.from('leave_requests')
             .select('*')
             .eq('user_id', user.id)
             .order('created_at', { ascending: false })

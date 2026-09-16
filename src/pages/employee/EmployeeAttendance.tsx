@@ -219,53 +219,12 @@ export default function EmployeeAttendance() {
     setHistory(recentLogs || []);
 
     const { data: reqs } = await supabase
-      .from('attendance_regularizations' as any)
+      .from('attendance_corrections' as any)
       .select('*')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
 
-    if (reqs && reqs.length > 0) {
-      setRegularizeRequests(reqs as RegularizeRequest[]);
-    } else {
-      setRegularizeRequests([
-        {
-          id: 'mock-1',
-          request_type: 'work_from_home',
-          request_for: '10-Sep-2026',
-          requested_on: '09-Sep-2026',
-          in_time: '10:00 AM',
-          out_time: '07:30 PM',
-          status: 'approved',
-          day_type: 'full_day',
-          reason: 'Broadband maintenance at apartment complex.',
-          document_name: null
-        },
-        {
-          id: 'mock-2',
-          request_type: 'missed_punch',
-          request_for: '12-Sep-2026',
-          requested_on: '13-Sep-2026',
-          in_time: '10:15 AM',
-          out_time: '08:00 PM',
-          status: 'approved',
-          day_type: 'full_day',
-          reason: 'Biometric reader device offline at Floor 4 reception.',
-          document_name: 'Device_Error_Log.pdf'
-        },
-        {
-          id: 'mock-3',
-          request_type: 'on_duty',
-          request_for: '15-Sep-2026',
-          requested_on: '14-Sep-2026',
-          in_time: '11:00 AM',
-          out_time: '06:00 PM',
-          status: 'pending',
-          day_type: 'second_half',
-          reason: 'Client integration kickoff meeting at Embassy GolfLinks.',
-          document_name: 'Client_Meeting_Invite.pdf'
-        }
-      ]);
-    }
+    setRegularizeRequests((reqs as any) || []);
   }, [user]);
 
   useEffect(() => {
@@ -452,15 +411,17 @@ export default function EmployeeAttendance() {
   }
 
   async function submitMood(score: number) {
-    if (!user) return;
+    if (!user || !user.companyId) return;
     setIsSubmittingMood(true);
     try {
-      const todayStr = '2026-09-16';
-      await supabase.from('wellness_checkins' as any).insert({
+      const todayStr = new Date().toISOString().split('T')[0];
+      const moodLabel = score >= 4 ? 'Great' : score >= 3 ? 'Good' : 'Needs Support';
+      await supabase.from('employee_moods' as any).insert({
         user_id: user.id,
         company_id: user.companyId,
         date: todayStr,
-        mood_score: score,
+        score: score,
+        mood: moodLabel,
       });
       toast.success('Thanks for sharing your mood today!');
       setShowMoodDialog(false);

@@ -158,6 +158,10 @@ export default function EmployeeDashboard() {
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
     const ninetyDaysAgoStr = ninetyDaysAgo.toISOString().split('T')[0];
 
+    const profilePromise = user.companyId 
+      ? supabase.from('profiles').select('id, full_name, email, job_title, department, avatar_url, date_of_birth, created_at, company_id').eq('company_id', user.companyId)
+      : Promise.resolve({ data: [] });
+
     Promise.all([
       supabase.from('attendance').select('*').eq('user_id', user.id).eq('date', today).maybeSingle(),
       supabase.from('tasks').select('id, status').eq('assigned_to', user.id),
@@ -165,7 +169,7 @@ export default function EmployeeDashboard() {
       supabase.from('tasks').select('*').eq('assigned_to', user.id).order('created_at', { ascending: false }).limit(5),
       supabase.from('attendance').select('*').eq('user_id', user.id).gte('date', ninetyDaysAgoStr).order('date', { ascending: false }),
       supabase.from('attendance_corrections' as any).select('*').eq('user_id', user.id),
-      supabase.from('profiles').select('id, full_name, email, job_title, department, avatar_url, date_of_birth, created_at, company_id').eq('company_id', user.companyId ?? ''),
+      profilePromise,
     ]).then(([att, tasks, leaves, recent, history, corrs, profs]) => {
       setTodayAtt(att.data);
       const t = tasks.data ?? [];
