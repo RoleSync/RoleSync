@@ -38,7 +38,6 @@ import { formatTime } from '@/lib/helpers';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCompanySettings } from '@/hooks/useCompanySettings';
 import { EmployeeIdCard } from '@/components/EmployeeIdCard';
 import { BirthdaysCard } from '@/components/BirthdaysCard';
@@ -502,16 +501,41 @@ export default function EmployeeDashboard() {
               {/* Period & Averages (Screenshot 51) */}
               <div className="pt-2 border-t border-border/50">
                 <div className="flex items-center justify-center mb-3">
-                  <Select value={dashboardPeriod} onValueChange={(val: '7' | '15' | '30') => setDashboardPeriod(val)}>
-                    <SelectTrigger className="h-7 text-[11px] font-semibold bg-muted/60 text-muted-foreground rounded-full border px-3 w-auto gap-1">
-                      <span>Period: {dashboardPeriod === '7' ? "Last 07 Day's" : dashboardPeriod === '15' ? "Last 15 Day's" : "Last 30 Day's"}</span>
-                    </SelectTrigger>
-                    <SelectContent align="center" className="text-xs">
-                      <SelectItem value="7">Last 07 Day's</SelectItem>
-                      <SelectItem value="15">Last 15 Day's</SelectItem>
-                      <SelectItem value="30">Last 30 Day's</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className="inline-flex items-center p-0.5 bg-muted/60 rounded-full border">
+                    <button
+                      type="button"
+                      onClick={() => setDashboardPeriod('7')}
+                      className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full transition-all ${
+                        dashboardPeriod === '7'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Last 7 Days
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDashboardPeriod('15')}
+                      className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full transition-all ${
+                        dashboardPeriod === '15'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Last 15 Days
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setDashboardPeriod('30')}
+                      className={`px-2.5 py-0.5 text-[10px] font-bold rounded-full transition-all ${
+                        dashboardPeriod === '30'
+                          ? 'bg-background text-foreground shadow-sm'
+                          : 'text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Last 30 Days
+                    </button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-center">
                   <div className="p-2.5 rounded-2xl bg-muted/30 border">
