@@ -46,67 +46,70 @@ export function AppSidebar() {
     return !!features?.[key];
   };
 
+  const slug = user?.company?.slug;
+  const prefix = slug ? `/${slug}` : '';
+
   const employeeMenu = [
-    { title: 'Dashboard', url: '/employee', icon: LayoutDashboard, show: true },
-    { title: 'My Leave', url: '/employee/leave', icon: CalendarDays, show: true },
-    { title: 'My Attendance', url: '/employee/attendance', icon: Clock, show: true },
-    { title: 'My Compensation', url: '/employee/compensation', icon: DollarSign, show: true },
-    { title: 'My Expenses', url: '/employee/expenses', icon: Receipt, show: true },
-    { title: 'My Performance', url: '/employee/performance', icon: TrendingUp, show: true },
-    { title: 'My Separation', url: '/employee/separation', icon: UserMinus, show: true },
-    { title: 'Intranet', url: '/employee/intranet', icon: Globe, show: true },
-    { title: 'Alerts', url: '/employee/alerts', icon: Bell, show: true },
-    { title: 'My Calendar', url: '/employee/calendar', icon: CalendarDays, show: true },
-    { title: 'People', url: '/employee/people', icon: Users, show: true },
-    { title: 'Knowledge Base', url: '/employee/knowledge-base', icon: BookOpen, show: true },
-    { title: 'Tasks', url: '/employee/tasks', icon: CheckSquare, show: isEnabled('tasks_enabled') },
-    { title: 'My Targets', url: '/employee/targets', icon: Target, show: true },
-    { title: 'Kudos', url: '/employee/kudos', icon: Award, show: isEnabled('kudos_enabled') },
-    { title: 'Chat', url: '/employee/chat', icon: MessageSquare, show: isEnabled('chat_enabled') },
-    { title: 'Birthdays', url: '/employee/birthdays', icon: CalendarDays, show: isEnabled('birthdays_enabled') },
-    { title: 'Office Updates', url: '/employee/inbox', icon: Mail, show: true },
-    { title: 'Helpdesk', url: '/employee/helpdesk', icon: LifeBuoy, show: isEnabled('helpdesk_enabled') },
-    { title: 'Profile', url: '/employee/profile', icon: User, show: true },
+    { title: 'Dashboard', url: `${prefix}/employee`, icon: LayoutDashboard, show: true },
+    { title: 'My Leave', url: `${prefix}/employee/leave`, icon: CalendarDays, show: true },
+    { title: 'My Attendance', url: `${prefix}/employee/attendance`, icon: Clock, show: true },
+    { title: 'My Compensation', url: `${prefix}/employee/compensation`, icon: DollarSign, show: true },
+    { title: 'My Expenses', url: `${prefix}/employee/expenses`, icon: Receipt, show: true },
+    { title: 'My Performance', url: `${prefix}/employee/performance`, icon: TrendingUp, show: true },
+    { title: 'My Separation', url: `${prefix}/employee/separation`, icon: UserMinus, show: true },
+    { title: 'Intranet', url: `${prefix}/employee/intranet`, icon: Globe, show: true },
+    { title: 'Alerts', url: `${prefix}/employee/alerts`, icon: Bell, show: true },
+    { title: 'My Calendar', url: `${prefix}/employee/calendar`, icon: CalendarDays, show: true },
+    { title: 'People', url: `${prefix}/employee/people`, icon: Users, show: true },
+    { title: 'Knowledge Base', url: `${prefix}/employee/knowledge-base`, icon: BookOpen, show: true },
+    { title: 'Tasks', url: `${prefix}/employee/tasks`, icon: CheckSquare, show: isEnabled('tasks_enabled') },
+    { title: 'My Targets', url: `${prefix}/employee/targets`, icon: Target, show: true },
+    { title: 'Kudos', url: `${prefix}/employee/kudos`, icon: Award, show: isEnabled('kudos_enabled') },
+    { title: 'Chat', url: `${prefix}/employee/chat`, icon: MessageSquare, show: isEnabled('chat_enabled') },
+    { title: 'Birthdays', url: `${prefix}/employee/birthdays`, icon: CalendarDays, show: isEnabled('birthdays_enabled') },
+    { title: 'Office Updates', url: `${prefix}/employee/inbox`, icon: Mail, show: true },
+    { title: 'Helpdesk', url: `${prefix}/employee/helpdesk`, icon: LifeBuoy, show: isEnabled('helpdesk_enabled') },
+    { title: 'Profile', url: `${prefix}/employee/profile`, icon: User, show: true },
   ].filter(i => i.show);
 
   const adminMenu = [
-    { title: 'Dashboard', url: '/admin', icon: LayoutDashboard, show: true },
-    { title: 'Employees', url: '/admin/employees', icon: Users, show: true },
-    { title: 'Org Chart & Directory', url: '/admin/people', icon: Users, show: true },
-    { title: 'Settings', url: '/admin/settings', icon: Settings, show: true },
-    { title: 'Attendance', url: '/admin/attendance', icon: Clock, show: true },
-    { title: 'Live Map', url: '/admin/live-map', icon: MapPin, show: true },
-    { title: 'Tasks', url: '/admin/tasks', icon: CheckSquare, show: isEnabled('tasks_enabled') },
-    { title: 'Targets', url: '/admin/targets', icon: Target, show: true },
-    { title: 'Leave Requests', url: '/admin/leave', icon: CalendarDays, show: true },
-    { title: 'Expense Approvals', url: '/admin/expenses', icon: Receipt, show: true },
-    { title: 'Exit Management', url: '/admin/separation', icon: UserMinus, show: true },
-    { title: 'Alerts Center', url: '/admin/alerts', icon: Bell, show: true },
-    { title: 'Company Calendar', url: '/admin/calendar', icon: CalendarDays, show: true },
-    { title: 'Intranet Wall', url: '/admin/intranet', icon: Globe, show: true },
-    { title: 'Helpdesk', url: '/admin/helpdesk', icon: LifeBuoy, show: isEnabled('helpdesk_enabled') },
-    { title: 'Chat', url: '/admin/chat', icon: MessageSquare, show: isEnabled('chat_enabled') },
-    { title: 'Kudos', url: '/admin/kudos', icon: Award, show: isEnabled('kudos_enabled') },
-    { title: 'Birthdays', url: '/admin/birthdays', icon: CalendarDays, show: isEnabled('birthdays_enabled') },
-    { title: 'Communication', url: '/admin/communication', icon: Megaphone, show: true },
-    { title: 'Wellbeing', url: '/admin/wellbeing', icon: HeartPulse, show: isEnabled('wellbeing_enabled') },
-    { title: 'Payroll', url: '/admin/payroll', icon: DollarSign, show: isEnabled('payroll_export_enabled') },
-    { title: 'AI Analytics', url: '/admin/ai-analytics', icon: TrendingUp, show: isEnabled('ai_analytics_enabled') },
-    { title: 'IP Whitelisting', url: '/admin/ip-whitelist', icon: Globe, show: isEnabled('ip_whitelist_enabled') },
-    { title: 'Mock GPS', url: '/admin/mock-gps', icon: MapPin, show: isEnabled('mock_gps_detection_enabled') },
-    { title: 'Audit Trail', url: '/admin/audit', icon: Shield, show: true },
-    { title: 'Permissions', url: '/admin/permissions', icon: Shield, show: true },
-    { title: 'Corrections', url: '/admin/corrections', icon: Clock, show: true },
-    { title: 'Approval Chain', url: '/admin/approval-chain', icon: GitBranch, show: isEnabled('multi_level_approvals_enabled') },
-    { title: 'Reports', url: '/admin/reports', icon: FileBarChart, show: true },
-    { title: 'Features', url: '/admin/features', icon: ToggleLeft, show: true },
+    { title: 'Dashboard', url: `${prefix}/admin`, icon: LayoutDashboard, show: true },
+    { title: 'Employees', url: `${prefix}/admin/employees`, icon: Users, show: true },
+    { title: 'Org Chart & Directory', url: `${prefix}/admin/people`, icon: Users, show: true },
+    { title: 'Settings', url: `${prefix}/admin/settings`, icon: Settings, show: true },
+    { title: 'Attendance', url: `${prefix}/admin/attendance`, icon: Clock, show: true },
+    { title: 'Live Map', url: `${prefix}/admin/live-map`, icon: MapPin, show: true },
+    { title: 'Tasks', url: `${prefix}/admin/tasks`, icon: CheckSquare, show: isEnabled('tasks_enabled') },
+    { title: 'Targets', url: `${prefix}/admin/targets`, icon: Target, show: true },
+    { title: 'Leave Requests', url: `${prefix}/admin/leave`, icon: CalendarDays, show: true },
+    { title: 'Expense Approvals', url: `${prefix}/admin/expenses`, icon: Receipt, show: true },
+    { title: 'Exit Management', url: `${prefix}/admin/separation`, icon: UserMinus, show: true },
+    { title: 'Alerts Center', url: `${prefix}/admin/alerts`, icon: Bell, show: true },
+    { title: 'Company Calendar', url: `${prefix}/admin/calendar`, icon: CalendarDays, show: true },
+    { title: 'Intranet Wall', url: `${prefix}/admin/intranet`, icon: Globe, show: true },
+    { title: 'Helpdesk', url: `${prefix}/admin/helpdesk`, icon: LifeBuoy, show: isEnabled('helpdesk_enabled') },
+    { title: 'Chat', url: `${prefix}/admin/chat`, icon: MessageSquare, show: isEnabled('chat_enabled') },
+    { title: 'Kudos', url: `${prefix}/admin/kudos`, icon: Award, show: isEnabled('kudos_enabled') },
+    { title: 'Birthdays', url: `${prefix}/admin/birthdays`, icon: CalendarDays, show: isEnabled('birthdays_enabled') },
+    { title: 'Communication', url: `${prefix}/admin/communication`, icon: Megaphone, show: true },
+    { title: 'Wellbeing', url: `${prefix}/admin/wellbeing`, icon: HeartPulse, show: isEnabled('wellbeing_enabled') },
+    { title: 'Payroll', url: `${prefix}/admin/payroll`, icon: DollarSign, show: isEnabled('payroll_export_enabled') },
+    { title: 'AI Analytics', url: `${prefix}/admin/ai-analytics`, icon: TrendingUp, show: isEnabled('ai_analytics_enabled') },
+    { title: 'IP Whitelisting', url: `${prefix}/admin/ip-whitelist`, icon: Globe, show: isEnabled('ip_whitelist_enabled') },
+    { title: 'Mock GPS', url: `${prefix}/admin/mock-gps`, icon: MapPin, show: isEnabled('mock_gps_detection_enabled') },
+    { title: 'Audit Trail', url: `${prefix}/admin/audit`, icon: Shield, show: true },
+    { title: 'Permissions', url: `${prefix}/admin/permissions`, icon: Shield, show: true },
+    { title: 'Corrections', url: `${prefix}/admin/corrections`, icon: Clock, show: true },
+    { title: 'Approval Chain', url: `${prefix}/admin/approval-chain`, icon: GitBranch, show: isEnabled('multi_level_approvals_enabled') },
+    { title: 'Reports', url: `${prefix}/admin/reports`, icon: FileBarChart, show: true },
+    { title: 'Features', url: `${prefix}/admin/features`, icon: ToggleLeft, show: true },
   ].filter(i => i.show);
 
   const superAdminMenu = [
     { title: 'Dashboard', url: '/super-admin', icon: LayoutDashboard },
     { title: 'Companies', url: '/super-admin/companies', icon: Globe },
-    { title: 'Settings', url: '/admin/settings', icon: Settings },
-    { title: 'My Company', url: '/admin', icon: Building2 },
+    { title: 'Settings', url: `${prefix}/admin/settings`, icon: Settings },
+    { title: 'My Company', url: `${prefix}/admin`, icon: Building2 },
   ];
 
   const menu = user?.role === 'super_admin' 
@@ -164,7 +167,7 @@ export function AppSidebar() {
                     const nextMode = viewMode === 'admin' ? 'employee' : 'admin';
                     setViewMode(nextMode);
                     localStorage.setItem('sidebar_view_mode', nextMode);
-                    navigate(nextMode === 'admin' ? '/admin' : '/employee');
+                    navigate(nextMode === 'admin' ? `${prefix}/admin` : `${prefix}/employee`);
                   }}
                 >
                   <span className="flex items-center gap-1.5 text-muted-foreground font-medium">

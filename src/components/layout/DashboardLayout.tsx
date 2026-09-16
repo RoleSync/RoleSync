@@ -88,10 +88,12 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const navigate = useNavigate();
   const showAdminNotifications = user?.role === 'admin' || user?.role === 'super_admin' || user?.isOwner;
   const showUserNotifications = !!user;
+  const slug = user?.company?.slug;
+  const prefix = slug ? `/${slug}` : '';
 
   const profilePath =
-    user?.role === 'employee' && !user?.isOwner ? '/employee/profile'
-    : (user?.role === 'admin' || user?.isOwner) ? '/admin/settings'
+    user?.role === 'employee' && !user?.isOwner ? `${prefix}/employee/profile`
+    : (user?.role === 'admin' || user?.isOwner) ? `${prefix}/admin/settings`
     : '/super-admin';
 
   const handleLogout = async () => {
@@ -115,33 +117,43 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       >
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 flex items-center justify-between border-b bg-card px-4 sticky top-0 z-10">
-            <div className="flex items-center gap-3 min-w-0 flex-1 max-w-xl mx-2">
+          <header className="h-14 border-b bg-card px-4 flex items-center justify-between gap-4 sticky top-0 z-30">
+            <div className="flex items-center gap-3">
               <SidebarTrigger />
-              {/* Global Entity Search Bar (Screenshot 32) */}
-              <div className="hidden md:flex items-center flex-1 relative">
+              {user?.company && (
+                <span className="font-heading font-semibold text-sm hidden sm:inline text-muted-foreground">
+                  {user.company.name}
+                </span>
+              )}
+            </div>
+
+            {/* Quick Global Search Bar */}
+            <div className="flex-1 max-w-md hidden md:block">
+              <div className="flex items-center">
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className="h-8 px-2.5 rounded-l-lg border border-r-0 bg-muted/40 hover:bg-muted text-xs font-semibold text-muted-foreground flex items-center gap-1.5 shrink-0 transition-colors">
-                      {searchScope === 'people' ? 'People' : 'Department'}
-                      <span className="text-[10px] opacity-70">▼</span>
+                    <button
+                      type="button"
+                      className="h-8 px-2.5 rounded-l-lg border border-r-0 bg-muted/60 hover:bg-muted text-[11px] font-semibold text-muted-foreground flex items-center gap-1 transition-colors"
+                    >
+                      <span>{searchScope === 'people' ? 'People' : 'Dept'}</span>
+                      <span className="text-[9px] opacity-70">▼</span>
                     </button>
                   </PopoverTrigger>
-                  <PopoverContent align="start" className="w-40 p-2 text-xs space-y-1">
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase px-2 py-1">Search By</p>
-                    <button 
-                      onClick={() => setSearchScope('people')} 
-                      className={`w-full text-left px-2 py-1.5 rounded-md flex items-center justify-between ${searchScope === 'people' ? 'bg-primary/10 text-primary font-bold' : 'hover:bg-muted'}`}
+                  <PopoverContent align="start" className="w-40 p-1.5 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setSearchScope('people')}
+                      className={`w-full text-left px-2.5 py-1.5 rounded-md text-xs transition-colors ${searchScope === 'people' ? 'bg-primary/10 text-primary font-bold' : 'hover:bg-muted'}`}
                     >
-                      <span>People</span>
-                      {searchScope === 'people' && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                      Search People
                     </button>
-                    <button 
-                      onClick={() => setSearchScope('department')} 
-                      className={`w-full text-left px-2 py-1.5 rounded-md flex items-center justify-between ${searchScope === 'department' ? 'bg-primary/10 text-primary font-bold' : 'hover:bg-muted'}`}
+                    <button
+                      type="button"
+                      onClick={() => setSearchScope('department')}
+                      className={`w-full text-left px-2.5 py-1.5 rounded-md text-xs transition-colors ${searchScope === 'department' ? 'bg-primary/10 text-primary font-bold' : 'hover:bg-muted'}`}
                     >
-                      <span>Department</span>
-                      {searchScope === 'department' && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                      Search Departments
                     </button>
                   </PopoverContent>
                 </Popover>
@@ -153,7 +165,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     className="w-full h-8 pl-3 pr-8 rounded-r-lg border bg-background text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
-                        navigate('/employee/people');
+                        navigate(`${prefix}/employee/people`);
                       }
                     }}
                   />

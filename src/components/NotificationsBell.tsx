@@ -175,7 +175,8 @@ export function NotificationsBell() {
             className="w-full text-xs text-primary font-semibold hover:bg-primary/10 h-7"
             onClick={() => {
               setIsOpen(false);
-              navigate('/employee/alerts');
+              const slug = user?.company?.slug;
+              navigate(slug ? `/${slug}/employee/alerts` : '/employee/alerts');
             }}
           >
             See All Notifications & Actions →

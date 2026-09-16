@@ -75,9 +75,10 @@ function NavigationDebugger() {
     if (location.pathname.includes('design-guide')) {
       console.warn('[Navigation] Intercepted rogue design-guide redirect. Returning to dashboard...');
       
+      const slug = user?.company?.slug || 'rolesync';
       const home = !isAuthenticated || !user ? '/' 
         : user.role === 'super_admin' ? '/super-admin' 
-        : (user.role === 'admin' || user.isOwner) ? '/admin' : '/employee';
+        : (user.role === 'admin' || user.isOwner) ? `/${slug}/admin` : `/${slug}/employee`;
         
       navigate(home, { replace: true });
     }
@@ -118,7 +119,8 @@ function ProtectedRoute({ children, allow }: { children: React.ReactNode; allow:
     (user.role === 'admin' && allow.includes('employee')) ||
     (user.isOwner && allow.includes('admin'));
   if (!hasAccess) {
-    const home = user.role === 'super_admin' ? '/super-admin' : (user.role === 'admin' || user.isOwner) ? '/admin' : `/${user.role}`;
+    const slug = user.company?.slug || 'rolesync';
+    const home = user.role === 'super_admin' ? '/super-admin' : (user.role === 'admin' || user.isOwner) ? `/${slug}/admin` : `/${slug}/${user.role}`;
     return <Navigate to={home} replace />;
   }
   return <>{children}</>;
@@ -141,16 +143,18 @@ function AppRoutes() {
   const { isAuthenticated, user, loading } = useAuth();
   if (loading) return <FullscreenLoader />;
 
+  const slug = user?.company?.slug || 'rolesync';
   const homeRedirect = isAuthenticated && user
     ? (user.role === 'super_admin' ? '/super-admin'
         : user.role === 'employee' && user.status !== 'approved' && !user.isOwner ? '/pending'
-        : (user.role === 'admin' || user.isOwner) ? '/admin' : `/${user.role}`)
+        : (user.role === 'admin' || user.isOwner) ? `/${slug}/admin` : `/${slug}/employee`)
     : null;
 
   return (
     <Routes>
       <Route path="/" element={homeRedirect ? <Navigate to={homeRedirect} replace /> : <LandingPage />} />
       <Route path="/login" element={homeRedirect ? <Navigate to={homeRedirect} replace /> : <LoginPage />} />
+      <Route path="/:companySlug/login" element={homeRedirect ? <Navigate to={homeRedirect} replace /> : <LoginPage />} />
       <Route path="/pricing" element={<PricingPage />} />
       <Route path="/privacy" element={<PrivacyPolicyPage />} />
       <Route path="/terms" element={<TermsPage />} />
@@ -160,9 +164,66 @@ function AppRoutes() {
       <Route path="/onboarding" element={<OnboardingPage />} />
 
       <Route element={<AuthenticatedLayout />}>
+        {/* Global Superadmin */}
         <Route path="/super-admin" element={<ProtectedRoute allow={['super_admin']}><SuperAdminDashboard /></ProtectedRoute>} />
         <Route path="/super-admin/companies" element={<ProtectedRoute allow={['super_admin']}><SuperAdminCompanies /></ProtectedRoute>} />
 
+        {/* Company-Scoped Routes (domain/:companySlug/...) */}
+        <Route path="/:companySlug/employee" element={<ProtectedRoute allow={['employee']}><EmployeeDashboard /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/attendance" element={<ProtectedRoute allow={['employee']}><EmployeeAttendance /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/tasks" element={<ProtectedRoute allow={['employee']}><EmployeeTasks /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/leave" element={<ProtectedRoute allow={['employee']}><EmployeeLeave /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/performance" element={<ProtectedRoute allow={['employee']}><EmployeePerformance /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/profile" element={<ProtectedRoute allow={['employee']}><EmployeeProfile /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/targets" element={<ProtectedRoute allow={['employee']}><EmployeeTargets /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/kudos" element={<ProtectedRoute allow={['employee']}><EmployeeKudos /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/chat" element={<ProtectedRoute allow={['employee']}><EmployeeChat /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/inbox" element={<ProtectedRoute allow={['employee']}><EmployeeInbox /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/helpdesk" element={<ProtectedRoute allow={['employee']}><EmployeeHelpdesk /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/expenses" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeeExpenses /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/intranet" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeeIntranet /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/separation" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeeSeparation /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/alerts" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeeAlerts /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/calendar" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeeCalendar /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/people" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeePeople /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/compensation" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeeCompensation /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/payroll" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeeCompensation /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/knowledge-base" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeeKnowledgeBase /></ProtectedRoute>} />
+        <Route path="/:companySlug/employee/birthdays" element={<ProtectedRoute allow={['employee']}><BirthdaysPage /></ProtectedRoute>} />
+
+        <Route path="/:companySlug/admin" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/expenses" element={<ProtectedRoute allow={['admin', 'super_admin']}><EmployeeExpenses /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/intranet" element={<ProtectedRoute allow={['admin', 'super_admin']}><EmployeeIntranet /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/separation" element={<ProtectedRoute allow={['admin', 'super_admin']}><EmployeeSeparation /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/alerts" element={<ProtectedRoute allow={['admin', 'super_admin']}><EmployeeAlerts /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/calendar" element={<ProtectedRoute allow={['admin', 'super_admin']}><EmployeeCalendar /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/people" element={<ProtectedRoute allow={['admin', 'super_admin']}><EmployeePeople /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/targets" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminTargets /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/employees" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminEmployees /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/employees/:id" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminEmployeeDetail /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/attendance" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminAttendance /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/live-map" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminLiveMap /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/tasks" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminTasks /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/leave" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminLeave /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/reports" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminReports /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/settings" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminSettings /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/helpdesk" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminHelpdesk /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/communication" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminCommunication /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/wellbeing" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminWellbeing /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/payroll" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminPayroll /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/audit" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminAuditLog /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/permissions" element={<ProtectedRoute allow={['admin']}><AdminPermissions /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/corrections" element={<ProtectedRoute allow={['admin']}><AdminCorrections /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/features" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminFeatures /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/approval-chain" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminApprovalChain /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/birthdays" element={<ProtectedRoute allow={['admin', 'super_admin']}><BirthdaysPage /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/chat" element={<ProtectedRoute allow={['admin', 'super_admin']}><EmployeeChat /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/kudos" element={<ProtectedRoute allow={['admin', 'super_admin']}><EmployeeKudos /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/ai-analytics" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminAIAnalytics /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/ip-whitelist" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminIPWhitelist /></ProtectedRoute>} />
+        <Route path="/:companySlug/admin/mock-gps" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminMockGPS /></ProtectedRoute>} />
+
+        {/* Fallback Unslugged Paths (for direct links & backward compatibility) */}
         <Route path="/employee" element={<ProtectedRoute allow={['employee']}><EmployeeDashboard /></ProtectedRoute>} />
         <Route path="/employee/attendance" element={<ProtectedRoute allow={['employee']}><EmployeeAttendance /></ProtectedRoute>} />
         <Route path="/employee/tasks" element={<ProtectedRoute allow={['employee']}><EmployeeTasks /></ProtectedRoute>} />

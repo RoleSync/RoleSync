@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { 
   Building2, 
   Mail, 
@@ -38,6 +38,7 @@ interface CompanyOption {
 
 export default function LoginPage() {
   const { login, isAuthenticated, user, loading } = useAuth();
+  const { companySlug } = useParams<{ companySlug?: string }>();
   const navigate = useNavigate();
   const [step, setStep] = useState<Step>('company');
   const [mode, setMode] = useState<Mode>('login');
@@ -52,6 +53,30 @@ export default function LoginPage() {
   const [selected, setSelected] = useState<CompanyOption | null>(null);
   const debounceRef = useRef<number | null>(null);
 
+  // Auto-resolve company if companySlug is in URL path
+  useEffect(() => {
+    if (!companySlug) return;
+    async function resolveCompanyFromUrl() {
+      const { data } = await supabase.from('companies')
+        .select('id, name, slug, login_preference')
+        .eq('status', 'active')
+        .ilike('slug', companySlug)
+        .maybeSingle();
+
+      if (data) {
+        setSelected(data as CompanyOption);
+        setQuery(data.name);
+        setStep('auth');
+        if (data.login_preference === 'id') {
+          setCredentialType('code');
+        } else {
+          setCredentialType('email');
+        }
+      }
+    }
+    resolveCompanyFromUrl();
+  }, [companySlug]);
+
   // Auth fields
   const [emailOrCode, setEmailOrCode] = useState('');
   const [password, setPassword] = useState('');
@@ -62,12 +87,13 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!loading && isAuthenticated && user) {
+      const slug = user.company?.slug || companySlug || selected?.slug || 'rolesync';
       const target = user.role === 'super_admin' ? '/super-admin'
-        : user.role === 'admin' ? '/admin'
-        : (user.status === 'approved' ? '/employee' : '/pending');
+        : (user.role === 'admin' || user.isOwner) ? `/${slug}/admin`
+        : (user.status === 'approved' ? `/${slug}/employee` : '/pending');
       navigate(target, { replace: true });
     }
-  }, [isAuthenticated, user, loading, navigate]);
+  }, [isAuthenticated, user, loading, navigate, companySlug, selected]);
 
   // Debounced company search (anon SELECT policy permits this)
   useEffect(() => {
