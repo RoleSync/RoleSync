@@ -417,11 +417,11 @@ export default function LoginPage() {
             © {new Date().getFullYear()} RoleSync Technologies. All rights reserved.
           </p>
           <div className="flex items-center justify-center gap-3 font-medium">
-            <a href="/pricing" className="hover:text-primary transition-colors">
+            <a href="/privacy" className="hover:text-primary transition-colors">
               Privacy Policy
             </a>
             <span>•</span>
-            <a href="/pricing" className="hover:text-primary transition-colors">
+            <a href="/terms" className="hover:text-primary transition-colors">
               Terms of Service
             </a>
           </div>
