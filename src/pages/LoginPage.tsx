@@ -196,7 +196,7 @@ export default function LoginPage() {
       </div>
 
       {/* Right Column: Card with Functional Improvements */}
-      <div className="flex items-center justify-center p-6">
+      <div className="flex flex-col items-center justify-center p-6">
         <Card className="w-full max-w-md p-8 rounded-2xl shadow-elegant">
           <div className="mb-6 text-center lg:hidden">
             <div className="inline-flex items-center gap-2 mb-2">
@@ -410,6 +410,22 @@ export default function LoginPage() {
             </form>
           )}
         </Card>
+
+        {/* Bottom Footer with Privacy Policy & Terms */}
+        <div className="mt-8 text-center text-xs text-muted-foreground space-y-1">
+          <p className="font-medium">
+            © {new Date().getFullYear()} RoleSync Technologies. All rights reserved.
+          </p>
+          <div className="flex items-center justify-center gap-3 font-medium">
+            <a href="/pricing" className="hover:text-primary transition-colors">
+              Privacy Policy
+            </a>
+            <span>•</span>
+            <a href="/pricing" className="hover:text-primary transition-colors">
+              Terms of Service
+            </a>
+          </div>
+        </div>
       </div>
     </div>
   );
