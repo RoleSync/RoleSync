@@ -200,11 +200,11 @@ export default function EmployeeSeparation() {
             </div>
 
             <h3 className="font-heading font-extrabold text-lg sm:text-xl text-foreground mb-1">
-              No Data Found
+              No Exit Request
             </h3>
             
             <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-6">
-              You have not initiated any exit or resignation request. Click "Initiate" above if you wish to begin the separation workflow.
+              You haven't submitted a resignation request. Use the button above to start the exit process.
             </p>
 
             <Button 
@@ -398,12 +398,12 @@ export default function EmployeeSeparation() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Career Growth / Better Opportunity">🚀 Career Growth / Better Opportunity</SelectItem>
-                  <SelectItem value="Higher Education / Studies">🎓 Higher Education / Studies</SelectItem>
-                  <SelectItem value="Relocation / Family Grounds">🏠 Relocation / Family Grounds</SelectItem>
-                  <SelectItem value="Personal Health / Well-being">🏥 Personal Health / Well-being</SelectItem>
-                  <SelectItem value="Entrepreneurship / Own Venture">💡 Entrepreneurship / Own Venture</SelectItem>
-                  <SelectItem value="Others">📋 Others</SelectItem>
+                  <SelectItem value="Career Growth / Better Opportunity">Career Growth / Better Opportunity</SelectItem>
+                  <SelectItem value="Higher Education / Studies">Higher Education / Studies</SelectItem>
+                  <SelectItem value="Relocation / Family Grounds">Relocation / Family Grounds</SelectItem>
+                  <SelectItem value="Personal Health / Well-being">Personal Health / Well-being</SelectItem>
+                  <SelectItem value="Entrepreneurship / Own Venture">Entrepreneurship / Own Venture</SelectItem>
+                  <SelectItem value="Others">Others</SelectItem>
                 </SelectContent>
               </Select>
             </div>

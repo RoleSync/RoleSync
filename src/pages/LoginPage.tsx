@@ -180,16 +180,15 @@ export default function LoginPage() {
         </div>
         <div>
           <h1 className="font-heading text-4xl font-bold leading-tight mb-4">
-            Intelligent workforce management.
+            Workforce operations, simplified.
           </h1>
           <p className="text-primary-foreground/85 text-lg">
-            Modern management platform with deep insights.
-            Attendance, tasks, leave and performance — all in one place.
+            Attendance, leaves, payroll, and team management — one platform, zero friction.
           </p>
           <ul className="mt-8 space-y-2 text-sm text-primary-foreground/85">
-            <li>✓ Strict data isolation</li>
-            <li>✓ AI-powered insights</li>
-            <li>✓ Modern enterprise portals</li>
+            <li>✓ Tenant-level data isolation</li>
+            <li>✓ Real-time attendance & shift tracking</li>
+            <li>✓ Indian statutory payroll built in</li>
           </ul>
         </div>
         <div className="text-xs text-primary-foreground/70">© {new Date().getFullYear()} RoleSync. All rights reserved.</div>
@@ -208,7 +207,7 @@ export default function LoginPage() {
             <div className="space-y-4">
               <div>
                 <h2 className="font-heading text-xl font-semibold">Find your company</h2>
-                <p className="text-sm text-muted-foreground mt-1">Search by name or company code</p>
+                <p className="text-sm text-muted-foreground mt-1">Enter your company name or code</p>
               </div>
               <div className="space-y-2 relative">
                 <Label htmlFor="company"><Building2 className="inline h-3 w-3 mr-1" />Company name or code</Label>
@@ -288,7 +287,7 @@ export default function LoginPage() {
                 </h2>
                 <p className="text-sm text-muted-foreground mt-1">
                   {mode === 'login' 
-                    ? 'Choose your credential type and sign in to continue' 
+                    ? 'Sign in with Work Email or Employee Code' 
                     : 'Create your account — admin will approve it'}
                 </p>
               </div>

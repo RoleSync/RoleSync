@@ -12,17 +12,31 @@ import { Lock, Users, Shield, User } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const FEATURE_TIERS: Record<string, { tier: 'basic' | 'pro' | 'enterprise'; label: string }> = {
+  // Basic
   tasks_enabled: { tier: 'basic', label: 'Basic' },
   birthdays_enabled: { tier: 'basic', label: 'Basic' },
+  attendance_regularization_enabled: { tier: 'basic', label: 'Basic' },
+  leave_management_enabled: { tier: 'basic', label: 'Basic' },
+  profile_vault_enabled: { tier: 'basic', label: 'Basic' },
+  org_directory_enabled: { tier: 'basic', label: 'Basic' },
+  // Pro
   chat_enabled: { tier: 'pro', label: 'Pro' },
   kudos_enabled: { tier: 'pro', label: 'Pro' },
   helpdesk_enabled: { tier: 'pro', label: 'Pro' },
+  knowledge_base_enabled: { tier: 'pro', label: 'Pro' },
+  travel_expenses_enabled: { tier: 'pro', label: 'Pro' },
+  org_chart_tree_enabled: { tier: 'pro', label: 'Pro' },
+  google_calendar_enabled: { tier: 'pro', label: 'Pro' },
   multi_level_approvals_enabled: { tier: 'pro', label: 'Pro' },
-  wellbeing_enabled: { tier: 'enterprise', label: 'Enterprise' },
+  // Enterprise
+  compensation_enabled: { tier: 'enterprise', label: 'Enterprise' },
   payroll_export_enabled: { tier: 'enterprise', label: 'Enterprise' },
+  separation_enabled: { tier: 'enterprise', label: 'Enterprise' },
+  performance_enabled: { tier: 'enterprise', label: 'Enterprise' },
   ai_analytics_enabled: { tier: 'enterprise', label: 'Enterprise' },
   ip_whitelist_enabled: { tier: 'enterprise', label: 'Enterprise' },
   mock_gps_detection_enabled: { tier: 'enterprise', label: 'Enterprise' },
+  wellbeing_enabled: { tier: 'enterprise', label: 'Enterprise' },
 };
 
 const PLAN_LEVELS = {
@@ -32,17 +46,33 @@ const PLAN_LEVELS = {
 };
 
 const FLAGS: { key: string; label: string; desc: string }[] = [
+  // Basic
   { key: 'tasks_enabled', label: 'Tasks Management', desc: 'Assign and track employee tasks' },
   { key: 'birthdays_enabled', label: 'Birthdays & Events', desc: 'Birthday & work anniversary alerts' },
-  { key: 'chat_enabled', label: 'Team Chat', desc: 'Realtime chat communication for employees' },
-  { key: 'kudos_enabled', label: 'Kudos Wall', desc: 'Peer recognition wall' },
-  { key: 'helpdesk_enabled', label: 'IT Helpdesk', desc: 'Internal ticketing and support system' },
-  { key: 'multi_level_approvals_enabled', label: 'Multi-Level Approvals', desc: 'Advanced approval flows' },
-  { key: 'wellbeing_enabled', label: 'Wellbeing Hub', desc: 'Employee wellbeing and burnout analytics' },
-  { key: 'payroll_export_enabled', label: 'Payroll Export', desc: 'Export attendance & timesheets' },
+  { key: 'attendance_regularization_enabled', label: 'Attendance Regularization & WFH', desc: 'Bulk regularization, missed punches & WFH requests' },
+  { key: 'leave_management_enabled', label: '6-Tier Leave Engine', desc: 'Bereavement, Casual, Earned, LWP, Menstrual & Sick quotas' },
+  { key: 'profile_vault_enabled', label: '7-Tab Profile & Vault', desc: 'Personal, professional, KYC & 2MB document limits' },
+  { key: 'org_directory_enabled', label: 'Org Directory & Profiles', desc: 'Searchable employee directory and public profiles' },
+  
+  // Pro
+  { key: 'chat_enabled', label: 'Team Chat & Channels', desc: 'Realtime chat communication for employees' },
+  { key: 'kudos_enabled', label: 'Social Wall & Kudos Badges', desc: '"Give A Badge" (Applause) peer recognition awards' },
+  { key: 'helpdesk_enabled', label: 'IT Helpdesk & Ticketing', desc: 'Internal ticketing and support system' },
+  { key: 'knowledge_base_enabled', label: 'Knowledge Base & Policies', desc: 'Searchable policy manuals, SOPs & 1-click PDFs' },
+  { key: 'travel_expenses_enabled', label: 'Travel & Expense Claims', desc: 'Pre-trip itineraries, bills & cash advances' },
+  { key: 'org_chart_tree_enabled', label: 'Interactive Org Chart Tree', desc: 'Visual hierarchy tree with subordinate count badges' },
+  { key: 'google_calendar_enabled', label: 'Google Calendar 2-Way Sync', desc: 'Sync leave, holiday & shift rosters to Google Calendar' },
+  { key: 'multi_level_approvals_enabled', label: 'Multi-Level Approvals', desc: 'Configurable lead → manager → HR approval chains' },
+  
+  // Enterprise
+  { key: 'compensation_enabled', label: 'My Compensation & CTC', desc: 'Granular CTC breakdown, allowances & Form 12BB' },
+  { key: 'payroll_export_enabled', label: 'Indian Statutory Payroll', desc: 'EPF, ESI, state Professional Tax & PDF payslips' },
+  { key: 'separation_enabled', label: 'Separation & Exit Clearance', desc: 'Resignation workflow & IT/HR/Finance checklists' },
+  { key: 'performance_enabled', label: 'Performance & 1:1 Reviews', desc: 'OKR goal check-ins, 360 review cycles & 1:1 notes' },
   { key: 'ai_analytics_enabled', label: 'AI Analytics', desc: 'Smart insights and predictions' },
   { key: 'ip_whitelist_enabled', label: 'IP Whitelisting', desc: 'Restrict check-ins to authorized networks' },
   { key: 'mock_gps_detection_enabled', label: 'Mock GPS Detection', desc: 'Prevent check-ins using fake locations' },
+  { key: 'wellbeing_enabled', label: 'Wellbeing Hub', desc: 'Employee wellbeing and burnout analytics' },
 ];
 
 export default function AdminFeatures() {

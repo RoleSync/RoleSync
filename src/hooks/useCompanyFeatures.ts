@@ -4,22 +4,58 @@ import { useAuth } from '@/contexts/AuthContext';
 
 export interface CompanyFeatures {
   company_id: string;
-  // Basic
+  // Basic Tier (Core HRMS & Shifts)
   tasks_enabled: boolean;
   birthdays_enabled: boolean;
-  // Pro
+  attendance_regularization_enabled: boolean;
+  leave_management_enabled: boolean;
+  profile_vault_enabled: boolean;
+  org_directory_enabled: boolean;
+  // Pro Tier (Collaboration, Policies, Expenses & Workflows)
   chat_enabled: boolean;
   kudos_enabled: boolean;
   helpdesk_enabled: boolean;
+  knowledge_base_enabled: boolean;
+  travel_expenses_enabled: boolean;
+  org_chart_tree_enabled: boolean;
+  google_calendar_enabled: boolean;
   multi_level_approvals_enabled: boolean;
-  // Enterprise
-  ai_analytics_enabled: boolean;
+  // Enterprise Tier (Statutory Payroll, AI, Security & Exit Governance)
+  compensation_enabled: boolean;
   payroll_export_enabled: boolean;
+  separation_enabled: boolean;
+  performance_enabled: boolean;
+  ai_analytics_enabled: boolean;
   ip_whitelist_enabled: boolean;
   mock_gps_detection_enabled: boolean;
   wellbeing_enabled: boolean;
-  feature_visibility?: Record<string, 'all' | 'admin' | 'employee'> | null;
+  feature_visibility?: Record<string, any> | null;
 }
+
+export const ALL_FEATURE_KEYS: (keyof Omit<CompanyFeatures, 'company_id' | 'feature_visibility'>)[] = [
+  'tasks_enabled',
+  'birthdays_enabled',
+  'attendance_regularization_enabled',
+  'leave_management_enabled',
+  'profile_vault_enabled',
+  'org_directory_enabled',
+  'chat_enabled',
+  'kudos_enabled',
+  'helpdesk_enabled',
+  'knowledge_base_enabled',
+  'travel_expenses_enabled',
+  'org_chart_tree_enabled',
+  'google_calendar_enabled',
+  'multi_level_approvals_enabled',
+  'compensation_enabled',
+  'payroll_export_enabled',
+  'separation_enabled',
+  'performance_enabled',
+  'ai_analytics_enabled',
+  'ip_whitelist_enabled',
+  'mock_gps_detection_enabled',
+  'wellbeing_enabled'
+];
 
 export function gateFeaturesByRole(
   features: CompanyFeatures,
@@ -30,16 +66,9 @@ export function gateFeaturesByRole(
   if (role === 'super_admin' || role === 'admin' || isOwner) return features;
 
   const gated = { ...features };
-  const visibility = (features.feature_visibility as Record<string, 'all' | 'admin' | 'employee'>) || {};
+  const visibility = (features.feature_visibility as Record<string, any>) || {};
 
-  const allKeys: (keyof Omit<CompanyFeatures, 'company_id' | 'feature_visibility'>)[] = [
-    'tasks_enabled', 'birthdays_enabled', 'chat_enabled', 'kudos_enabled',
-    'helpdesk_enabled', 'multi_level_approvals_enabled', 'ai_analytics_enabled',
-    'payroll_export_enabled', 'ip_whitelist_enabled', 'mock_gps_detection_enabled',
-    'wellbeing_enabled'
-  ];
-
-  allKeys.forEach(k => {
+  ALL_FEATURE_KEYS.forEach(k => {
     const rule = visibility[k] || 'all';
 
     if (role === 'employee') {
@@ -54,12 +83,52 @@ export function gateFeaturesByRole(
 }
 
 const PLAN_DEFAULTS: Record<'basic' | 'pro' | 'enterprise', (keyof Omit<CompanyFeatures, 'company_id'>)[]> = {
-  basic: ['tasks_enabled', 'birthdays_enabled'],
-  pro: ['tasks_enabled', 'birthdays_enabled', 'chat_enabled', 'kudos_enabled', 'helpdesk_enabled', 'multi_level_approvals_enabled'],
+  basic: [
+    'tasks_enabled',
+    'birthdays_enabled',
+    'attendance_regularization_enabled',
+    'leave_management_enabled',
+    'profile_vault_enabled',
+    'org_directory_enabled'
+  ],
+  pro: [
+    'tasks_enabled',
+    'birthdays_enabled',
+    'attendance_regularization_enabled',
+    'leave_management_enabled',
+    'profile_vault_enabled',
+    'org_directory_enabled',
+    'chat_enabled',
+    'kudos_enabled',
+    'helpdesk_enabled',
+    'knowledge_base_enabled',
+    'travel_expenses_enabled',
+    'org_chart_tree_enabled',
+    'google_calendar_enabled',
+    'multi_level_approvals_enabled'
+  ],
   enterprise: [
-    'tasks_enabled', 'birthdays_enabled', 'chat_enabled', 'kudos_enabled',
-    'helpdesk_enabled', 'multi_level_approvals_enabled', 'ai_analytics_enabled',
-    'payroll_export_enabled', 'ip_whitelist_enabled', 'mock_gps_detection_enabled',
+    'tasks_enabled',
+    'birthdays_enabled',
+    'attendance_regularization_enabled',
+    'leave_management_enabled',
+    'profile_vault_enabled',
+    'org_directory_enabled',
+    'chat_enabled',
+    'kudos_enabled',
+    'helpdesk_enabled',
+    'knowledge_base_enabled',
+    'travel_expenses_enabled',
+    'org_chart_tree_enabled',
+    'google_calendar_enabled',
+    'multi_level_approvals_enabled',
+    'compensation_enabled',
+    'payroll_export_enabled',
+    'separation_enabled',
+    'performance_enabled',
+    'ai_analytics_enabled',
+    'ip_whitelist_enabled',
+    'mock_gps_detection_enabled',
     'wellbeing_enabled'
   ]
 };
@@ -69,34 +138,19 @@ export function getDefaultsForPlan(plan: string): Omit<CompanyFeatures, 'company
   const enabledKeys = PLAN_DEFAULTS[normPlan];
   const defaults: any = {};
   
-  const allKeys: (keyof Omit<CompanyFeatures, 'company_id'>)[] = [
-    'tasks_enabled', 'birthdays_enabled', 'chat_enabled', 'kudos_enabled',
-    'helpdesk_enabled', 'multi_level_approvals_enabled', 'ai_analytics_enabled',
-    'payroll_export_enabled', 'ip_whitelist_enabled', 'mock_gps_detection_enabled',
-    'wellbeing_enabled'
-  ];
-
-  allKeys.forEach(k => {
+  ALL_FEATURE_KEYS.forEach(k => {
     defaults[k] = enabledKeys.includes(k);
   });
 
   return defaults;
 }
 
-
 export function gateFeaturesByPlan(features: CompanyFeatures, plan: string): CompanyFeatures {
   const normPlan = (plan === 'pro' || plan === 'enterprise') ? plan : 'basic';
   const allowedKeys = PLAN_DEFAULTS[normPlan];
   const gated = { ...features };
   
-  const allKeys: (keyof Omit<CompanyFeatures, 'company_id'>)[] = [
-    'tasks_enabled', 'birthdays_enabled', 'chat_enabled', 'kudos_enabled',
-    'helpdesk_enabled', 'multi_level_approvals_enabled', 'ai_analytics_enabled',
-    'payroll_export_enabled', 'ip_whitelist_enabled', 'mock_gps_detection_enabled',
-    'wellbeing_enabled'
-  ];
-
-  allKeys.forEach(k => {
+  ALL_FEATURE_KEYS.forEach(k => {
     // If the database has it enabled, keep it enabled (super-admin override).
     // Otherwise, if it is not in the plan, force it to false.
     if (!allowedKeys.includes(k) && !features[k]) {
@@ -202,11 +256,16 @@ export function useCompanyFeatures() {
 
     try {
       const { data, error } = await activeFetchPromise;
-      if (error) throw error;
       const plan = user?.company?.planType || 'basic';
-      const resolvedDb = data
-        ? (data as CompanyFeatures)
-        : ({ company_id: user.companyId, ...getDefaultsForPlan(plan) } as CompanyFeatures);
+      const planDefaults = getDefaultsForPlan(plan);
+      let resolvedDb: CompanyFeatures;
+      if (data) {
+        const jsonFlags = (data as any)?.feature_visibility?.flags || {};
+        const merged: any = { ...planDefaults, ...data, ...jsonFlags, company_id: user.companyId };
+        resolvedDb = merged as CompanyFeatures;
+      } else {
+        resolvedDb = { company_id: user.companyId, ...planDefaults } as CompanyFeatures;
+      }
       const resolved = gateFeaturesByPlan(resolvedDb, plan);
 
       const changed = JSON.stringify(cachedFeatures) !== JSON.stringify(resolved);

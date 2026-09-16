@@ -55,7 +55,7 @@ export default function EmployeeKudos() {
     });
     setSubmitting(false);
     if (error) return toast.error(error.message);
-    toast.success('Kudos sent! 🎉');
+    toast.success('Kudos recognition sent successfully!');
     setMessage(''); setToUser('');
     load();
   };

@@ -212,7 +212,7 @@ export default function EmployeeIntranet() {
     setPosts(prev => [newPost, ...prev]);
     setBadgeDialogOpen(false);
     setBadgeNote('');
-    toast.success(`Awarded ${badgeType} badge to ${badgeRecipient}! 🏆`);
+    toast.success(`Awarded ${badgeType} badge to ${badgeRecipient}!`);
   };
 
   // Handle Like Post
@@ -238,7 +238,7 @@ export default function EmployeeIntranet() {
     const newComment: PostComment = {
       id: `c-${Date.now()}`,
       author_name: user?.name || 'Anil Dhakar',
-      author_role: user?.role === 'employee' ? 'Frontend Developer Intern' : 'Staff Engineer',
+      author_role: user?.role === 'employee' ? 'Frontend Developer Intern' : 'Staff Software Engineer',
       created_at: 'Just now',
       content: text
     };
@@ -259,14 +259,14 @@ export default function EmployeeIntranet() {
 
   // Birthday Wish Action
   const handleWishBirthday = (personName: string) => {
-    toast.success(`Birthday greeting & confetti sent to ${personName}! 🎂🎉`, {
+    toast.success(`Birthday greeting sent to ${personName}!`, {
       description: "Automated greeting posted to team announcements."
     });
   };
 
   // Anniversary Wish Action
   const handleWishAnniversary = (personName: string, years: number) => {
-    toast.success(`Congratulations sent to ${personName} for completing ${years} years! 🏆✨`, {
+    toast.success(`Congratulations sent to ${personName} for completing ${years} years!`, {
       description: "Work anniversary celebration note sent."
     });
   };
@@ -415,8 +415,8 @@ export default function EmployeeIntranet() {
                 {/* Engagement Bar: Like & Comment Counters */}
                 <div className="flex items-center justify-between py-2 border-y border-border/50 text-xs text-muted-foreground">
                   <div className="flex items-center gap-1.5">
-                    <span className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold">
-                      👍
+                    <span className="h-5 w-5 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                      <ThumbsUp className="h-3 w-3 fill-primary/30" />
                     </span>
                     <span className="font-semibold text-foreground">{post.likes}</span>
                   </div>
@@ -443,10 +443,7 @@ export default function EmployeeIntranet() {
                   <Button 
                     variant="ghost" 
                     size="sm" 
-                    onClick={() => {
-                      const input = document.getElementById(`comment-input-${post.id}`);
-                      input?.focus();
-                    }}
+                    onClick={() => setCommentInputs(prev => ({ ...prev, [post.id]: prev[post.id] !== undefined ? undefined : '' }))}
                     className="h-8 px-3 text-xs font-semibold gap-1.5 text-muted-foreground hover:text-foreground"
                   >
                     <MessageSquare className="h-3.5 w-3.5" />
@@ -454,48 +451,42 @@ export default function EmployeeIntranet() {
                   </Button>
                 </div>
 
-                {/* Comments List */}
-                {post.comments.length > 0 && (
-                  <div className="space-y-2 mt-3 pt-3 border-t border-border/40">
-                    {post.comments.map((c) => (
-                      <div key={c.id} className="flex items-start gap-2.5 p-2.5 rounded-xl bg-muted/30 border border-border/40 text-xs">
-                        <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[11px] shrink-0">
-                          {c.author_name.charAt(0)}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-foreground">{c.author_name}</span>
-                            <span className="text-[10px] text-muted-foreground">{c.created_at}</span>
+                {/* Inline Comment Box */}
+                {commentInputs[post.id] !== undefined && (
+                  <div className="pt-3 border-t border-border/40 space-y-3 animate-in fade-in duration-150">
+                    <div className="flex gap-2">
+                      <Input 
+                        placeholder="Write a supportive comment…"
+                        value={commentInputs[post.id] || ''}
+                        onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddComment(post.id)}
+                        className="h-8 text-xs rounded-xl bg-muted/40"
+                      />
+                      <Button 
+                        size="sm" 
+                        onClick={() => handleAddComment(post.id)}
+                        className="h-8 px-3 text-xs rounded-xl bg-primary"
+                      >
+                        <Send className="h-3 w-3" />
+                      </Button>
+                    </div>
+
+                    {/* Comments List */}
+                    {post.comments.length > 0 && (
+                      <div className="space-y-2 pt-1">
+                        {post.comments.map(c => (
+                          <div key={c.id} className="p-2.5 rounded-xl bg-muted/30 border border-border/40 text-xs">
+                            <div className="flex items-center justify-between font-semibold text-foreground mb-0.5">
+                              <span>{c.author_name}</span>
+                              <span className="text-[10px] text-muted-foreground font-normal">{c.created_at}</span>
+                            </div>
+                            <p className="text-muted-foreground leading-relaxed">{c.content}</p>
                           </div>
-                          <p className="text-muted-foreground mt-0.5 leading-relaxed">{c.content}</p>
-                        </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
                   </div>
                 )}
-
-                {/* Inline Comment Input Box */}
-                <div className="mt-3 flex items-center gap-2 pt-2 border-t border-border/30">
-                  <div className="h-7 w-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-[10px] shrink-0">
-                    {user?.name ? user.name.charAt(0).toUpperCase() : 'A'}
-                  </div>
-                  <Input 
-                    id={`comment-input-${post.id}`}
-                    placeholder="Write a comment…"
-                    value={commentInputs[post.id] || ''}
-                    onChange={(e) => setCommentInputs(prev => ({ ...prev, [post.id]: e.target.value }))}
-                    onKeyDown={(e) => { if (e.key === 'Enter') handleAddComment(post.id); }}
-                    className="h-8 text-xs bg-muted/20 border-border/60"
-                  />
-                  <Button 
-                    size="sm" 
-                    onClick={() => handleAddComment(post.id)}
-                    className="h-8 px-2.5 bg-primary text-primary-foreground"
-                  >
-                    <Send className="h-3 w-3" />
-                  </Button>
-                </div>
-
               </Card>
             ))}
           </div>
@@ -504,26 +495,25 @@ export default function EmployeeIntranet() {
 
         {/* ─── Right Column (4 cols): Celebrations & Anniversaries Widget (Matching screenshot) ─── */}
         <div className="lg:col-span-4 space-y-6">
-          <Card className="p-5 border-border/70 shadow-sm bg-card">
+          <Card className="border border-border/70 shadow-sm overflow-hidden sticky top-20">
             
-            {/* Widget Header Tabs: BIRTHDAY(S) (1) vs WORK ANNIVERSARIES (1) */}
-            <div className="flex items-center justify-between border-b border-border/70 pb-3 mb-4">
+            {/* Widget Header Tabs: TODAY'S BIRTHDAY (1) vs WORK ANNIVERSARIES (1) */}
+            <div className="grid grid-cols-2 p-1.5 bg-muted/40 border-b border-border/60 gap-1 text-[11px] font-bold">
               <button
                 onClick={() => setRightTab('birthdays')}
-                className={`text-xs font-bold uppercase tracking-wider transition-all pb-1 ${
+                className={`py-2 rounded-xl transition-all ${
                   rightTab === 'birthdays'
-                    ? 'text-primary border-b-2 border-primary'
+                    ? 'bg-card text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
-                BIRTHDAY(S) (1)
+                TODAY'S BIRTHDAY (1)
               </button>
-
               <button
                 onClick={() => setRightTab('anniversaries')}
-                className={`text-xs font-bold uppercase tracking-wider transition-all pb-1 ${
+                className={`py-2 rounded-xl transition-all ${
                   rightTab === 'anniversaries'
-                    ? 'text-primary border-b-2 border-primary'
+                    ? 'bg-card text-foreground shadow-sm'
                     : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -533,7 +523,7 @@ export default function EmployeeIntranet() {
 
             {/* TAB: BIRTHDAYS */}
             {rightTab === 'birthdays' && (
-              <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="space-y-6 animate-in fade-in duration-200 p-4">
                 
                 {/* Date indicator */}
                 <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-primary bg-primary/5 py-1.5 rounded-lg border border-primary/10">
@@ -543,8 +533,8 @@ export default function EmployeeIntranet() {
 
                 {/* Featured Birthday Hero Card */}
                 <div className="flex flex-col items-center text-center p-4 rounded-2xl bg-gradient-to-b from-primary/5 via-background to-accent/20 border border-border/70 relative overflow-hidden">
-                  <div className="absolute top-2 right-2 text-xl animate-bounce">
-                    🎂
+                  <div className="absolute top-2 right-2 text-primary p-1 rounded-full bg-primary/10">
+                    <Cake className="h-4 w-4" />
                   </div>
 
                   <div className="h-16 w-16 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center font-bold text-xl text-primary mb-3 shadow-sm">
@@ -602,7 +592,7 @@ export default function EmployeeIntranet() {
 
             {/* TAB: WORK ANNIVERSARIES */}
             {rightTab === 'anniversaries' && (
-              <div className="space-y-6 animate-in fade-in duration-200">
+              <div className="space-y-6 animate-in fade-in duration-200 p-4">
                 
                 {/* Date indicator */}
                 <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-amber-500 bg-amber-500/5 py-1.5 rounded-lg border border-amber-500/10">
@@ -612,8 +602,8 @@ export default function EmployeeIntranet() {
 
                 {/* Featured Anniversary Hero Card */}
                 <div className="flex flex-col items-center text-center p-4 rounded-2xl bg-gradient-to-b from-amber-500/5 via-background to-accent/20 border border-border/70 relative overflow-hidden">
-                  <div className="absolute top-2 right-2 text-xl animate-bounce">
-                    🏆
+                  <div className="absolute top-2 right-2 text-amber-500 p-1 rounded-full bg-amber-500/10">
+                    <Trophy className="h-4 w-4" />
                   </div>
 
                   <div className="h-16 w-16 rounded-full bg-amber-500/10 border-2 border-amber-500/30 flex items-center justify-center font-bold text-xl text-amber-600 mb-3 shadow-sm">
@@ -702,12 +692,12 @@ export default function EmployeeIntranet() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Applause">👏 Applause (Great job & dedication)</SelectItem>
-                  <SelectItem value="Star Performer">⭐ Star Performer (High impact results)</SelectItem>
-                  <SelectItem value="Superstar">🚀 Superstar (Out of this world execution)</SelectItem>
-                  <SelectItem value="Innovator">💡 Innovator (Creative problem solver)</SelectItem>
-                  <SelectItem value="Team Player">🤝 Team Player (Outstanding collaboration)</SelectItem>
-                  <SelectItem value="MVP">👑 MVP (Most valuable player)</SelectItem>
+                  <SelectItem value="Applause">Applause (Great job & dedication)</SelectItem>
+                  <SelectItem value="Star Performer">Star Performer (High impact results)</SelectItem>
+                  <SelectItem value="Superstar">Superstar (Exceptional execution)</SelectItem>
+                  <SelectItem value="Innovator">Innovator (Creative problem solver)</SelectItem>
+                  <SelectItem value="Team Player">Team Player (Outstanding collaboration)</SelectItem>
+                  <SelectItem value="MVP">MVP (Most valuable contributor)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

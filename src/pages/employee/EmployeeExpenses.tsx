@@ -822,10 +822,10 @@ export default function EmployeeExpenses() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Flight">✈️ Flight</SelectItem>
-                    <SelectItem value="Train">🚆 Train / Railway</SelectItem>
-                    <SelectItem value="Cab / Taxi">🚕 Cab / Taxi</SelectItem>
-                    <SelectItem value="Personal Vehicle">🚗 Personal Vehicle</SelectItem>
+                    <SelectItem value="Flight">Flight</SelectItem>
+                    <SelectItem value="Train">Train / Railway</SelectItem>
+                    <SelectItem value="Cab / Taxi">Cab / Taxi</SelectItem>
+                    <SelectItem value="Personal Vehicle">Personal Vehicle</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -885,13 +885,13 @@ export default function EmployeeExpenses() {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Food & Meals">🍔 Food & Meals</SelectItem>
-                    <SelectItem value="Travel & Commute">🚕 Travel & Commute</SelectItem>
-                    <SelectItem value="Client Entertainment">👔 Client Entertainment</SelectItem>
-                    <SelectItem value="Internet & Mobile">📶 Internet & Mobile</SelectItem>
-                    <SelectItem value="Hardware & Software">💻 Hardware & Software</SelectItem>
-                    <SelectItem value="Office Supplies">📦 Office Supplies</SelectItem>
-                    <SelectItem value="Others">📋 Others</SelectItem>
+                    <SelectItem value="Food & Meals">Food & Meals</SelectItem>
+                    <SelectItem value="Travel & Commute">Travel & Commute</SelectItem>
+                    <SelectItem value="Client Entertainment">Client Entertainment</SelectItem>
+                    <SelectItem value="Internet & Mobile">Internet & Mobile</SelectItem>
+                    <SelectItem value="Hardware & Software">Hardware & Software</SelectItem>
+                    <SelectItem value="Office Supplies">Office Supplies</SelectItem>
+                    <SelectItem value="Others">Others</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

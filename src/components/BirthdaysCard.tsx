@@ -41,7 +41,7 @@ export function BirthdaysCard() {
               <p className="text-sm font-medium">{i.name}</p>
               <p className="text-xs text-muted-foreground">{i.date}</p>
             </div>
-            <span className="text-xs text-muted-foreground">{i.days === 0 ? '🎉 Today!' : `in ${i.days}d`}</span>
+            <span className="text-xs text-muted-foreground font-medium">{i.days === 0 ? 'Today' : `in ${i.days}d`}</span>
           </div>
         ))}
       </CardContent>

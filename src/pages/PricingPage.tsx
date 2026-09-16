@@ -16,7 +16,7 @@ const PLANS = [
     name: "Starter",
     price: "Free",
     period: "",
-    desc: "For small teams getting started",
+    desc: "Free for teams up to 10. Core shift tracking, leave quotas, and org directory.",
     features: [
       "Up to 10 employees",
       "Face attendance + GPS geofencing",
@@ -33,7 +33,7 @@ const PLANS = [
     name: "Professional",
     price: "₹99",
     period: "/user/mo",
-    desc: "For growing Indian businesses",
+    desc: "Complete HRMS with travel claims, exit clearances, and Indian statutory payroll.",
     features: [
       "Unlimited employees",
       "Everything in Starter",
@@ -58,7 +58,7 @@ const PLANS = [
     name: "Enterprise",
     price: "Custom",
     period: "",
-    desc: "For large organizations",
+    desc: "Custom pricing for 100+ employees. SSO, white-label domain, and hardware API sync.",
     features: [
       "Everything in Professional",
       "Custom branding & logo upload",

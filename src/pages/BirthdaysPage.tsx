@@ -86,7 +86,7 @@ export default function BirthdaysPage() {
 
   const handleCelebrate = (empId: string, name: string) => {
     setWished(prev => ({ ...prev, [empId]: true }));
-    toast.success(`Sent virtual birthday wishes to ${name}! 🎈🧁✨`);
+    toast.success(`Sent virtual birthday wishes to ${name}!`);
   };
 
   if (!features?.birthdays_enabled) {
@@ -143,7 +143,7 @@ export default function BirthdaysPage() {
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-heading text-pink-600 flex items-center gap-2">
                 <Cake className="h-5 w-5 text-pink-500 animate-pulse" />
-                Happening Today! 🎉
+                Happening Today
               </CardTitle>
               <CardDescription>Don't forget to wish your colleagues a fantastic day!</CardDescription>
             </CardHeader>

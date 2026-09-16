@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
 import { AppSidebar } from './AppSidebar';
 import { useAuth } from '@/contexts/AuthContext';
@@ -80,6 +80,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   }
 
   const { user, logout } = useAuth();
+  const [searchScope, setSearchScope] = useState<'people' | 'department'>('people');
+  const [helpTextVisible, setHelpTextVisible] = useState(() => localStorage.getItem('help_text_visible') !== 'false');
   const initial = user?.name?.charAt(0)?.toUpperCase() ?? '?';
   const { items, count } = useAdminNotifications();
   const { theme, toggle } = useTheme();
@@ -114,13 +116,51 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <AppSidebar />
         <div className="flex-1 flex flex-col min-w-0">
           <header className="h-14 flex items-center justify-between border-b bg-card px-4 sticky top-0 z-10">
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex items-center gap-3 min-w-0 flex-1 max-w-xl mx-2">
               <SidebarTrigger />
-              <span className="text-sm text-muted-foreground capitalize truncate">
-                {user?.role?.replace('_', ' ')} Portal
-                {user?.company && (<span className="ml-2 text-foreground font-medium">· {user.company.name}</span>)}
-              </span>
+              {/* Global Entity Search Bar (Screenshot 32) */}
+              <div className="hidden md:flex items-center flex-1 relative">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button className="h-8 px-2.5 rounded-l-lg border border-r-0 bg-muted/40 hover:bg-muted text-xs font-semibold text-muted-foreground flex items-center gap-1.5 shrink-0 transition-colors">
+                      {searchScope === 'people' ? 'People' : 'Department'}
+                      <span className="text-[10px] opacity-70">▼</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="start" className="w-40 p-2 text-xs space-y-1">
+                    <p className="text-[10px] font-bold text-muted-foreground uppercase px-2 py-1">Search By</p>
+                    <button 
+                      onClick={() => setSearchScope('people')} 
+                      className={`w-full text-left px-2 py-1.5 rounded-md flex items-center justify-between ${searchScope === 'people' ? 'bg-primary/10 text-primary font-bold' : 'hover:bg-muted'}`}
+                    >
+                      <span>People</span>
+                      {searchScope === 'people' && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                    </button>
+                    <button 
+                      onClick={() => setSearchScope('department')} 
+                      className={`w-full text-left px-2 py-1.5 rounded-md flex items-center justify-between ${searchScope === 'department' ? 'bg-primary/10 text-primary font-bold' : 'hover:bg-muted'}`}
+                    >
+                      <span>Department</span>
+                      {searchScope === 'department' && <span className="h-1.5 w-1.5 rounded-full bg-primary" />}
+                    </button>
+                  </PopoverContent>
+                </Popover>
+
+                <div className="relative flex-1">
+                  <input
+                    type="text"
+                    placeholder={`Search by ${searchScope === 'people' ? 'name or employee code' : 'department or team'}…`}
+                    className="w-full h-8 pl-3 pr-8 rounded-r-lg border bg-background text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        navigate('/employee/people');
+                      }
+                    }}
+                  />
+                </div>
+              </div>
             </div>
+
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle theme">
                 {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
@@ -145,7 +185,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     </div>
                     <div className="max-h-96 overflow-y-auto">
                       {items.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-8">All caught up 🎉</p>
+                        <p className="text-sm text-muted-foreground text-center py-8">All caught up. No pending requests.</p>
                       ) : (
                         items.map((n) => {
                           const Icon = iconFor(n.kind);
@@ -165,33 +205,64 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   </PopoverContent>
                 </Popover>
               )}
+
+              {/* User Profile Dropdown Menu (Screenshot 48) */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="h-8 w-8 rounded-full bg-primary flex items-center justify-center hover:opacity-90 transition focus:outline-none focus:ring-2 focus:ring-primary/50" aria-label="Account menu">
-                    <span className="text-xs font-medium text-primary-foreground">{initial}</span>
+                  <button className="h-8 w-8 rounded-full bg-primary flex items-center justify-center hover:opacity-90 transition focus:outline-none focus:ring-2 focus:ring-primary/50 overflow-hidden" aria-label="Account menu">
+                    {user?.avatarUrl ? (
+                      <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+                    ) : (
+                      <span className="text-xs font-bold text-primary-foreground">{initial}</span>
+                    )}
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>
-                    <div className="font-medium truncate">{user?.name}</div>
-                    <div className="text-[10px] text-muted-foreground truncate font-normal">{user?.email}</div>
-                    {user?.employeeId && (
-                      <div className="mt-1.5 py-0.5 px-2 rounded-md bg-primary/10 text-primary text-[10px] font-mono inline-block">
-                        ID: {user.employeeId}
-                      </div>
-                    )}
-                  </DropdownMenuLabel>
+                <DropdownMenuContent align="end" className="w-64 p-2 shadow-xl rounded-2xl border">
+                  <div className="p-3 bg-muted/30 rounded-xl mb-1.5">
+                    <p className="font-bold text-sm text-foreground truncate">{user?.name}</p>
+                    <p className="text-xs text-muted-foreground truncate font-normal">{user?.email}</p>
+                    <button 
+                      onClick={() => navigate(profilePath)} 
+                      className="mt-2 text-xs font-semibold text-primary hover:underline block"
+                    >
+                      View Profile →
+                    </button>
+                  </div>
+                  
                   <DropdownMenuSeparator />
-                  {user?.role !== 'super_admin' && (
-                    <>
-                      <DropdownMenuItem onClick={() => navigate(profilePath)}>
-                        {(user?.role === 'admin' || user?.isOwner) ? <Settings className="h-4 w-4 mr-2" /> : <UserIcon className="h-4 w-4 mr-2" />}
-                        {(user?.role === 'admin' || user?.isOwner) ? 'Settings' : 'Profile'}
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                    </>
-                  )}
-                  <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive">
+
+                  <DropdownMenuItem onClick={() => navigate(profilePath)} className="py-2 cursor-pointer text-xs font-medium">
+                    <Settings className="h-4 w-4 mr-2 text-muted-foreground" />
+                    My Account Settings
+                  </DropdownMenuItem>
+
+                  {/* Help Text Visible UX Switch (Screenshot 48) */}
+                  <div className="px-2 py-2 flex items-center justify-between text-xs text-foreground font-medium rounded-lg hover:bg-muted/40">
+                    <span className="text-muted-foreground">Help Text Visible</span>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={helpTextVisible}
+                      onClick={() => {
+                        const next = !helpTextVisible;
+                        setHelpTextVisible(next);
+                        localStorage.setItem('help_text_visible', next ? 'true' : 'false');
+                      }}
+                      className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                        helpTextVisible ? 'bg-primary' : 'bg-muted-foreground/30'
+                      }`}
+                    >
+                      <span
+                        className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                          helpTextVisible ? 'translate-x-4' : 'translate-x-0'
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem onClick={handleLogout} className="py-2 cursor-pointer text-xs text-destructive focus:text-destructive font-medium">
                     <LogOut className="h-4 w-4 mr-2" /> Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>

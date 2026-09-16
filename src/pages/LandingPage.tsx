@@ -11,7 +11,10 @@ import {
   ChevronUp, ArrowRight, Menu, X, Zap, Globe, Smartphone, Lock,
   Award, TrendingUp, FileText, UserCheck, Send, Camera, ListTodo,
   CalendarDays, Coffee, HeartHandshake, Sparkles, Building2,
-  FileCheck2, Compass, ShieldAlert, BadgePercent, Cake, PartyPopper
+  FileCheck2, Compass, ShieldAlert, BadgePercent, Cake, PartyPopper,
+  Briefcase, Plane, Receipt, UserX, Network, CheckSquare, Layers,
+  HelpCircle, Eye, RefreshCw, IndianRupee, BookOpen, FolderLock,
+  Scale, ShieldQuestion, Download, FileSpreadsheet
 } from "lucide-react";
 import heroDashboard from "@/assets/hero-dashboard.jpg";
 import testimonial1 from "@/assets/testimonial-1.jpg";
@@ -27,7 +30,7 @@ function Navbar() {
   const [open, setOpen] = useState(false);
   const links = [
     { name: "Features", href: "#features" },
-    { name: "Platform Showcase", href: "#showcase" },
+    { name: "Interactive Showcase", href: "#showcase" },
     { name: "How It Works", href: "#how-it-works" },
     { name: "Role Matrix", href: "#roles" },
     { name: "Pricing", href: "/pricing", isRoute: true },
@@ -129,32 +132,41 @@ function HeroSection() {
         <div className="space-y-6">
           <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3.5 py-1 text-xs font-semibold text-primary">
             <Sparkles className="h-3.5 w-3.5" />
-            <span>RoleSync 2.0 • Complete Workforce & HRMS Suite</span>
+            <span>RoleSync • Unified HRMS & Workforce Operations</span>
           </div>
 
           <h1 className="font-[Poppins] text-4xl font-bold leading-tight text-foreground lg:text-5xl xl:text-6xl">
-            Smart, Unified <span className="text-primary bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">Employee Management</span> Platform
+            Automate Attendance, Leaves, Payroll & <span className="text-primary bg-gradient-to-r from-primary to-indigo-600 bg-clip-text text-transparent">Team Operations</span>
           </h1>
 
           <p className="w-full text-base sm:text-lg text-muted-foreground leading-relaxed">
-            Everything your organization needs in one fast, secure cloud: <strong>Face-verified Attendance</strong>, <strong>Live Break Tracking</strong>, <strong>6-Tier Leave Quotas</strong>, <strong>WFH & Regularization Workflows</strong>, <strong>Team Celebrations & Kudos</strong>, and <strong>Indian Payroll Compliance</strong>.
+            Biometric shift tracking, 7-tab profile vault, CTC breakdown with Indian payroll, 6-tier leave quotas, one-click expense claims, peer recognition badges, and corporate policy manuals — all in a single unified dashboard.
           </p>
 
           <div className="flex flex-wrap gap-2.5 pt-1">
             <span className="inline-flex items-center gap-1.5 rounded-md bg-secondary/80 px-2.5 py-1 text-xs font-medium text-foreground">
-              <Clock className="h-3.5 w-3.5 text-primary" /> Live Break & Punch Tracking
+              <Clock className="h-3.5 w-3.5 text-primary" /> Live Punch & Break Timer
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-md bg-secondary/80 px-2.5 py-1 text-xs font-medium text-foreground">
-              <Calendar className="h-3.5 w-3.5 text-indigo-500" /> 6-Quota Leave Engine
+              <IndianRupee className="h-3.5 w-3.5 text-emerald-500" /> CTC Breakdown & Payslips
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-md bg-secondary/80 px-2.5 py-1 text-xs font-medium text-foreground">
-              <MapPin className="h-3.5 w-3.5 text-emerald-500" /> GPS Geofence & Anti-Spoof
+              <FolderLock className="h-3.5 w-3.5 text-indigo-500" /> 7-Tab Profile & Vault
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-md bg-secondary/80 px-2.5 py-1 text-xs font-medium text-foreground">
-              <PartyPopper className="h-3.5 w-3.5 text-amber-500" /> Celebrations & Kudos
+              <BookOpen className="h-3.5 w-3.5 text-amber-500" /> Policy Library & SOPs
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-md bg-secondary/80 px-2.5 py-1 text-xs font-medium text-foreground">
-              <ShieldCheck className="h-3.5 w-3.5 text-sky-500" /> Multi-Tenant RLS Security
+              <Calendar className="h-3.5 w-3.5 text-indigo-500" /> 6-Category Leave Quotas
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-md bg-secondary/80 px-2.5 py-1 text-xs font-medium text-foreground">
+              <FileCheck2 className="h-3.5 w-3.5 text-teal-500" /> Bulk Regularize & WFH
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-md bg-secondary/80 px-2.5 py-1 text-xs font-medium text-foreground">
+              <Award className="h-3.5 w-3.5 text-purple-500" /> "Give A Badge" Awards
+            </span>
+            <span className="inline-flex items-center gap-1.5 rounded-md bg-secondary/80 px-2.5 py-1 text-xs font-medium text-foreground">
+              <Network className="h-3.5 w-3.5 text-sky-500" /> Interactive Org Chart Tree
             </span>
           </div>
 
@@ -163,7 +175,7 @@ function HeroSection() {
               Start 14-Day Free Trial <ArrowRight className="h-4 w-4" />
             </Button>
             <Button size="lg" variant="outline" onClick={() => { const el = document.getElementById("features"); el?.scrollIntoView({ behavior: "smooth" }); }}>
-              Explore All Features
+              Explore All 16 Modules
             </Button>
           </div>
 
@@ -182,9 +194,9 @@ function HeroSection() {
           </div>
 
           <div className="flex flex-wrap items-center gap-5 pt-1 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> No credit card required</span>
-            <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> 1-Click Instant Setup</span>
-            <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> EPF / ESI / PT Compliant</span>
+            <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> Multi-Tenant Subdomains</span>
+            <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> Email & Emp-Code Login</span>
+            <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-green-500" /> Google Calendar 2-Way Sync</span>
           </div>
         </div>
 
@@ -197,24 +209,25 @@ function HeroSection() {
               height={800} 
               className="w-full rounded-xl object-cover shadow-inner ring-1 ring-border" 
             />
-            {/* Overlay badge preview */}
+            {/* Overlay badge preview 1 */}
             <div className="absolute -bottom-4 -left-4 hidden sm:flex items-center gap-3 rounded-xl border border-border/80 bg-card/95 p-3 shadow-xl backdrop-blur-md animate-in fade-in duration-300">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500">
                 <Clock className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-foreground">Live Work Hours Tracker</p>
-                <p className="text-[11px] text-muted-foreground">8 hrs 42 mins • In Office</p>
+                <p className="text-xs font-semibold text-foreground">Live Timer & Punch Tracker</p>
+                <p className="text-[11px] text-muted-foreground">01:11:01 • In Office • Avg 09:35 hrs</p>
               </div>
             </div>
             
+            {/* Overlay badge preview 2 */}
             <div className="absolute -top-4 -right-4 hidden sm:flex items-center gap-3 rounded-xl border border-border/80 bg-card/95 p-3 shadow-xl backdrop-blur-md animate-in fade-in duration-300">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-500">
-                <Cake className="h-5 w-5" />
+                <Award className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-foreground">Team Birthday Radar</p>
-                <p className="text-[11px] text-muted-foreground">2 Celebrations This Week</p>
+                <p className="text-xs font-semibold text-foreground">Kudos & Badge Awards</p>
+                <p className="text-[11px] text-muted-foreground">"Applause" Awarded to Vamshika</p>
               </div>
             </div>
           </div>
@@ -227,10 +240,10 @@ function HeroSection() {
 /* ─── Stats Bar ─── */
 function StatsBar() {
   const stats = [
-    { label: "Active Enterprises", value: "500+", icon: Building2, desc: "Across India & Global" },
-    { label: "Daily Check-Ins", value: "50,000+", icon: UserCheck, desc: "Face & Geofence Verified" },
-    { label: "Platform Uptime", value: "99.99%", icon: Zap, desc: "Enterprise SLA" },
-    { label: "Leave & HR Quotas", value: "6 Categories", icon: CalendarDays, desc: "Automated Balances" },
+    { label: "Companies", value: "500+", icon: Building2, desc: "India & Global" },
+    { label: "Daily Punches", value: "100K+", icon: UserCheck, desc: "Biometric & Web" },
+    { label: "HRMS Modules", value: "16+", icon: Layers, desc: "Single Cloud Suite" },
+    { label: "Uptime SLA", value: "99.99%", icon: BadgePercent, desc: "EPF, ESI, PT Compliant" },
   ];
 
   return (
@@ -267,103 +280,183 @@ function InteractiveShowcase() {
     };
   }> = {
     attendance: {
-      title: "Smart Time, Attendance & Break Engine",
-      subtitle: "Biometric face verification with liveness anti-spoofing and microsecond precision break tracking.",
-      badge: "Real-Time Tracking",
+      title: "Time & Shift Tracking",
+      subtitle: "Real-time punch timer, daily work-hour charts, and batch regularization in one view.",
+      badge: "Live Real-Time Tracking",
       points: [
-        { icon: Camera, title: "Selfie Clock-In & Face Liveness", desc: "Dual verification using instant front camera selfie and geo-coordinate locking." },
-        { icon: Coffee, title: "Live Break Session Timer", desc: "Start and resume coffee or lunch breaks with active duration counter (HH:MM:SS)." },
-        { icon: MapPin, title: "Geofence Radius Enforcement", desc: "Define precise office bounds to ensure employees only punch within designated zones." },
-        { icon: BarChart3, title: "Recharts Work Hours Analytics", desc: "Interactive bar charts displaying weekly logged hours, overtime, and daily targets." }
+        { icon: Clock, title: "Live Punch & Break Digital Timer", desc: "Running counter (HH:MM:SS) with 1-click Clock Out, Start Break, and Lunch tracking." },
+        { icon: BarChart3, title: "3-Series Daily Work Analytics", desc: "Interactive charts tracking Work Hours, Break Durations, and Auto Clockouts across all shifts." },
+        { icon: CheckSquare, title: "Batch Regularization Shortcuts", desc: "1-click 'Check/Un-Check All' and 'Check excluding weekends' with bulk Regularize (N) submission." },
+        { icon: HelpCircle, title: "480-Min Policy & Biometric FAQ", desc: "Transparent deduction matrices (0-240m = 1 Day EL, 240-480m = 0.5 Day EL) and No-Show rules." }
       ],
       mockPreview: {
-        header: "Live Employee Punch State",
+        header: "Live Attendance Session State",
         metrics: [
-          { label: "Today's Status", val: "Clocked In (09:12 AM)", color: "text-emerald-500" },
-          { label: "Current Break", val: "Coffee Break (14m 20s)", color: "text-amber-500" },
-          { label: "Total Logged", val: "7h 45m / 8h 00m", color: "text-primary" }
+          { label: "Live Punch Timer", val: "01:11:01 (Clocked In)", color: "text-emerald-500" },
+          { label: "Averages (In / Out)", val: "10:45 AM • 08:21 PM", color: "text-primary" },
+          { label: "Avg Work Hours", val: "09:35 hrs • 16 Paid Days", color: "text-indigo-500" }
         ],
-        statusText: "📍 Office Geofence Verified (98.4% On-time score)"
+        statusText: "General Shift 1120 • Biometric Sync Active"
+      }
+    },
+    compensation: {
+      title: "Compensation & Indian Payroll",
+      subtitle: "Transparent CTC breakdown, basic/allowances, statutory deductions, Form 12BB declarations, and monthly PDF payslips.",
+      badge: "Statutory Payroll & Tax",
+      points: [
+        { icon: IndianRupee, title: "Detailed CTC & Monthly Structure", desc: "Granular breakdown of Basic Salary, HRA, Special Allowances, and employer contributions." },
+        { icon: BadgePercent, title: "EPF, ESI & State Professional Tax", desc: "Automated calculations conforming to statutory ceilings and state tax slabs across India." },
+        { icon: Download, title: "Instant PDF Payslip Archive", desc: "View, download, and verify digital payslips with month-by-month attendance summaries." },
+        { icon: FileSpreadsheet, title: "Form 12BB & Tax Declarations", desc: "Self-service declarations for 80C, 80D, HRA rent receipts, and home loan interest." }
+      ],
+      mockPreview: {
+        header: "Monthly Compensation & Tax Snapshot",
+        metrics: [
+          { label: "Annual Gross CTC", val: "₹14,50,000 / annum", color: "text-foreground" },
+          { label: "Monthly In-Hand Net", val: "₹1,02,450 / month", color: "text-emerald-500" },
+          { label: "EPF + PT Deductions", val: "₹4,200 (Compliant)", color: "text-indigo-500" }
+        ],
+        statusText: "Latest Payslip Ready for Download (PDF)"
+      }
+    },
+    profile: {
+      title: "7-Tab Profile & Document Vault",
+      subtitle: "Centralized employee repository covering personal records, professional background, family nominees, and verifiable documents.",
+      badge: "Employee Vault & Compliance",
+      points: [
+        { icon: FolderLock, title: "7 Dedicated Profile Tabs", desc: "Personal, Professional, Contact Details, Emergency Nominees, Financial Bank Data, Work Profile, and Forms/Letters." },
+        { icon: ShieldCheck, title: "Secure Document & Letter Vault", desc: "Upload and archive offer letters, PAN, Aadhaar, degree certificates, and contracts with 2MB size enforcement." },
+        { icon: RefreshCw, title: "Granular Audit Trail History", desc: "Every profile edit, document replacement, or status change is timestamped with actor logging." },
+        { icon: UserCheck, title: "Emergency & Nominee Protection", desc: "Store critical allergies, primary emergency contacts, and registered nominees for insurance." }
+      ],
+      mockPreview: {
+        header: "Employee Record & Verification",
+        metrics: [
+          { label: "Profile Status", val: "100% Complete (Verified)", color: "text-emerald-500" },
+          { label: "Vault Documents", val: "8 Files Stored (2MB max)", color: "text-primary" },
+          { label: "Audit Log History", val: "12 Timestamped Edits", color: "text-indigo-500" }
+        ],
+        statusText: "Bank details & KYC documents encrypted"
       }
     },
     leave: {
-      title: "Comprehensive 6-Tier Leave & Holiday Quota Engine",
-      subtitle: "End-to-end leave management with quota donut progress rings, holiday calendars, and instant CSV exports.",
+      title: "Leave Management",
+      subtitle: "Six leave types, dual table and card views, holiday opt-ins, and CSV export.",
       badge: "Automated Quotas",
       points: [
-        { icon: CalendarDays, title: "6 Dedicated Quota Categories", desc: "Bereavement, Casual, Earned (Annual), LWP, Menstrual, and Sick leave tracking." },
-        { icon: Target, title: "Dynamic Balance Rings", desc: "Visual donut completion rings tracking consumed vs available annual leave balances." },
-        { icon: Clock, title: "SLA Escalation Countdown", desc: "Configurable SLA timers ensure leave requests are approved or flagged within hours." },
-        { icon: FileText, title: "Instant CSV & Calendar Sync", desc: "Download company leave logs and view the complete 2026 holiday calendar." }
+        { icon: CalendarDays, title: "6 Dedicated Quota Buckets", desc: "Bereavement, Casual, Earned, Leave Without Pay (LWP), Menstrual, and Sick leave tracking." },
+        { icon: Layers, title: "Dual Table & Card Visual Views", desc: "Switch instantly between detailed numerical quota tables and visual progress cards." },
+        { icon: Star, title: "Mandatory vs Restricted Holidays", desc: "Color-coded holiday roster with employee opt-in selection for restricted/optional festival holidays." },
+        { icon: FileText, title: "7-State Request Lifecycle & CSV", desc: "Track Approved, Pending, Cancelled, and Post-Approval modifications with instant CSV export." }
       ],
       mockPreview: {
-        header: "Leave Balance & Quotas",
+        header: "Leave Balance & Quota Roster",
         metrics: [
-          { label: "Casual Leave", val: "8 / 12 Days Avail", color: "text-indigo-500" },
-          { label: "Sick Leave", val: "10 / 10 Days Avail", color: "text-emerald-500" },
-          { label: "Earned Leave", val: "14 / 18 Days Avail", color: "text-sky-500" }
+          { label: "Casual Leave", val: "8.0 / 12.0 Days Balance", color: "text-indigo-500" },
+          { label: "Earned Leave", val: "14.5 / 18.0 Days Balance", color: "text-sky-500" },
+          { label: "Upcoming Holidays", val: "3 in Next 90 Days", color: "text-emerald-500" }
         ],
-        statusText: "✨ 2026 Public Holidays Synced • 0 SLA Breaches"
+        statusText: "Optional Holidays: 1 Selected / 2 Allocated"
       }
     },
-    governance: {
-      title: "Workforce Governance, Regularization & WFH",
-      subtitle: "Empower employees to submit attendance corrections and remote work requests with transparent approvals.",
-      badge: "Governance & Approvals",
+    expenses: {
+      title: "Expense & Travel Claims",
+      subtitle: "Submit travel requests, expense claims, and cash advances with multi-tier approvals.",
+      badge: "Expense Governance",
       points: [
-        { icon: FileCheck2, title: "Attendance Regularization", desc: "Allow employees to submit punch correction requests with timestamps and manager remarks." },
-        { icon: Globe, title: "Work From Home (WFH) Approvals", desc: "Streamline hybrid workforce scheduling with flexible WFH requests and status rings." },
-        { icon: ShieldAlert, title: "Anti-Mock Location Guard", desc: "Detects and blocks GPS faker extensions and location spoofing attempts automatically." },
-        { icon: ArrowRight, title: "Multi-Tier Approval Chains", desc: "Route requests seamlessly from Team Lead → Department Manager → HR Admin." }
+        { icon: Plane, title: "Travel Itinerary Requests", desc: "Pre-trip approval workflow covering flights, hotels, daily per-diem allowances, and cab bills." },
+        { icon: Receipt, title: "Expense Claims & Receipts", desc: "Upload multi-currency bills with auto-categorization (Meals, Fuel, Client Entertainment, Logistics)." },
+        { icon: Briefcase, title: "Cash Advance Requests", desc: "Request upfront corporate advances with automatic reconciliation against final submitted bills." },
+        { icon: UserCheck, title: "'Viewing As' Delegate Switcher", desc: "Allows authorized executive assistants and managers to file or review claims on behalf of team members." }
       ],
       mockPreview: {
-        header: "Regularization & WFH Pipeline",
+        header: "Travel & Expense Pipeline",
         metrics: [
-          { label: "WFH Requests", val: "1 Pending (Lead Review)", color: "text-amber-500" },
-          { label: "Punch Correction", val: "Approved Yesterday", color: "text-emerald-500" },
-          { label: "Approval Speed", val: "Avg 2.4 Hours", color: "text-primary" }
+          { label: "Pending Claims", val: "₹14,500 (Admin Review)", color: "text-amber-500" },
+          { label: "Approved Advances", val: "₹25,000 (Disbursed)", color: "text-emerald-500" },
+          { label: "Approval Status", val: "Approved by Workflow", color: "text-primary" }
         ],
-        statusText: "🛡️ 100% Audit trail logged for HR compliance"
+        statusText: "Travel Desk & Finance Sync Complete"
       }
     },
-    culture: {
-      title: "Team Culture, Recognition & Celebrations",
-      subtitle: "Nurture high morale with birthday notifications, work anniversary milestones, and peer kudos badges.",
+    knowledge: {
+      title: "Knowledge Base & Corporate Policies",
+      subtitle: "Searchable central repository for SOPs, attendance deduction matrices, code of conduct, and downloadable PDFs.",
+      badge: "Policy Hub & Transparency",
+      points: [
+        { icon: BookOpen, title: "Searchable Policy Directory", desc: "Categorized library for Leave SOPs, Code of Conduct, Travel Guidelines, and Benefits manuals." },
+        { icon: Scale, title: "Radical Shift Transparency", desc: "Clear 480-minute shift rule matrix: 0-240m = 1 Day EL deduction, 240-480m = 0.5 Day EL deduction." },
+        { icon: ShieldQuestion, title: "No-Show & Comp-Off Governance", desc: "Automated X+1 warning, X+2 deduction SLA, and 11-day compensatory off expiry rules." },
+        { icon: Download, title: "1-Click PDF Downloads", desc: "Direct offline access for employees to official signed handbook and policy documents." }
+      ],
+      mockPreview: {
+        header: "Company Knowledge & SOP Portal",
+        metrics: [
+          { label: "Active Policies", val: "14 Corporate Handbooks", color: "text-foreground" },
+          { label: "Attendance Policy", val: "480-min Shift SLA Active", color: "text-amber-500" },
+          { label: "Comp-Off Validity", val: "11-Day Expiry Tracked", color: "text-emerald-500" }
+        ],
+        statusText: "Employee Handbook v4.2 Available (PDF)"
+      }
+    },
+    social: {
+      title: "Social Intranet & Kudos",
+      subtitle: "Peer badge awards, birthday spotlights, anonymous posting, and threaded discussions.",
       badge: "Culture & Connection",
       points: [
-        { icon: Cake, title: "Real-Time Celebrations Radar", desc: "Celebrate team member birthdays and work milestones with automated team announcements." },
-        { icon: Star, title: "Kudos & Peer Recognition Wall", desc: "Award Star, Helpful, MVP, and Innovator badges with custom peer appreciation notes." },
-        { icon: MessageSquare, title: "Secure Tenant-Scoped Chat", desc: "Real-time team messaging isolated per company with Office Updates broadcast channel." },
-        { icon: Headphones, title: "Integrated Helpdesk Ticketing", desc: "Fast resolution of HR, IT, and administrative issues with priority tagging." }
+        { icon: Award, title: "'Give A Badge' Peer Awards", desc: "Award highlighted badges like 'Applause', 'Star Performer', and 'Team Player' with personal citations." },
+        { icon: Cake, title: "Birthday & Work Anniversary Spotlight", desc: "Hero birthday card with 1-click 'Wish Happy Birthday' action and upcoming celebrations carousel." },
+        { icon: MessageSquare, title: "Named & Anonymous Posting", desc: "Share announcements, walk-in drives, referral bonuses (₹3k/₹4k/₹5k), and media attachments." },
+        { icon: HeartHandshake, title: "Reactions & Threaded Comments", desc: "Live likes, celebratory emoji reactions, and threaded discussions on all corporate posts." }
       ],
       mockPreview: {
-        header: "Team Celebrations & Kudos",
+        header: "Company Social & Kudos Wall",
         metrics: [
-          { label: "Birthdays Today", val: "🎂 Ananya Sharma", color: "text-rose-500" },
-          { label: "Top Kudos MVP", val: "⭐ Rajesh Kumar (+14)", color: "text-amber-500" },
-          { label: "Helpdesk SLA", val: "99.2% Resolved <4h", color: "text-emerald-500" }
+          { label: "Today's Birthday", val: "Somnath Tiwary (Growth)", color: "text-rose-500" },
+          { label: "Latest Badge", val: "Peer 'Applause' to Vamshika", color: "text-amber-500" },
+          { label: "Referral Drive", val: "₹5,000 Bonus Active", color: "text-emerald-500" }
         ],
-        statusText: "🎉 High team engagement: 42 Kudos sent this month"
+        statusText: "15 Likes & 4 Comments on recent Kudos"
       }
     },
-    payroll: {
-      title: "Indian Payroll & Statutory Compliance",
-      subtitle: "Automated calculations for EPF, ESI, Professional Tax, and instant PDF payslip downloads.",
-      badge: "Tax & Compliance",
+    people: {
+      title: "People & Org Chart",
+      subtitle: "Visual hierarchy tree, searchable directory, and two-way Google Calendar sync.",
+      badge: "Org Intelligence",
       points: [
-        { icon: BadgePercent, title: "EPF & ESI Auto-Deductions", desc: "Pre-configured Indian labor law formulas for Employee Provident Fund and ESI." },
-        { icon: Building2, title: "State-Wise Professional Tax", desc: "Automated PT slabs customized for Karnataka, Maharashtra, Delhi, and other states." },
-        { icon: FileText, title: "PDF Payslips & Bank Registers", desc: "1-click salary slip generation for employees and bank-ready transfer CSVs for admins." },
-        { icon: ShieldCheck, title: "GST-Compliant Billing", desc: "Automated GST tax invoices with HSN/SAC codes and company GSTIN." }
+        { icon: Network, title: "Dynamic Organization Chart Tree", desc: "Interactive node cards with subordinate count badges (e.g. 6), sibling arrows, and reporting lines." },
+        { icon: Users, title: "Searchable Employee Directory", desc: "Filter by department, search by name, and jump directly into 'View Profile' or 'Org Chart'." },
+        { icon: Calendar, title: "2-Way Google Calendar Sync", desc: "1-click OAuth sync displaying personal leaves, team leaves, holidays, and week-offs on Google Calendar." },
+        { icon: Compass, title: "Universal Scope Search", desc: "Header search with quick toggle between People and Department auto-complete lookups." }
       ],
       mockPreview: {
-        header: "Monthly Payroll Run",
+        header: "People & Org Intelligence",
         metrics: [
-          { label: "Gross Disbursed", val: "₹18,40,000", color: "text-foreground" },
-          { label: "EPF / ESI Deducted", val: "₹2,10,000", color: "text-indigo-500" },
-          { label: "Net Payable", val: "₹16,30,000", color: "text-emerald-500" }
+          { label: "Manager Focus", val: "Sachin Shetty (Tech Lead)", color: "text-foreground" },
+          { label: "Direct Reports", val: "6 Engineers (Bengaluru)", color: "text-indigo-500" },
+          { label: "Calendar Sync", val: "Synced with Google", color: "text-emerald-500" }
         ],
-        statusText: "📄 All payslips digitally generated & signed"
+        statusText: "Multi-level hierarchy visualizer active"
+      }
+    },
+    separation: {
+      title: "Exit & Clearance Workflows",
+      subtitle: "Self-service resignation, parallel department clearances, and structured alert center.",
+      badge: "Lifecycle & Governance",
+      points: [
+        { icon: UserX, title: "Initiate Exit Self-Service", desc: "Employees submit resignation with requested LWD, notice period calculations, and reasons." },
+        { icon: FileCheck2, title: "6-Stage Lifecycle Tracking", desc: "Clear visual badges: Approved, Rejected, Pending, Cancelled, Not Received Yet, and Cancellation." },
+        { icon: CheckSquare, title: "Multi-Department Clearances", desc: "Parallel clearance tasks across IT Assets, Finance Final Settlement, and HR Exit Interviews." },
+        { icon: Bell, title: "Segregated Alerts Center", desc: "Distinct tabs for General 'Notifications' vs required 'Actions' with Pending and Archived sub-tabs." }
+      ],
+      mockPreview: {
+        header: "Exit Clearance & Action Alerts",
+        metrics: [
+          { label: "Exit Status", val: "Pending HR Clearance", color: "text-amber-500" },
+          { label: "Pending Actions", val: "2 Approval Tasks Waiting", color: "text-rose-500" },
+          { label: "Archived Alerts", val: "14 Completed Items", color: "text-muted-foreground" }
+        ],
+        statusText: "Complete exit compliance audit trail"
       }
     }
   };
@@ -374,36 +467,44 @@ function InteractiveShowcase() {
     <section id="showcase" className="w-full bg-accent/15 py-16 lg:py-24 border-b border-border/40">
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="mb-10 text-center max-w-3xl mx-auto">
-          <Badge variant="secondary" className="mb-3 px-3 py-1">Interactive Feature Suite</Badge>
+          <Badge variant="secondary" className="mb-3 px-3 py-1">Interactive HRMS Suite</Badge>
           <h2 className="font-[Poppins] text-3xl font-bold text-foreground lg:text-4xl">
-            Engineered for Modern Teams
+            Explore Core HRMS Modules
           </h2>
           <p className="mt-3 text-muted-foreground text-base">
-            Click through the core functional pillars of RoleSync to explore how every module seamlessly interconnects.
+            Click any tab to see how each module works, end to end.
           </p>
         </div>
 
         {/* Tab Selector buttons */}
         <div className="flex flex-wrap justify-center gap-2 mb-10">
           {[
-            { id: "attendance", label: "⏱️ Time & Attendance", icon: Clock },
-            { id: "leave", label: "🏖️ Leaves & Holidays", icon: CalendarDays },
-            { id: "governance", label: "📋 Regularization & WFH", icon: FileCheck2 },
-            { id: "culture", label: "🎉 Culture & Celebrations", icon: PartyPopper },
-            { id: "payroll", label: "🇮🇳 Payroll & Compliance", icon: BadgePercent }
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${
-                activeTab === tab.id
-                  ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105"
-                  : "bg-card border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+            { id: "attendance", label: "Time & Shifts", icon: Clock },
+            { id: "compensation", label: "Compensation & CTC", icon: IndianRupee },
+            { id: "profile", label: "7-Tab Profile Vault", icon: FolderLock },
+            { id: "leave", label: "Leave & Holidays", icon: CalendarDays },
+            { id: "expenses", label: "Expenses & Travel", icon: Plane },
+            { id: "knowledge", label: "Policies & SOPs", icon: BookOpen },
+            { id: "social", label: "Social & Kudos", icon: PartyPopper },
+            { id: "people", label: "People & Org", icon: Network },
+            { id: "separation", label: "Exit & Clearance", icon: UserX },
+          ].map((tab) => {
+            const TabIcon = tab.icon;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`px-4 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 flex items-center gap-2 ${
+                  activeTab === tab.id
+                    ? "bg-primary text-primary-foreground shadow-md shadow-primary/20 scale-105"
+                    : "bg-card border border-border/60 text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                <TabIcon className="h-4 w-4" />
+                {tab.label}
+              </button>
+            );
+          })}
         </div>
 
         {/* Tab Content Display */}
@@ -445,7 +546,7 @@ function InteractiveShowcase() {
                 <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Live Simulation</span>
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-500">
                   <span className="h-2 w-2 rounded-full bg-emerald-500 animate-ping"></span>
-                  Active System
+                  Active HRMS Node
                 </span>
               </div>
 
@@ -481,137 +582,173 @@ function InteractiveShowcase() {
 
 /* ─── Feature Preview Modals ─── */
 const FEATURE_PREVIEWS: Record<string, { title: string; bullets: string[] }> = {
-  "Face Attendance": {
-    title: "Face Attendance & Biometrics",
+  "Time & Attendance": {
+    title: "Time, Shifts & Biometric Attendance",
     bullets: [
-      "📸 Fast selfie verification — anti-spoofing liveness detection prevents fraud.",
-      "📍 Geo-tagging: latitude & longitude locked at moment of check-in.",
-      "✅ Instant verification badge rendered directly on employee dashboard.",
-      "📊 Admin logs show full selfie thumbnails, timestamps, and map coordinates."
+      "Real-time running timer clock (HH:MM:SS) with 1-click Clock Out & Start Break.",
+      "Highcharts 3-series daily bar charts: Work Hours, Break Duration, and Auto Clockouts.",
+      "7-Column monthly timetable roster for General Shift 1120 with week-off tracking.",
+      "480-minute shift deduction matrix (0-240m = 1 Day EL, 240-480m = 0.5 Day EL) and No-Show auto rules."
     ],
   },
-  "Live Break Tracking": {
-    title: "Live Break Timer & Session Tracker",
+  "My Compensation & CTC": {
+    title: "Compensation, CTC Breakdown & Form 12BB",
     bullets: [
-      "☕ One-click break start with session selector (Lunch, Coffee, Personal).",
-      "⏱️ Live digital timer running down to the second (HH:MM:SS).",
-      "⏸️ Seamless pause/resume functionality with automated daily totals.",
-      "📋 Admin reports showing total break hours vs productive work hours."
+      "Comprehensive CTC structure: Basic Pay, HRA, Special Allowance, PF, and Medical Insurance.",
+      "Monthly digital payslip viewer with instant PDF download and historical archives.",
+      "Form 12BB tax investment declaration workflow for 80C, 80D, HRA rent, and home loans.",
+      "Automated Indian statutory compliance: EPF, ESI, and state-wise Professional Tax."
+    ],
+  },
+  "7-Tab Profile & Vault": {
+    title: "7-Tab Employee Profile & Secure Document Vault",
+    bullets: [
+      "7 Comprehensive Tabs: Personal, Professional, Contact, Emergency, Financial, Work Profile, Forms/Letters.",
+      "Secure Document Vault: Upload PAN, Aadhaar, resumes, signed offer letters with 2MB validation.",
+      "Timestamped Audit History modal tracking every field update with user and time attribution.",
+      "Nominee registration and medical allergy emergency contact safeguarding."
+    ],
+  },
+  "Knowledge Base & SOPs": {
+    title: "Knowledge Base, Corporate Policies & SOPs",
+    bullets: [
+      "Searchable categorized library: Leave Policies, Code of Conduct, Travel Guidelines, Benefits.",
+      "1-Click offline PDF downloads of signed corporate handbooks and company procedures.",
+      "480-minute shift deduction policy breakdown and biometric punch FAQ guide.",
+      "Centralized announcement hub for corporate compliance updates and employee rights."
+    ],
+  },
+  "Bulk Regularization & WFH": {
+    title: "Attendance Regularization & WFH Pipeline",
+    bullets: [
+      "Bulk selection shortcuts: 'Check/Un-Check All' and 'Check all excluding weekends'.",
+      "3 Summary KPI Cards: WFH Count (11), Missed Punch (1), and On Duty (4) tracking.",
+      "Flexible multi-tier approval chains routing requests to Reporting Managers & HR.",
+      "Full CSV export of personal attendance logs and regularization histories."
     ],
   },
   "6-Tier Leave Engine": {
     title: "Multi-Category Leave Quota Engine",
     bullets: [
-      "🏖️ 6 standard quota types: Bereavement, Casual, Earned, LWP, Menstrual, Sick.",
-      "📊 Dynamic SVG donut rings showing quota consumption vs remaining balance.",
-      "⏱️ SLA countdown timers prevent pending request bottlenecks.",
-      "📅 Integrated 2026 holiday calendar with automatic optional holiday support."
+      "6 Dedicated Quota Buckets: Bereavement, Casual, Earned, LWP, Menstrual, and Sick Leave.",
+      "Dual Table View vs Card View showing Accrued, Used, Requested, and Balance metrics.",
+      "Holiday Roster with Mandatory (Orange) vs Restricted/Optional (Blue) opt-in selection.",
+      "Integrated 7-state request lifecycle with cancellation support and CSV export."
     ],
   },
-  "Regularization & WFH": {
-    title: "Attendance Correction & WFH Requests",
+  "Travel & Expense Claims": {
+    title: "Travel Itinerary, Expenses & Cash Advances",
     bullets: [
-      "✏️ Employees submit punch corrections for missed check-ins with clear reasons.",
-      "🏠 Remote Work / WFH request scheduling with multi-day selection.",
-      "🔗 Flexible multi-tier approval chains (Team Lead → Manager → HR Admin).",
-      "📜 Complete immutable audit log of who approved or rejected requests."
+      "3 Sub-Modules: Travel Booking Requests, Expense Claims, and Cash Advances.",
+      "'Viewing As' Employee Switcher for executive assistants and department heads.",
+      "7-State Filter Pipeline: Pending, Auto Approved, Admin Approved, Workflow Approved, etc.",
+      "Multi-currency receipt attachment uploads with automated mileage calculations."
     ],
   },
-  "Team Celebrations": {
-    title: "Live Team Celebrations & Birthdays",
+  "Peer Badges & Intranet": {
+    title: "Social Intranet & 'Give A Badge' Recognition",
     bullets: [
-      "🎂 Real-time birthday notifications for today and upcoming team members.",
-      "💼 Work anniversary recognition alerts celebrating employee tenure.",
-      "✨ Boosts team connection in hybrid and remote office setups.",
-      "🔔 Integrated directly into the employee home dashboard."
+      "'Give A Badge' Peer Award system: Award 'Applause', 'Star Performer', or 'Team Player'.",
+      "Celebrations Spotlight: Today's Birthday hero card with 1-click 'Wish Happy Birthday' action.",
+      "Rich Composer with 'Posting as Myself' vs 'Anonymous' mode and photo/video attachments.",
+      "Official referral drives (₹3k/₹4k/₹5k tiers) and walk-in drive announcements with reactions."
     ],
   },
-  "Kudos & Recognition": {
-    title: "Peer-to-Peer Kudos & Appreciation Wall",
+  "Org Chart & Directory": {
+    title: "Interactive Org Chart Tree & Directory",
     bullets: [
-      "🌟 Award custom recognition badges: Star, Helpful, MVP, and Innovator.",
-      "💬 Public appreciation comments to celebrate team member wins.",
-      "🏆 Monthly recognition leaderboard highlighting top contributors.",
-      "📈 Proven to elevate employee engagement and retention."
+      "Dynamic hierarchical tree: Manager node with subordinate count badge (e.g., 6) and sibling navigation arrows.",
+      "Organization Directory: Search by name, filter by department with reset, and sort criteria.",
+      "Quick Action Jump Links: 'View Profile' and 'Org Chart' directly on table rows.",
+      "Universal Search Scope: Toggle search between People and Department across the platform."
     ],
   },
-  "GPS Geofencing": {
-    title: "GPS Geofencing & Anti-Spoofing",
+  "Separation & Exit Clearance": {
+    title: "Separation & Multi-Department Exit Clearance",
     bullets: [
-      "📍 Restrict attendance marking strictly to configured office coordinates.",
-      "🏢 Multi-branch support: configure distinct coordinates and radius for each office.",
-      "🚫 Mock GPS detection instantly blocks browser location faker extensions.",
-      "🗺️ Live on-field location logs for logistics and sales personnel."
+      "'Initiate Your Exit' self-service resignation workflow with notice period calculations.",
+      "6-State Lifecycle Indicators: Approved, Rejected, Pending, Cancelled, Not Received Yet.",
+      "Multi-Department Clearance: Parallel checklists for IT Assets, Finance Settlements, and HR Interviews.",
+      "Secure access revocation and automated Form 16 / relieving letter generation."
     ],
   },
-  "Tasks & Targets": {
-    title: "Task & Target Management",
+  "Policy Rules & No-Show SLA": {
+    title: "Attendance Deduction Transparency & SLAs",
     bullets: [
-      "🎯 Monthly target assignment with real-time percentage completion bars.",
-      "📋 Task prioritization (Low, Medium, High, Urgent) with due dates.",
-      "🔗 Sub-task dependency chains to streamline complex workflows.",
-      "📑 Bulk CSV upload to import quarterly targets for entire departments."
+      "480-Minute Shift Matrix: 0 to 240 mins worked = 1 Day EL deducted; 240 to 480 mins = 0.5 Day EL.",
+      "No-Show Escalation SLA: Auto-warning generated at X+1 days; automated LWP deduction applied at X+2 days.",
+      "Comp-off 11-Day Expiry: Automated countdown enforcing timely redemption of compensatory leaves.",
+      "Transparent, dispute-free audit trail accessible to both employees and management."
+    ],
+  },
+  "Alerts & Action Items": {
+    title: "Segregated Alerts & Notification Center",
+    bullets: [
+      "Split Category Views: General 'Notifications' vs Required 'Actions'.",
+      "Actions Sub-Tabs: 'Pending Actions' requiring immediate review vs 'Archived Actions'.",
+      "1-Click inline approval and rejection triggers directly from notifications.",
+      "Real-time badge counter on global header."
+    ],
+  },
+  "Google Calendar Sync": {
+    title: "My Calendar & 2-Way Google Sync",
+    bullets: [
+      "Month, Week, and Day calendar views with interactive date grids and event dots.",
+      "1-Click 'Sync With Google Calendar' OAuth 2.0 integration.",
+      "6-Item Color-Coded Event Filter: My Leave, Leave Request, Notify, Team Leave, Holiday, Week Off.",
+      "Departmental overlay to avoid project scheduling conflicts."
     ],
   },
   "Indian Statutory Payroll": {
     title: "Indian Payroll & Statutory Compliance",
     bullets: [
-      "💰 Automated EPF (Provident Fund) and ESI calculations.",
-      "🇮🇳 State-wise Professional Tax (PT) calculations matching Indian labor laws.",
-      "📄 1-Click PDF payslip generation and download for all employees.",
-      "🏦 Bank-ready transfer CSV registers for fast monthly salary disbursement."
+      "Automated EPF (Provident Fund) and ESI calculations matching statutory ceilings.",
+      "State-wise Professional Tax (PT) calculations for Karnataka, Maharashtra, Delhi, etc.",
+      "1-Click PDF payslip generation and download for all employees.",
+      "Bank-ready transfer CSV registers for fast monthly salary disbursement."
     ],
   },
-  "Enterprise Security": {
-    title: "Enterprise Multi-Tenancy & Security",
+  "Multi-Tenant Subdomains": {
+    title: "Multi-Tenancy & Dual Mode Login",
     bullets: [
-      "🏢 Strict Row Level Security (RLS) ensuring total data isolation between companies.",
-      "🔑 Two-Factor Authentication (2FA) and SAML/SSO ready.",
-      "🖥️ Active Session Manager: inspect and remotely terminate rogue logged-in devices.",
-      "📜 Comprehensive audit trails tracking all modifications with IP addresses."
+      "Dedicated tenant subdomains ([company].rolesync.com) with custom branding.",
+      "Dual Login Mode: Switch seamlessly between Work Email and Employee Code.",
+      "Password visibility toggle and instant email password recovery.",
+      "Strict Row Level Security (RLS) ensuring 100% tenant data isolation."
     ],
   },
-  "Team Chat & Broadcasts": {
-    title: "Team Messaging & Admin Broadcasts",
+  "Performance & 1:1 Reviews": {
+    title: "Performance Management & 1:1 Check-ins",
     bullets: [
-      "💬 Real-time tenant-scoped instant messaging for internal collaboration.",
-      "📢 Official 'Office Updates' broadcast channel with read receipts and attachments.",
-      "🔒 Zero data leakage guarantee with strict database isolation.",
-      "📎 Share images, documents, and policies directly inside chats."
-    ],
-  },
-  "Helpdesk & Ticketing": {
-    title: "Integrated Internal Helpdesk",
-    bullets: [
-      "🎫 Employees create tickets for HR, IT, Payroll, or Administrative queries.",
-      "⏱️ Priority tags (Low/Med/High/Urgent) with response SLA timers.",
-      "💬 Direct two-way messaging between employee and assigned resolution agent.",
-      "📊 Admin analytics measuring average resolution time and satisfaction."
+      "4 Sub-Tabs: My 1:1 Meetings, OKR Updates, Regular Peer Feedback, and Review Cycles.",
+      "Scope-based search filter: Search by People vs Search by Department.",
+      "360-degree review cycles, self-appraisals, and manager scorecards.",
+      "Alignment of personal monthly targets to corporate strategic goals."
     ],
   }
 };
 
-/* ─── Complete Features Grid ─── */
+/* ─── Complete Features Grid (All 16 Modules) ─── */
 const ALL_FEATURES = [
-  { icon: Camera, title: "Face Attendance", category: "Time & Attendance", desc: "Anti-spoof selfie capture with GPS coordinates for fraud-proof attendance marking.", hasPreview: true },
-  { icon: Coffee, title: "Live Break Tracking", category: "Time & Attendance", desc: "Track active breaks down to the second with instant pause/resume and duration logging.", hasPreview: true },
-  { icon: MapPin, title: "GPS Geofencing", category: "Time & Attendance", desc: "Configurable radius per office branch. Blocks mock GPS and fake browser locations.", hasPreview: true },
-  { icon: BarChart3, title: "Work Hours Recharts", category: "Analytics", desc: "Dynamic interactive weekly bar charts showing logged work hours, breaks, and trends.", hasPreview: false },
-  
-  { icon: CalendarDays, title: "6-Tier Leave Engine", category: "Leave & Time Off", desc: "Bereavement, Casual, Earned, LWP, Menstrual, and Sick leave quotas with auto-balances.", hasPreview: true },
-  { icon: FileCheck2, title: "Regularization & WFH", category: "Governance", desc: "Empower employees to request punch corrections and WFH days with approval chains.", hasPreview: true },
-  { icon: Calendar, title: "2026 Holiday Calendar", category: "Leave & Time Off", desc: "Pre-configured Indian national & regional holidays with custom company additions.", hasPreview: false },
-  { icon: Clock, title: "SLA Countdown Approvals", category: "Governance", desc: "Configurable SLA timers flagging pending manager approvals before they breach.", hasPreview: false },
+  { icon: Clock, title: "Time & Attendance", category: "Attendance & Shifts", desc: "Live punch timer (HH:MM:SS), 3-series daily charts, and 480-min shift deduction rules.", hasPreview: true },
+  { icon: IndianRupee, title: "My Compensation & CTC", category: "Payroll & Tax", desc: "CTC breakdown, basic/allowances, EPF/PT deductions, PDF payslips, and Form 12BB.", hasPreview: true },
+  { icon: FolderLock, title: "7-Tab Profile & Vault", category: "Employee Records", desc: "Personal, Professional, Contact, Emergency, Financial, Work, and 2MB Document Vault.", hasPreview: true },
+  { icon: BookOpen, title: "Knowledge Base & SOPs", category: "Policies & Hub", desc: "Searchable company policies, 480-min shift deduction matrix, and 1-click PDF downloads.", hasPreview: true },
 
-  { icon: Cake, title: "Team Celebrations", category: "Culture & Team", desc: "Automated real-time birthday radar and work anniversary milestone alerts.", hasPreview: true },
-  { icon: Star, title: "Kudos & Recognition", category: "Culture & Team", desc: "Peer-to-peer appreciation wall with Star, Helpful, MVP, and Innovator badges.", hasPreview: true },
-  { icon: MessageSquare, title: "Team Chat & Broadcasts", category: "Communication", desc: "Tenant-scoped instant messaging and official company announcement channel.", hasPreview: true },
-  { icon: Headphones, title: "Helpdesk & Ticketing", category: "Operations", desc: "Built-in ticketing for HR, IT, and admin requests with resolution workflows.", hasPreview: true },
+  { icon: FileCheck2, title: "Bulk Regularization & WFH", category: "Attendance & Shifts", desc: "1-click bulk select, WFH/Missed Punch/On Duty KPI counter cards, and manager approvals.", hasPreview: true },
+  { icon: CalendarDays, title: "6-Tier Leave Engine", category: "Leave Management", desc: "Bereavement, Casual, Earned, LWP, Menstrual, Sick quotas with Table/Card views and holiday opt-ins.", hasPreview: true },
+  { icon: Plane, title: "Travel & Expense Claims", category: "Expense Management", desc: "Multi-tab Travel, Expenses, and Cash Advances with 'Viewing As' delegate switcher.", hasPreview: true },
+  { icon: Award, title: "Peer Badges & Intranet", category: "Culture & Social", desc: "'Give A Badge' awards (Applause), Birthday spotlight hero, and named/anonymous social feed.", hasPreview: true },
 
-  { icon: Target, title: "Tasks & Targets", category: "Performance", desc: "Assign monthly targets, track sub-task dependencies, and bulk import via CSV.", hasPreview: true },
-  { icon: BadgePercent, title: "Indian Statutory Payroll", category: "Payroll & Tax", desc: "EPF, ESI, and state-wise Professional Tax calculation with PDF payslips.", hasPreview: true },
-  { icon: ShieldCheck, title: "Enterprise Security", category: "Enterprise", desc: "Row Level Security multi-tenancy, 2FA, session manager, and immutable audit logs.", hasPreview: true },
-  { icon: Globe, title: "White-Labeling & Custom Subdomains", category: "Enterprise", desc: "Host on your own URL (portal.company.com) with custom logos and brand themes.", hasPreview: false },
+  { icon: Network, title: "Org Chart & Directory", category: "People & Org", desc: "Dynamic tree with subordinate count badges (6), sibling arrows, and searchable employee directory.", hasPreview: true },
+  { icon: Scale, title: "Policy Rules & No-Show SLA", category: "Governance", desc: "0-240m = 1d EL, 240-480m = 0.5d EL, X+1 notice, X+2 deduction, and 11-day comp-off expiry.", hasPreview: true },
+  { icon: UserX, title: "Separation & Exit Clearance", category: "Separation", desc: "'Initiate Exit' workflow, 6-state lifecycle tracking, and IT/HR/Finance clearance checklists.", hasPreview: true },
+  { icon: Bell, title: "Alerts & Action Items", category: "Governance", desc: "Segregated Notifications vs Actions with Pending and Archived sub-tabs for fast approvals.", hasPreview: true },
+
+  { icon: Calendar, title: "Google Calendar Sync", category: "Integrations", desc: "2-way Google Calendar OAuth sync with 6-color event legend filters and Month/Week views.", hasPreview: true },
+  { icon: BadgePercent, title: "Indian Statutory Payroll", category: "Payroll & Tax", desc: "EPF, ESI, state-wise Professional Tax, 1-click PDF payslips, and bank transfer CSVs.", hasPreview: true },
+  { icon: Globe, title: "Multi-Tenant Subdomains", category: "Enterprise & Security", desc: "Company subdomain resolution, dual login (Email vs Emp Code), and strict RLS data isolation.", hasPreview: true },
+  { icon: Target, title: "Performance & 1:1 Reviews", category: "Performance", desc: "1:1 meeting notes, OKR goal check-ins, continuous peer feedback, and formal review cycles.", hasPreview: true },
 ];
 
 function FeaturesSection() {
@@ -622,12 +759,12 @@ function FeaturesSection() {
     <section id="features" className="w-full bg-background py-16 lg:py-24">
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center max-w-3xl mx-auto">
-          <Badge variant="secondary" className="mb-3 px-3 py-1">Comprehensive Feature Catalog</Badge>
+          <Badge variant="secondary" className="mb-3 px-3 py-1">Feature Catalog</Badge>
           <h2 className="font-[Poppins] text-3xl font-bold text-foreground lg:text-4xl">
-            Every HR & Attendance Feature Under One Roof
+            All Modules, One Platform
           </h2>
           <p className="mt-3 text-muted-foreground text-base">
-            No more switching between 5 disconnected tools. RoleSync provides an end-to-end suite designed specifically for Indian startups and enterprises.
+            Stop juggling five disconnected tools. Everything your HR team needs ships in a single cloud workspace.
           </p>
         </div>
 
@@ -696,13 +833,19 @@ function FeaturesSection() {
 /* ─── Role Comparison ─── */
 function RoleComparison() {
   const rows = [
-    { feature: "Time & Attendance", employee: "1-Click Selfie Punch & GPS Lock", admin: "Live Organization Attendance Radar", superAdmin: "Global Cross-Company Analytics" },
-    { feature: "Break Tracking", employee: "Live Break Timer (Coffee, Lunch)", admin: "Break Durations & Overtime Log", superAdmin: "Platform-wide Health Metrics" },
-    { feature: "Leaves & Holidays", employee: "6 Quota Balances & 2026 Holiday View", admin: "Custom Policy Rules & Approvals", superAdmin: "System Quota Presets" },
-    { feature: "Governance & WFH", employee: "Regularization & WFH Requests", admin: "Multi-tier SLA Decision Engine", superAdmin: "System Audit Logs" },
-    { feature: "Culture & Kudos", employee: "Send Kudos & View Celebrations", admin: "Channel Moderation & Broadcasts", superAdmin: "Feature Flag Controls" },
-    { feature: "Payroll & Payslips", employee: "Download Monthly PDF Payslips", admin: "EPF/ESI Slabs & Salary Registers", superAdmin: "GST Invoicing Engine" },
-    { feature: "Security & Sessions", employee: "2FA & Device Management", admin: "Geofences, RLS, Role Matrix", superAdmin: "Tenant Isolation & Backups" },
+    { feature: "Time & Attendance", employee: "Live Punch (HH:MM:SS) & 3-Series Work Charts", admin: "Real-Time Org Attendance Radar & Shift Config", superAdmin: "Cross-Tenant Shift Analytics & Policies" },
+    { feature: "Break & Shift Rules", employee: "Live Break Timer & General Shift 1120 Roster", admin: "480-Min Deduction Matrix & No-Show Rules", superAdmin: "Global Rule Configuration Presets" },
+    { feature: "My Compensation & CTC", employee: "Detailed CTC Breakdown, Form 12BB & PDF Payslips", admin: "Salary Slabs, Pay Components & Revision Logs", superAdmin: "Bank Payout Gateways & Statutory Rule Builder" },
+    { feature: "7-Tab Profile Vault", employee: "Personal, Professional, Contact, Emergency & Documents", admin: "Verification Approvals & 2MB Document Compliance", superAdmin: "Field Schema & Encryption Audits" },
+    { feature: "Knowledge Base & SOPs", employee: "Searchable Policy Library & 1-Click PDF Downloads", admin: "Policy Publisher, Categories & Version Management", superAdmin: "Statutory Compliance Policy Blueprints" },
+    { feature: "Leaves & Holidays", employee: "6 Quota Buckets & Optional Holiday Opt-in", admin: "Approval SLAs, Policy Builder & CSV Export", superAdmin: "Statutory Leave Templates" },
+    { feature: "Regularize & WFH", employee: "Bulk Date Selection & WFH/On-Duty Requests", admin: "Approval Chains (Lead → Manager → HR)", superAdmin: "Immutable Audit Trail" },
+    { feature: "Travel & Expenses", employee: "Submit Travel, Expense Claims & Advances", admin: "Multi-tier Expense Audits & 'Viewing As' Proxy", superAdmin: "Multi-Currency Financial Rules" },
+    { feature: "Culture & Intranet", employee: "'Give A Badge' (Applause) & Birthday Wishes", admin: "Broadcast Channels & Moderation Tools", superAdmin: "Platform-wide Social Controls" },
+    { feature: "People & Org Tree", employee: "Interactive Hierarchy Tree & Directory Lookup", admin: "Department Re-org & Role Matrix", superAdmin: "Tenant Domain & Multi-Branch Mapping" },
+    { feature: "Separation & Exit", employee: "Initiate Exit Self-Service & Track Clearances", admin: "IT, HR, Finance Parallel Clearance Engine", superAdmin: "Legal Compliance & Relieving Slips" },
+    { feature: "Indian Payroll", employee: "Download Monthly PDF Payslips & Tax Declarations", admin: "EPF/ESI Auto-Deductions & Bank CSV Transfer", superAdmin: "GST Invoices & Statutory Audit" },
+    { feature: "Alerts & Security", employee: "Separate Notifications vs Actions + Google Sync", admin: "Session Manager, 2FA Enforcement & RLS", superAdmin: "Tenant Isolation, Backups & SLA" },
   ];
 
   return (
@@ -711,7 +854,7 @@ function RoleComparison() {
         <div className="mb-10 text-center max-w-2xl mx-auto">
           <Badge variant="secondary" className="mb-3 px-3 py-1">Role Matrix</Badge>
           <h2 className="font-[Poppins] text-3xl font-bold text-foreground lg:text-4xl">Built for Every Stakeholder</h2>
-          <p className="mt-2 text-muted-foreground text-sm sm:text-base">Distinct, tailored interfaces designed specifically for Employees, HR Admins, and Enterprise Executives.</p>
+          <p className="mt-2 text-muted-foreground text-sm sm:text-base">Distinct, tailored interfaces designed specifically for Employees, People Managers, HR Admins, and Enterprise Executives.</p>
         </div>
 
         <div className="overflow-x-auto rounded-2xl border border-border/60 bg-card shadow-lg">
@@ -744,10 +887,10 @@ function RoleComparison() {
 /* ─── How It Works ─── */
 function HowItWorks() {
   const steps = [
-    { num: "01", title: "Create Workspace", desc: "Enter company name and get your dedicated multi-tenant workspace with custom subdomain instantly." },
-    { num: "02", title: "Invite Team Members", desc: "Add employees individually or via CSV import. Team members set up profile selfies for face-match." },
-    { num: "03", title: "Set Geofence & Rules", desc: "Configure office coordinates, leave quotas (6 tiers), approval chains, and break time rules." },
-    { num: "04", title: "Run on Autopilot", desc: "Employees punch in, track breaks, celebrate milestones, and request leave while admins oversee real-time analytics." },
+    { num: "01", title: "Claim Workspace Subdomain", desc: "Enter your organization name and get your dedicated workspace (e.g. acme.rolesync.com) instantly." },
+    { num: "02", title: "Configure Shifts & Policies", desc: "Set up 480-minute shift rules, 6 leave quota categories, deduction matrices, and office geofences." },
+    { num: "03", title: "Invite Your Workforce", desc: "Add team members with Work Email or Employee Code. Employees jump straight into self-service portals." },
+    { num: "04", title: "Run Entire HR on Autopilot", desc: "Employees punch in, regularize shifts, file travel claims, give badges, and download payslips with zero friction." },
   ];
 
   return (
@@ -756,7 +899,7 @@ function HowItWorks() {
         <div className="mb-12 text-center max-w-2xl mx-auto">
           <Badge variant="secondary" className="mb-3 px-3 py-1">Onboarding Flow</Badge>
           <h2 className="font-[Poppins] text-3xl font-bold text-foreground lg:text-4xl">Go Live in 4 Simple Steps</h2>
-          <p className="mt-2 text-muted-foreground text-sm">Zero infrastructure setup needed. Everything runs in the secure cloud.</p>
+          <p className="mt-2 text-muted-foreground text-sm">Zero infrastructure setup needed. Everything runs securely in the cloud.</p>
         </div>
         
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -778,39 +921,44 @@ function PricingSection() {
   const navigate = useNavigate();
   const plans = [
     {
-      name: "Starter", price: "Free", period: "", desc: "For small teams and growing startups",
+      name: "Starter", price: "Free", period: "", desc: "Free for teams up to 10. Core shift tracking, leave quotas, and org directory.",
       features: [
         "Up to 10 employees",
-        "Face-verified attendance + GPS",
-        "Live break duration tracking",
+        "Real-time punch & break timer",
+        "7-Tab profile & document vault",
         "6-category leave quotas",
-        "Attendance regularization & WFH",
-        "Team celebrations & birthdays",
+        "Attendance bulk regularization",
+        "Social intranet & 'Give A Badge'",
+        "Interactive Org Chart tree",
         "Email support"
       ],
       cta: "Start Free", popular: false,
     },
     {
-      name: "Professional", price: "₹99", period: "/user/mo", desc: "For modern growing companies in India",
+      name: "Professional", price: "₹99", period: "/user/mo", desc: "Complete HRMS with travel claims, exit clearances, knowledge base, and Indian statutory payroll.",
       features: [
         "Unlimited employees", 
         "Everything in Starter", 
+        "Detailed CTC breakdown & PDF payslips",
+        "Form 12BB tax investment declarations",
+        "Searchable knowledge base & SOP library",
+        "Travel, Expense Claims & Cash Advances",
+        "Separation & multi-department exit clearance",
+        "Performance reviews & 1:1 check-in notes",
         "EPF, ESI & Professional Tax compliance",
-        "Downloadable PDF payslips & bank CSVs",
-        "Tasks, monthly targets & Recharts analytics", 
-        "Peer kudos wall & office broadcast updates", 
-        "Granular 4-tier role permission matrix", 
-        "GST-compliant tax invoices",
+        "2-Way Google Calendar sync",
+        "Segregated Actions vs Notifications alert center",
         "Priority 24/7 support"
       ],
       cta: "Start 14-Day Trial", popular: true,
     },
     {
-      name: "Enterprise", price: "Custom", period: "", desc: "For scaling organizations & custom setups",
+      name: "Enterprise", price: "Custom", period: "", desc: "Custom pricing for 100+ employees. SSO, white-label domain, and hardware API sync.",
       features: [
         "Everything in Professional", 
         "Custom domain white-labeling (portal.company.com)", 
         "SSO / SAML 2.0 integration", 
+        "Biometric device hardware integration APIs",
         "REST API keys & real-time webhooks", 
         "Dedicated Account Manager & SLA", 
         "Custom payroll rules & Indian statutory audit", 
@@ -871,9 +1019,9 @@ function PricingSection() {
 /* ─── Testimonials ─── */
 function TestimonialsSection() {
   const items = [
-    { img: testimonial1, name: "Rajesh Kumar", role: "CTO, TechBite Solutions (Bengaluru)", text: "RoleSync transformed our attendance and leave process completely. Face verification eliminated buddy punching, and the live break tracker gives our managers real transparency without micromanagement." },
-    { img: testimonial2, name: "Priya Sharma", role: "HR Head, ZenithWorks (New Delhi)", text: "The 6-quota leave engine, birthday celebrations radar, and automated EPF/ESI payroll calculations saved our HR department over 20 hours each week. It's built perfectly for Indian businesses." },
-    { img: testimonial3, name: "Ananya Singh", role: "Director, CloudScale (Mumbai)", text: "The tenant isolation, audit logs, and geofenced multi-office support made security approval a breeze. Best HRMS and employee management tool we have ever used." },
+    { img: testimonial1, name: "Rajesh Kumar", role: "CTO, TechBite Solutions (Bengaluru)", text: "We cut attendance discrepancies by 90% in the first month. The live punch timer and batch regularization replaced two spreadsheets and a WhatsApp group." },
+    { img: testimonial2, name: "Priya Sharma", role: "HR Head, ZenithWorks (New Delhi)", text: "Managing EPF, ESI, and Professional Tax used to take 3 days every month. With RoleSync payroll, it takes 15 minutes. The leave quotas and kudos wall are a bonus our team actually uses." },
+    { img: testimonial3, name: "Ananya Singh", role: "Director, CloudScale (Mumbai)", text: "Travel claims, exit clearances, and the org chart replaced four separate subscriptions. Our finance team finally has one source of truth." },
   ];
 
   return (
@@ -881,7 +1029,7 @@ function TestimonialsSection() {
       <div className="w-full px-4 sm:px-6 lg:px-8">
         <div className="mb-12 text-center max-w-2xl mx-auto">
           <Badge variant="secondary" className="mb-3 px-3 py-1">Customer Reviews</Badge>
-          <h2 className="font-[Poppins] text-3xl font-bold text-foreground lg:text-4xl">Trusted by Fast-Growing Companies</h2>
+          <h2 className="font-[Poppins] text-3xl font-bold text-foreground lg:text-4xl">Trusted by Fast-Growing Teams</h2>
         </div>
         <div className="grid gap-8 md:grid-cols-3 max-w-7xl mx-auto">
           {items.map((t) => (
@@ -911,12 +1059,14 @@ function TestimonialsSection() {
 function FAQSection() {
   const [openIdx, setOpenIdx] = useState<number | null>(0);
   const faqs = [
-    { q: "How does face-verified attendance and anti-spoofing work?", a: "Employees take an instant selfie during check-in from their mobile or desktop camera. Our algorithm runs anti-spoofing liveness detection and matches coordinates against your office geofence to guarantee fraud-free attendance." },
-    { q: "How does the live break timer work?", a: "Employees click 'Start Break' on their dashboard and select a break type (Coffee, Lunch, Personal). The live timer updates by the second. Admins can view individual and team break totals to ensure healthy work-life balance." },
-    { q: "What leave categories are supported in the 6-tier engine?", a: "RoleSync comes pre-configured with Bereavement Leave, Casual Leave, Earned (Annual) Leave, Leave Without Pay (LWP), Menstrual Leave, and Sick Leave. All categories feature automated quota donut tracking, half-day toggles, and SLA escalation." },
-    { q: "Can employees submit attendance corrections and WFH requests?", a: "Yes. If an employee forgets to clock in or needs remote work, they can submit a regularization or WFH request with timestamps and reasons. Configurable multi-tier approval chains route it directly to their team lead or HR." },
-    { q: "Do you support Indian statutory payroll like EPF, ESI, and Professional Tax?", a: "Yes, completely! RoleSync is customized for Indian businesses. We support EPF (Provident Fund), ESI calculations, state-wise Professional Tax slabs, downloadable PDF payslips, and GST-compliant tax invoices." },
-    { q: "Is our company data completely isolated from other tenants?", a: "Yes. RoleSync uses strict Row Level Security (RLS) policies and isolated cloud storage buckets. No organization can ever view, query, or leak data belonging to another tenant." },
+    { q: "Can employees log in using either Work Email or Employee Code?", a: "Yes. RoleSync provides a dual-mode login interface allowing team members to sign in with their corporate email or assigned Employee Code (e.g. INT1415) under their company subdomain." },
+    { q: "How do employees view their CTC breakdown, submit Form 12BB, and download payslips?", a: "Employees navigate to the 'My Compensation' portal where they see their full annual CTC breakdown (Basic, HRA, Special Allowance, PF, etc.), net in-hand take home, monthly tax deductions, self-service Form 12BB declaration builder (80C/80D/HRA), and 1-click PDF payslip downloads." },
+    { q: "What information is supported in the 7-Tab Profile & Document Vault?", a: "RoleSync covers 7 structured tabs: Personal Details (marital status, DOB, anniversaries), Professional Profile (degrees, past experience, employee ID), Contact Details, Emergency Nominees, Financial (Bank AC & IFSC), Work Profile (designation, department, reporting manager), and Forms/Documents/Letters with 2MB limits and timestamped audit trails." },
+    { q: "How does batch attendance regularization and the 480-minute shift policy work?", a: "Employees can select individual dates or use batch shortcuts like 'Check all excluding weekends'. The system enforces transparent deduction tiers: 0-240 minutes worked results in a 1-day EL deduction, while 240-480 minutes results in a 0.5-day EL deduction. Missed punches trigger an X+1 warning and X+2 automatic LWP deduction SLA." },
+    { q: "What leave categories are included in the 6-tier engine?", a: "RoleSync comes standard with Bereavement Leave, Casual Leave, Earned (Annual) Leave, Leave Without Pay (LWP), Menstrual Leave, and Sick Leave. Both Table View and Card View are supported with automated balance deductions and SLA escalations." },
+    { q: "How does the 'Give A Badge' peer recognition system work?", a: "Employees can open the Intranet wall, click 'Give A Badge', choose a badge (such as 'Applause' or 'Star Performer'), tag a teammate, and write a citation. The post renders with an illuminated recognition banner on the company social feed." },
+    { q: "How does the Travel & Expense management module operate?", a: "RoleSync divides expenses into Travel Itineraries, Expense Claims, and Cash Advances. Authorized delegates can file on behalf of executives using the 'Viewing As' switcher, and claims follow multi-tier workflow approvals." },
+    { q: "Do you support Indian statutory payroll like EPF, ESI, and Professional Tax?", a: "Yes, 100%. RoleSync supports EPF (Provident Fund), ESI calculations, state-wise Professional Tax slabs, downloadable PDF payslips, bank transfer CSVs, and GST-compliant tax invoices." },
   ];
 
   return (
@@ -970,7 +1120,7 @@ function CompanySelector() {
       <div className="max-w-xl mx-auto px-4 text-center">
         <Badge variant="secondary" className="mb-3 px-3 py-1">Workspace Portal</Badge>
         <h2 className="mb-2 font-[Poppins] text-2xl font-bold text-foreground">Find Your Company Workspace</h2>
-        <p className="mb-6 text-sm text-muted-foreground">Search for your registered organization to jump directly into your portal</p>
+        <p className="mb-6 text-sm text-muted-foreground">Enter your company name to open your workspace.</p>
         
         <Input
           placeholder="Search company by name (e.g. Acme, Zenith, TechBite)…"
@@ -1021,10 +1171,10 @@ function CTASection() {
             ⚡ Instant 14-Day Free Access
           </Badge>
           <h2 className="font-[Poppins] text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight">
-            Ready to Upgrade Your <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-primary bg-clip-text text-transparent">Workforce Operations?</span>
+            Run Your Entire HR on <span className="bg-gradient-to-r from-blue-400 via-indigo-300 to-primary bg-clip-text text-transparent">Autopilot</span>
           </h2>
           <p className="mt-5 text-sm sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
-            Join 500+ modern companies saving 20+ hours every month on biometric attendance, break logs, leave quotas, and Indian statutory payroll.
+            500+ companies save 25+ hours a week on attendance, leaves, expenses, and payroll. Start your 14-day free trial today.
           </p>
           <div className="mt-8 flex flex-wrap justify-center gap-4">
             <Button 
@@ -1060,27 +1210,33 @@ function Footer() {
     if (!footerEmail.trim()) return;
     setSending(true);
     const domain = footerEmail.split("@")[1]?.split(".")[0] || "company";
-    const slug = `${domain}-${Date.now().toString(36)}`;
-    const { error } = await supabase.from("companies").insert({ name: domain.charAt(0).toUpperCase() + domain.slice(1), slug, status: "active" });
+    const companyName = domain.charAt(0).toUpperCase() + domain.slice(1);
+    const slug = `${domain}-${Date.now().toString(36).slice(-5)}`;
+    const { error } = await supabase.from("companies").insert({ name: companyName, slug, status: "active" });
     setSending(false);
     if (error) {
       toast.error("Could not create workspace. Please try again.", { description: error.message });
     } else {
-      toast.success("Workspace created! Directing to login.", { description: `Slug: ${slug}` });
+      toast.success(`Workspace "${companyName}" created!`, { description: "Redirecting to login…" });
       setFooterEmail("");
       navigate(`/login?company=${slug}`);
     }
   };
 
+
   const navCols = [
     {
-      title: "Product",
+      title: "Core Modules",
       links: [
-        { label: "Features", href: "#features" },
-        { label: "Interactive Showcase", href: "#showcase" },
-        { label: "Pricing Plans", href: "/pricing", isRoute: true },
-        { label: "Employee Portal", href: "/login", isRoute: true },
-        { label: "Admin Portal", href: "/login", isRoute: true }
+        { label: "Time & Attendance", href: "#features" },
+        { label: "Compensation & CTC", href: "#features" },
+        { label: "7-Tab Profile Vault", href: "#features" },
+        { label: "Knowledge Base & SOPs", href: "#features" },
+        { label: "6-Quota Leaves & Holidays", href: "#features" },
+        { label: "Travel & Expense Claims", href: "#features" },
+        { label: "Peer Badges & Intranet", href: "#features" },
+        { label: "Interactive Org Chart", href: "#features" },
+        { label: "Separation & Clearance", href: "#features" }
       ]
     },
     {
@@ -1088,7 +1244,7 @@ function Footer() {
       links: [
         { label: "EPF & ESI Compliance", href: "#features" },
         { label: "State Professional Tax", href: "#features" },
-        { label: "Multi-Tenant RLS", href: "#features" },
+        { label: "Multi-Tenant RLS Security", href: "#features" },
         { label: "Privacy Policy", href: "/privacy", isRoute: true },
         { label: "Terms of Service", href: "/terms", isRoute: true }
       ]
@@ -1096,10 +1252,10 @@ function Footer() {
     {
       title: "Quick Links",
       links: [
+        { label: "Interactive Showcase", href: "#showcase" },
         { label: "How It Works", href: "#how-it-works" },
         { label: "Role Matrix", href: "#roles" },
-        { label: "FAQ", href: "#faq" },
-        { label: "Find Workspace", href: "/login", isRoute: true },
+        { label: "Pricing Plans", href: "/pricing", isRoute: true },
         { label: "Contact Support", href: "mailto:support@rolesync.in" }
       ]
     }
@@ -1113,7 +1269,7 @@ function Footer() {
             <RoleSyncLogo size={80} />
           </div>
           <p className="text-sm text-slate-600 dark:text-muted-foreground leading-relaxed">
-            RoleSync is the unified employee management & HRMS platform built for modern Indian businesses. Seamless face attendance, live break tracker, 6-quota leaves, and statutory payroll compliance.
+            RoleSync is an enterprise HRMS for fast-growing teams. Attendance, leaves, travel claims, peer recognition, and payroll compliance in one platform.
           </p>
           
           <div className="pt-2 w-full">

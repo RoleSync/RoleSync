@@ -7,7 +7,13 @@ import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
-import { Loader2, Plus, Building2, Users, Clock, Shield, UserCog, UserCheck, Lock, Globe, Trash2, Check, X, Star, Zap, Crown } from 'lucide-react';
+import { 
+  Loader2, Plus, Building2, Users, Clock, Shield, UserCog, UserCheck, Lock, Globe, 
+  Trash2, Check, X, Star, Zap, Crown, Search, RotateCcw, Filter, CheckCircle2,
+  ClipboardList, Cake, CalendarDays, FolderLock, MessageSquare, Award, Headphones, 
+  BookOpen, Plane, Network, Calendar, CheckSquare, IndianRupee, Receipt, UserX, 
+  Target, Cpu, MapPin, HeartPulse, Save, LucideIcon
+} from 'lucide-react';
 import { toast } from 'sonner';
 import {
   AlertDialog,
@@ -46,30 +52,92 @@ interface CompanyRow {
   employee_id_prefix?: string | null;
 }
 
-const ALL_FEATURES = [
-  // Basic tier
-  { key: 'tasks_enabled', label: 'Tasks Management', description: 'Assign and track tasks', plan: 'basic' as const, icon: '📋' },
-  { key: 'birthdays_enabled', label: 'Birthdays & Events', description: 'Celebrate team milestones', plan: 'basic' as const, icon: '🎂' },
-  // Pro tier
-  { key: 'chat_enabled', label: 'Team Chat', description: 'Enable realtime chat between employees', plan: 'pro' as const, icon: '💬' },
-  { key: 'kudos_enabled', label: 'Kudos Wall', description: 'Employee recognition platform', plan: 'pro' as const, icon: '🏆' },
-  { key: 'helpdesk_enabled', label: 'IT Helpdesk', description: 'Ticketing system for internal support', plan: 'pro' as const, icon: '🎫' },
-  { key: 'multi_level_approvals_enabled', label: 'Multi-Level Approvals', description: 'Advanced approval workflows', plan: 'pro' as const, icon: '✅' },
-  // Enterprise tier
-  { key: 'ai_analytics_enabled', label: 'AI Analytics', description: 'Smart insights and predictions', plan: 'enterprise' as const, icon: '🤖' },
-  { key: 'payroll_export_enabled', label: 'Payroll Export', description: 'Export attendance to payroll formats', plan: 'enterprise' as const, icon: '💰' },
-  { key: 'ip_whitelist_enabled', label: 'IP Whitelisting', description: 'Restrict access by IP address', plan: 'enterprise' as const, icon: '🔒' },
-  { key: 'mock_gps_detection_enabled', label: 'Mock GPS Detection', description: 'Prevent fake location check-ins', plan: 'enterprise' as const, icon: '📍' },
-  { key: 'wellbeing_enabled', label: 'Employee Wellbeing', description: 'Mental health & wellness tracking', plan: 'enterprise' as const, icon: '❤️' },
+interface FeatureDefinition {
+  key: string;
+  label: string;
+  description: string;
+  plan: 'basic' | 'pro' | 'enterprise';
+  category: string;
+  icon: LucideIcon;
+}
+
+const ALL_FEATURES: FeatureDefinition[] = [
+  // Basic tier (Core HRMS & Shift Operations)
+  { key: 'tasks_enabled', label: 'Tasks Management', description: 'Assign, prioritize, and track team tasks', plan: 'basic', category: 'Core HR', icon: ClipboardList },
+  { key: 'birthdays_enabled', label: 'Birthdays & Events', description: 'Celebrate team milestones and work anniversaries', plan: 'basic', category: 'Culture', icon: Cake },
+  { key: 'attendance_regularization_enabled', label: 'Attendance Regularization & WFH', description: 'Bulk regularization, missed punches & WFH requests', plan: 'basic', category: 'Attendance', icon: Clock },
+  { key: 'leave_management_enabled', label: '6-Tier Leave Engine', description: 'Bereavement, Casual, Earned, LWP, Menstrual & Sick quotas', plan: 'basic', category: 'Leaves', icon: CalendarDays },
+  { key: 'profile_vault_enabled', label: '7-Tab Profile & Vault', description: 'Personal, professional, KYC & 2MB document limits', plan: 'basic', category: 'Core HR', icon: FolderLock },
+  { key: 'org_directory_enabled', label: 'Org Directory & Profiles', description: 'Searchable employee directory and public profiles', plan: 'basic', category: 'People', icon: Users },
+  
+  // Pro tier (Collaboration, Policies, Expenses & Workflows)
+  { key: 'chat_enabled', label: 'Team Chat & Channels', description: 'Real-time channels, direct messaging and attachments', plan: 'pro', category: 'Collaboration', icon: MessageSquare },
+  { key: 'kudos_enabled', label: 'Social Wall & Kudos Badges', description: '"Give A Badge" (Applause) peer recognition awards', plan: 'pro', category: 'Culture', icon: Award },
+  { key: 'helpdesk_enabled', label: 'IT Helpdesk & Ticketing', description: 'Ticketing system for internal support and SLAs', plan: 'pro', category: 'Operations', icon: Headphones },
+  { key: 'knowledge_base_enabled', label: 'Knowledge Base & Policies', description: 'Searchable policy manuals, SOPs & 1-click PDFs', plan: 'pro', category: 'Governance', icon: BookOpen },
+  { key: 'travel_expenses_enabled', label: 'Travel & Expense Claims', description: 'Pre-trip itineraries, bills & cash advances', plan: 'pro', category: 'Finance', icon: Plane },
+  { key: 'org_chart_tree_enabled', label: 'Interactive Org Chart Tree', description: 'Visual hierarchy tree with subordinate count badges', plan: 'pro', category: 'People', icon: Network },
+  { key: 'google_calendar_enabled', label: 'Google Calendar 2-Way Sync', description: 'Sync leave, holiday & shift rosters to Google Calendar', plan: 'pro', category: 'Integrations', icon: Calendar },
+  { key: 'multi_level_approvals_enabled', label: 'Multi-Level Approvals', description: 'Configurable lead → manager → HR approval chains', plan: 'pro', category: 'Operations', icon: CheckSquare },
+  
+  // Enterprise tier (Statutory Payroll, AI, Security & Exit Governance)
+  { key: 'compensation_enabled', label: 'My Compensation & CTC', description: 'Granular CTC breakdown, allowances & Form 12BB', plan: 'enterprise', category: 'Finance', icon: IndianRupee },
+  { key: 'payroll_export_enabled', label: 'Indian Statutory Payroll', description: 'EPF, ESI, state Professional Tax & PDF payslips', plan: 'enterprise', category: 'Finance', icon: Receipt },
+  { key: 'separation_enabled', label: 'Separation & Exit Clearance', description: 'Resignation workflow & IT/HR/Finance checklists', plan: 'enterprise', category: 'Operations', icon: UserX },
+  { key: 'performance_enabled', label: 'Performance & 1:1 Reviews', description: 'OKR goal check-ins, 360 review cycles & 1:1 notes', plan: 'enterprise', category: 'Performance', icon: Target },
+  { key: 'ai_analytics_enabled', label: 'AI Workforce Analytics', description: 'Attendance trends, burnout risks & predictive insights', plan: 'enterprise', category: 'Analytics', icon: Cpu },
+  { key: 'ip_whitelist_enabled', label: 'IP Whitelisting', description: 'Restrict portal check-ins to authorized company IPs', plan: 'enterprise', category: 'Security', icon: Lock },
+  { key: 'mock_gps_detection_enabled', label: 'Mock GPS Anti-Spoofing', description: 'Prevent fake location check-ins & geofence bypass', plan: 'enterprise', category: 'Security', icon: MapPin },
+  { key: 'wellbeing_enabled', label: 'Employee Wellbeing Hub', description: 'Mental wellness check-ins & anonymous feedback', plan: 'enterprise', category: 'Culture', icon: HeartPulse },
 ];
 
 const PLAN_DEFAULTS: Record<string, string[]> = {
-  basic: ['tasks_enabled', 'birthdays_enabled'],
-  pro: ['tasks_enabled', 'birthdays_enabled', 'chat_enabled', 'kudos_enabled', 'helpdesk_enabled', 'multi_level_approvals_enabled'],
+  basic: [
+    'tasks_enabled',
+    'birthdays_enabled',
+    'attendance_regularization_enabled',
+    'leave_management_enabled',
+    'profile_vault_enabled',
+    'org_directory_enabled'
+  ],
+  pro: [
+    'tasks_enabled',
+    'birthdays_enabled',
+    'attendance_regularization_enabled',
+    'leave_management_enabled',
+    'profile_vault_enabled',
+    'org_directory_enabled',
+    'chat_enabled',
+    'kudos_enabled',
+    'helpdesk_enabled',
+    'knowledge_base_enabled',
+    'travel_expenses_enabled',
+    'org_chart_tree_enabled',
+    'google_calendar_enabled',
+    'multi_level_approvals_enabled'
+  ],
   enterprise: [
-    'tasks_enabled', 'birthdays_enabled', 'chat_enabled', 'kudos_enabled',
-    'helpdesk_enabled', 'multi_level_approvals_enabled', 'ai_analytics_enabled',
-    'payroll_export_enabled', 'ip_whitelist_enabled', 'mock_gps_detection_enabled',
+    'tasks_enabled',
+    'birthdays_enabled',
+    'attendance_regularization_enabled',
+    'leave_management_enabled',
+    'profile_vault_enabled',
+    'org_directory_enabled',
+    'chat_enabled',
+    'kudos_enabled',
+    'helpdesk_enabled',
+    'knowledge_base_enabled',
+    'travel_expenses_enabled',
+    'org_chart_tree_enabled',
+    'google_calendar_enabled',
+    'multi_level_approvals_enabled',
+    'compensation_enabled',
+    'payroll_export_enabled',
+    'separation_enabled',
+    'performance_enabled',
+    'ai_analytics_enabled',
+    'ip_whitelist_enabled',
+    'mock_gps_detection_enabled',
     'wellbeing_enabled'
   ]
 };
@@ -149,6 +217,8 @@ export default function SuperAdminCompanies() {
   const [currentFeatures, setCurrentFeatures] = useState<any>({});
   const [featuresLoading, setFeaturesLoading] = useState(false);
   const [savingFeatures, setSavingFeatures] = useState(false);
+  const [featureSearch, setFeatureSearch] = useState('');
+  const [featureCategory, setFeatureCategory] = useState<string>('all');
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deletingCompany, setDeletingCompany] = useState<CompanyRow | null>(null);
@@ -249,15 +319,12 @@ export default function SuperAdminCompanies() {
       
       const cs = companiesData || [];
       
-      // Efficiently count employees per company using a single query if possible, 
-      // or map them if the list is small enough. For now, let's use the count feature.
       const companiesWithCounts: CompanyRow[] = await Promise.all((cs ?? []).map(async (c) => {
         const { count } = await supabase
           .from('profiles')
           .select('*', { count: 'exact', head: true })
           .eq('company_id', c.id);
         
-        // Also get owner name and email
         let ownerName = 'Not Set';
         let ownerEmail = '';
         if (c.owner_id) {
@@ -327,14 +394,30 @@ export default function SuperAdminCompanies() {
     setConfiguringCompany(company);
     setFeaturesOpen(true);
     setFeaturesLoading(true);
+    setFeatureSearch('');
+    setFeatureCategory('all');
     const { data } = await supabase.from('company_features' as any).select('*').eq('company_id', company.id).maybeSingle();
-    setCurrentFeatures(data || {});
+    const plan = company.plan_type || 'basic';
+    const defaults = PLAN_DEFAULTS[plan] || [];
+    const featObj: any = {};
+    const jsonFlags = (data as any)?.feature_visibility?.flags || {};
+
+    ALL_FEATURES.forEach(f => {
+      if (data && (data as any)[f.key] !== undefined && (data as any)[f.key] !== null) {
+        featObj[f.key] = (data as any)[f.key];
+      } else if (jsonFlags[f.key] !== undefined) {
+        featObj[f.key] = jsonFlags[f.key];
+      } else {
+        featObj[f.key] = defaults.includes(f.key);
+      }
+    });
+    setCurrentFeatures(featObj);
     setFeaturesLoading(false);
   };
 
   const updateFeature = async (key: string, value: boolean) => {
     if (!configuringCompany) return;
-    setCurrentFeatures(prev => ({ ...prev, [key]: value }));
+    setCurrentFeatures((prev: any) => ({ ...prev, [key]: value }));
   };
 
   const applyPlanDefaults = (plan: string) => {
@@ -352,20 +435,38 @@ export default function SuperAdminCompanies() {
     if (!configuringCompany) return;
     setSavingFeatures(true);
     try {
-      // Use select-then-insert/update to avoid ON CONFLICT issues (id may be NULL)
       const { data: existing } = await supabase
-        .from('company_features' as any).select('company_id')
+        .from('company_features' as any).select('company_id, feature_visibility')
         .eq('company_id', configuringCompany.id).maybeSingle();
+
+      const existingVis = (existing as any)?.feature_visibility || {};
+      const updatedVis = {
+        ...existingVis,
+        flags: currentFeatures
+      };
+
+      const payload: any = {
+        company_id: configuringCompany.id,
+        birthdays_enabled: !!currentFeatures.birthdays_enabled,
+        chat_enabled: !!currentFeatures.chat_enabled,
+        helpdesk_enabled: !!currentFeatures.helpdesk_enabled,
+        ip_whitelist_enabled: !!currentFeatures.ip_whitelist_enabled,
+        kudos_enabled: !!currentFeatures.kudos_enabled,
+        mock_gps_detection_enabled: !!currentFeatures.mock_gps_detection_enabled,
+        multi_level_approvals_enabled: !!currentFeatures.multi_level_approvals_enabled,
+        feature_visibility: updatedVis,
+        updated_at: new Date().toISOString()
+      };
 
       let featErr;
       if (existing) {
         const r = await supabase.from('company_features' as any)
-          .update({ ...currentFeatures })
+          .update(payload)
           .eq('company_id', configuringCompany.id);
         featErr = r.error;
       } else {
         const r = await supabase.from('company_features' as any)
-          .insert({ company_id: configuringCompany.id, ...currentFeatures });
+          .insert(payload);
         featErr = r.error;
       }
       if (featErr) throw new Error(featErr.message);
@@ -375,7 +476,7 @@ export default function SuperAdminCompanies() {
         .update({ plan_type: configuringCompany.plan_type })
         .eq('id', configuringCompany.id);
 
-      toast.success(`✅ Features saved for ${configuringCompany.name}`);
+      toast.success(`✅ Features configured for ${configuringCompany.name}`);
       setFeaturesOpen(false);
       load();
     } catch (e: any) {
@@ -1029,33 +1130,41 @@ export default function SuperAdminCompanies() {
 
         {/* Features Management Dialog */}
         <Dialog open={featuresOpen} onOpenChange={setFeaturesOpen}>
-          <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[92vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2 text-xl">
-                <Shield className="h-5 w-5 text-primary" />
-                Feature Gating — <span className="text-primary">{configuringCompany?.name}</span>
-              </DialogTitle>
-              <p className="text-sm text-muted-foreground">Select a plan tier, then fine-tune individual features.</p>
+              <div className="flex items-center justify-between gap-4">
+                <DialogTitle className="flex items-center gap-2 text-xl font-[Poppins]">
+                  <Shield className="h-5 w-5 text-primary" />
+                  Feature Gating — <span className="text-primary">{configuringCompany?.name}</span>
+                </DialogTitle>
+                <Badge variant="outline" className="text-xs uppercase font-mono px-2.5 py-0.5 border-primary/30 text-primary">
+                  {configuringCompany?.plan_type || 'basic'} Tier
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground">Select a subscription plan tier preset, then fine-tune any individual feature flag.</p>
             </DialogHeader>
 
             {featuresLoading ? (
-              <div className="py-16 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></div>
+              <div className="py-20 text-center"><Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" /></div>
             ) : (
               <div className="space-y-6 pt-2">
 
-                {/* Plan Tier Selector */}
+                {/* Plan Tier Preset Selector */}
                 <div>
-                  <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-3 block">Subscription Tier</Label>
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Subscription Tier Presets</Label>
+                    <span className="text-xs text-muted-foreground">Clicking a tier activates its default feature bundle</span>
+                  </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {(['basic', 'pro', 'enterprise'] as const).map((t) => {
                       const isActive = configuringCompany?.plan_type === t;
                       const featCount = PLAN_DEFAULTS[t].length;
                       const Icon = t === 'basic' ? Star : t === 'pro' ? Zap : Crown;
                       const activeRing = t === 'basic' ? 'ring-slate-400' : t === 'pro' ? 'ring-blue-400' : 'ring-purple-400';
-                      const activeBg = t === 'basic' ? 'bg-gradient-to-br from-slate-50 to-white border-slate-300' : t === 'pro' ? 'bg-gradient-to-br from-blue-50 to-white border-blue-300' : 'bg-gradient-to-br from-purple-50 to-white border-purple-300';
-                      const iconColor = t === 'basic' ? 'text-slate-600' : t === 'pro' ? 'text-blue-600' : 'text-purple-600';
-                      const iconBg = t === 'basic' ? 'bg-slate-200' : t === 'pro' ? 'bg-blue-200' : 'bg-purple-200';
-                      const buttonBg = t === 'basic' ? 'bg-slate-800 hover:bg-slate-700' : t === 'pro' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-purple-600 hover:bg-purple-700';
+                      const activeBg = t === 'basic' ? 'bg-gradient-to-br from-slate-50 to-white border-slate-300 dark:from-slate-900/40 dark:to-slate-800/20' : t === 'pro' ? 'bg-gradient-to-br from-blue-50 to-white border-blue-300 dark:from-blue-950/30 dark:to-slate-900/20' : 'bg-gradient-to-br from-purple-50 to-white border-purple-300 dark:from-purple-950/30 dark:to-slate-900/20';
+                      const iconColor = t === 'basic' ? 'text-slate-600 dark:text-slate-300' : t === 'pro' ? 'text-blue-600 dark:text-blue-400' : 'text-purple-600 dark:text-purple-400';
+                      const iconBg = t === 'basic' ? 'bg-slate-200 dark:bg-slate-800' : t === 'pro' ? 'bg-blue-200 dark:bg-blue-900/50' : 'bg-purple-200 dark:bg-purple-900/50';
+                      const buttonBg = t === 'basic' ? 'bg-slate-800 hover:bg-slate-700 text-white' : t === 'pro' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-purple-600 hover:bg-purple-700 text-white';
 
                       return (
                         <button
@@ -1064,44 +1173,38 @@ export default function SuperAdminCompanies() {
                           onClick={() => applyPlanDefaults(t)}
                           className={`relative flex flex-col p-5 rounded-2xl border transition-all duration-300 overflow-hidden group text-left ${
                             isActive 
-                              ? `border-transparent ring-2 shadow-md ${activeRing} ${activeBg} scale-[1.02] z-10` 
+                              ? `border-transparent ring-2 shadow-md ${activeRing} ${activeBg} scale-[1.01] z-10` 
                               : 'border-border/60 bg-card hover:border-primary/30 hover:shadow-sm'
                           }`}
                         >
-                          {/* Background decoration for active */}
-                          {isActive && (
-                            <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-current opacity-5 blur-2xl pointer-events-none" style={{ color: t === 'pro' ? '#3b82f6' : t === 'enterprise' ? '#a855f7' : '#64748b' }} />
-                          )}
-
-                          <div className="flex items-start justify-between w-full mb-4">
+                          <div className="flex items-start justify-between w-full mb-3">
                             <div className={`p-2.5 rounded-xl ${isActive ? iconBg : 'bg-muted'} transition-colors shadow-sm`}>
                               <Icon className={`h-5 w-5 ${isActive ? iconColor : 'text-muted-foreground group-hover:text-foreground'}`} />
                             </div>
                             {isActive && (
-                              <Badge className="bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20 shadow-none border-0 font-bold px-2 py-0.5">
-                                Active
+                              <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 shadow-none border border-emerald-500/20 font-bold px-2 py-0.5">
+                                <CheckCircle2 className="h-3 w-3 mr-1" /> Active
                               </Badge>
                             )}
                           </div>
                           
                           <div className="w-full flex-1">
                             <h3 className={`font-heading text-lg font-bold capitalize mb-1 ${isActive ? 'text-foreground' : 'text-muted-foreground'}`}>{t}</h3>
-                            <div className="flex items-baseline gap-1.5 mb-2">
-                              <span className="text-3xl font-bold tracking-tight text-foreground">{featCount}</span> 
-                              <span className="text-sm font-medium text-muted-foreground">modules</span>
+                            <div className="flex items-baseline gap-1.5 mb-1.5">
+                              <span className="text-3xl font-extrabold tracking-tight text-foreground">{featCount}</span> 
+                              <span className="text-xs font-medium text-muted-foreground">included modules</span>
                             </div>
-                            <p className="text-xs text-muted-foreground leading-relaxed h-8">
-                              {t === 'basic' && 'Core attendance & task management.'}
-                              {t === 'pro' && 'Everything in Basic + Chat & Helpdesk.'}
-                              {t === 'enterprise' && 'All premium features unlocked.'}
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              {t === 'basic' && 'Core shifts, 6 leave quotas, 7-tab vault & task management.'}
+                              {t === 'pro' && 'Everything in Basic + Chat, Kudos, Helpdesk & Travel.'}
+                              {t === 'enterprise' && 'Full suite: Indian Payroll, CTC, Exit Clearance, AI & Security.'}
                             </p>
                           </div>
 
-                          {/* Selection indicator */}
                           <div className={`mt-4 w-full rounded-full py-2 text-xs font-semibold tracking-wide text-center transition-all ${
-                            isActive ? `${buttonBg} text-white shadow-sm` : 'bg-secondary text-secondary-foreground group-hover:bg-primary group-hover:text-primary-foreground'
+                            isActive ? `${buttonBg} shadow-sm` : 'bg-secondary text-secondary-foreground group-hover:bg-primary group-hover:text-primary-foreground'
                           }`}>
-                            {isActive ? 'CURRENT PLAN' : 'SELECT TIER'}
+                            {isActive ? 'CURRENT PLAN TIER' : 'APPLY TIER DEFAULTS'}
                           </div>
                         </button>
                       );
@@ -1109,42 +1212,96 @@ export default function SuperAdminCompanies() {
                   </div>
                 </div>
 
-                {/* Features by Tier Group */}
-                <div className="space-y-5">
+                {/* Filter and Search Bar */}
+                <div className="space-y-3 pt-1">
+                  <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
+                    <div className="relative w-full sm:w-72">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search 22 HRMS features…"
+                        value={featureSearch}
+                        onChange={(e) => setFeatureSearch(e.target.value)}
+                        className="pl-9 h-9 text-xs"
+                      />
+                    </div>
+
+                    {/* Category Filter Pills */}
+                    <div className="flex flex-wrap gap-1.5 w-full sm:w-auto">
+                      {['all', 'Core HR', 'Attendance', 'Leaves', 'Finance', 'Collaboration', 'Culture', 'Operations', 'People', 'Security', 'Performance', 'Governance'].map((cat) => (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => setFeatureCategory(cat)}
+                          className={`text-[11px] font-medium px-2.5 py-1 rounded-full border transition-all ${
+                            featureCategory === cat
+                              ? 'bg-primary text-primary-foreground border-primary'
+                              : 'bg-muted/50 border-border/60 text-muted-foreground hover:bg-muted hover:text-foreground'
+                          }`}
+                        >
+                          {cat === 'all' ? 'All (22)' : cat}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Features List Grouped by Tier */}
+                <div className="space-y-6">
                   {(['basic', 'pro', 'enterprise'] as const).map((tier) => {
-                    const tierFeatures = ALL_FEATURES.filter(f => f.plan === tier);
+                    const tierFeatures = ALL_FEATURES.filter(f => {
+                      const matchesTier = f.plan === tier;
+                      const matchesSearch = !featureSearch.trim() || 
+                        f.label.toLowerCase().includes(featureSearch.toLowerCase()) || 
+                        f.description.toLowerCase().includes(featureSearch.toLowerCase()) ||
+                        f.key.toLowerCase().includes(featureSearch.toLowerCase());
+                      const matchesCat = featureCategory === 'all' || f.category === featureCategory;
+                      return matchesTier && matchesSearch && matchesCat;
+                    });
+
+                    if (tierFeatures.length === 0) return null;
+
                     return (
-                      <div key={tier}>
-                        <div className="flex items-center gap-2 mb-3">
+                      <div key={tier} className="space-y-3">
+                        <div className="flex items-center gap-2">
                           <span className={`text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-full border ${PLAN_COLORS[tier]}`}>
-                            {tier === 'basic' ? '⭐ Basic' : tier === 'pro' ? '🚀 Pro' : '💎 Enterprise'}
+                            {tier === 'basic' ? 'Basic Tier Modules' : tier === 'pro' ? 'Pro Tier Modules' : 'Enterprise Tier Modules'}
                           </span>
-                          <div className="h-px flex-1 bg-border" />
+                          <span className="text-xs text-muted-foreground font-mono">({tierFeatures.length})</span>
+                          <div className="h-px flex-1 bg-border/60" />
                         </div>
+                        
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {tierFeatures.map((f) => {
                             const isOn = !!currentFeatures[f.key];
+                            const IconComponent = f.icon;
                             return (
                               <div
                                 key={f.key}
-                                className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer ${
+                                className={`flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer select-none ${
                                   isOn
-                                    ? 'border-primary/30 bg-primary/5 shadow-sm'
-                                    : 'border-border bg-muted/20 opacity-60'
+                                    ? 'border-primary/40 bg-primary/5 shadow-sm hover:border-primary/60'
+                                    : 'border-border/60 bg-muted/20 opacity-60 hover:opacity-80'
                                 }`}
                                 onClick={() => updateFeature(f.key, !isOn)}
                               >
-                                <div className="flex items-center gap-2.5 min-w-0">
-                                  <span className="text-lg">{f.icon}</span>
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className={`p-2 rounded-lg shrink-0 ${isOn ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'}`}>
+                                    <IconComponent className="h-4 w-4" />
+                                  </div>
                                   <div className="min-w-0">
-                                    <p className="text-sm font-semibold leading-tight">{f.label}</p>
-                                    <p className="text-[10px] text-muted-foreground truncate">{f.description}</p>
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <p className="text-sm font-semibold text-foreground leading-tight">{f.label}</p>
+                                      <Badge variant="secondary" className="text-[9px] py-0 px-1.5 h-4 font-normal text-muted-foreground">
+                                        {f.category}
+                                      </Badge>
+                                    </div>
+                                    <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">{f.description}</p>
                                   </div>
                                 </div>
-                                <div className={`ml-2 h-6 w-11 rounded-full relative transition-colors flex-shrink-0 ${
-                                  isOn ? 'bg-primary' : 'bg-muted'
+                                <div className={`ml-3 h-6 w-11 rounded-full relative transition-colors shrink-0 ${
+                                  isOn ? 'bg-primary' : 'bg-muted border border-border'
                                 }`}>
-                                  <div className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                                  <div className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow-md transition-transform ${
                                     isOn ? 'translate-x-5' : ''
                                   }`} />
                                 </div>
@@ -1157,24 +1314,35 @@ export default function SuperAdminCompanies() {
                   })}
                 </div>
 
-                {/* Summary Bar */}
-                <div className="flex items-center justify-between bg-muted/30 rounded-xl px-4 py-3 border">
+                {/* Summary & Batch Controls Bar */}
+                <div className="flex flex-col sm:flex-row items-center justify-between bg-muted/40 rounded-2xl px-5 py-3.5 border border-border/70 gap-3">
                   <div className="text-sm">
-                    <span className="font-bold text-primary">{Object.values(currentFeatures).filter(Boolean).length}</span>
-                    <span className="text-muted-foreground"> of {ALL_FEATURES.length} features enabled</span>
+                    <span className="font-bold text-primary text-base mr-1">
+                      {Object.values(currentFeatures).filter(Boolean).length}
+                    </span>
+                    <span className="text-muted-foreground"> of {ALL_FEATURES.length} platform features enabled</span>
                   </div>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={() => {
+                  <div className="flex flex-wrap gap-2">
+                    <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => {
                       const all: any = {}; ALL_FEATURES.forEach(f => all[f.key] = true); setCurrentFeatures(all);
-                    }}>Enable All</Button>
-                    <Button variant="outline" size="sm" onClick={() => {
+                    }}>
+                      <Check className="h-3.5 w-3.5 text-emerald-500" /> Enable All
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => {
                       const none: any = {}; ALL_FEATURES.forEach(f => none[f.key] = false); setCurrentFeatures(none);
-                    }}>Disable All</Button>
+                    }}>
+                      <X className="h-3.5 w-3.5 text-rose-500" /> Disable All
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-8 text-xs gap-1" onClick={() => {
+                      if (configuringCompany) applyPlanDefaults(configuringCompany.plan_type || 'basic');
+                    }}>
+                      <RotateCcw className="h-3.5 w-3.5 text-indigo-500" /> Reset to Plan
+                    </Button>
                   </div>
                 </div>
 
-                <Button className="w-full h-11 text-base" onClick={saveAllFeatures} disabled={savingFeatures}>
-                  {savingFeatures ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving...</> : '💾 Apply Configuration'}
+                <Button className="w-full h-11 text-sm sm:text-base font-semibold bg-gradient-to-r from-primary to-indigo-600 shadow-md shadow-primary/20 flex items-center justify-center gap-2" onClick={saveAllFeatures} disabled={savingFeatures}>
+                  {savingFeatures ? <><Loader2 className="h-4 w-4 animate-spin" />Saving Configuration…</> : <><Save className="h-4 w-4" /> Save & Apply Feature Configuration</>}
                 </Button>
               </div>
             )}

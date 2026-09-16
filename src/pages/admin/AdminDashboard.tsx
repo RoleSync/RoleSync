@@ -57,7 +57,7 @@ export default function AdminDashboard() {
           <p className="text-muted-foreground">
             {user?.role === 'super_admin' && !user.companyId 
               ? 'Aggregated insights across all tenant organizations.' 
-              : `Welcome back, ${user?.name.split(' ')[0]} 👋`}
+              : `Welcome back, ${user?.name.split(' ')[0]}.`}
           </p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

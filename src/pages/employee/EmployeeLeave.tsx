@@ -840,9 +840,9 @@ export default function EmployeeLeave() {
                 </div>
               </div>
               <div>
-                <h3 className="text-base font-semibold text-foreground">No Data Found</h3>
+                <h3 className="text-base font-semibold text-foreground">No Matching Requests</h3>
                 <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                  You do not have any leave requests matching the chosen criteria.
+                  No leave requests match the selected filters.
                 </p>
               </div>
               <Button
@@ -974,9 +974,9 @@ export default function EmployeeLeave() {
                 <AlertTriangle className="h-8 w-8" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-foreground">No Data Found</h3>
+                <h3 className="text-base font-semibold text-foreground">No Holidays Found</h3>
                 <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                  There are no holidays matching the selected filter.
+                  No holidays match the current filter.
                 </p>
               </div>
             </Card>

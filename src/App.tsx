@@ -30,6 +30,8 @@ import EmployeeSeparation from "./pages/employee/EmployeeSeparation";
 import EmployeeAlerts from "./pages/employee/EmployeeAlerts";
 import EmployeeCalendar from "./pages/employee/EmployeeCalendar";
 import EmployeePeople from "./pages/employee/EmployeePeople";
+import EmployeeKnowledgeBase from "./pages/employee/EmployeeKnowledgeBase";
+import EmployeeCompensation from "./pages/employee/EmployeeCompensation";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminTargets from "./pages/admin/AdminTargets";
 import AdminHelpdesk from "./pages/admin/AdminHelpdesk";
@@ -177,6 +179,9 @@ function AppRoutes() {
         <Route path="/employee/alerts" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeeAlerts /></ProtectedRoute>} />
         <Route path="/employee/calendar" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeeCalendar /></ProtectedRoute>} />
         <Route path="/employee/people" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeePeople /></ProtectedRoute>} />
+        <Route path="/employee/compensation" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeeCompensation /></ProtectedRoute>} />
+        <Route path="/employee/payroll" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeeCompensation /></ProtectedRoute>} />
+        <Route path="/employee/knowledge-base" element={<ProtectedRoute allow={['employee', 'admin']}><EmployeeKnowledgeBase /></ProtectedRoute>} />
         <Route path="/employee/birthdays" element={<ProtectedRoute allow={['employee']}><BirthdaysPage /></ProtectedRoute>} />
 
         <Route path="/admin" element={<ProtectedRoute allow={['admin', 'super_admin']}><AdminDashboard /></ProtectedRoute>} />

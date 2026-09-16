@@ -93,7 +93,7 @@ export default function EmployeeCalendar() {
     },
     {
       id: 'ev-4',
-      title: 'Somnath Tiwary Birthday 🎂',
+      title: 'Somnath Tiwary Birthday',
       type: 'notify',
       date: '2026-09-16',
       time: '11:00 AM',

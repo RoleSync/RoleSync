@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -6,9 +6,10 @@ import {
   Bell, CheckCircle2, Clock, FileText, ShieldAlert, Sparkles, 
   Smile, AlertTriangle, Check, X, ArrowRight, ShieldCheck, 
   FileCheck2, Calendar as CalendarIcon, UserCheck, DollarSign, 
-  Award, Trash2, Archive, HelpCircle, Eye, ExternalLink
+  Award, Trash2, Archive, HelpCircle, Eye, ExternalLink, Loader2
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 type MainTab = 'notifications' | 'actions';
@@ -18,7 +19,7 @@ type NotificationSubTab = 'all' | 'unread' | 'system' | 'broadcasts';
 interface ActionItem {
   id: string;
   title: string;
-  category: 'Policy & Compliance' | 'Tax & Finance' | 'Performance' | 'Approvals';
+  category: 'Policy & Compliance' | 'Tax & Finance' | 'Performance' | 'Approvals' | 'Tasks';
   description: string;
   deadline: string;
   priority: 'urgent' | 'medium' | 'low';
@@ -40,98 +41,114 @@ interface NotificationItem {
 export default function EmployeeAlerts() {
   const { user } = useAuth();
 
-  // Navigation State (Matching screenshot)
-  const [mainTab, setMainTab] = useState<MainTab>('actions');
-  const [actionSubTab, setActionSubTab] = useState<ActionSubTab>('archived');
+  // Navigation State
+  const [mainTab, setMainTab] = useState<MainTab>('notifications');
+  const [actionSubTab, setActionSubTab] = useState<ActionSubTab>('pending');
   const [notifSubTab, setNotifSubTab] = useState<NotificationSubTab>('all');
+  const [loading, setLoading] = useState(true);
 
   // Actions Data State
-  const [actionList, setActionList] = useState<ActionItem[]>([
-    {
-      id: 'ACT-101',
-      title: 'Acknowledge Information Security & Data Protection Policy 2026',
-      category: 'Policy & Compliance',
-      description: 'Annual mandatory sign-off on enterprise SOC-2 & confidentiality policies.',
-      deadline: '25-Mar-2026',
-      priority: 'urgent',
-      status: 'pending',
-      action_label: 'Sign & Acknowledge'
-    },
-    {
-      id: 'ACT-102',
-      title: 'Submit Investment Declarations & Rent Receipts (Form 12BB)',
-      category: 'Tax & Finance',
-      description: 'Upload proof of investments for EPF, 80C, 80D, and HRA tax exemptions.',
-      deadline: '28-Mar-2026',
-      priority: 'urgent',
-      status: 'pending',
-      action_label: 'Upload Proofs'
-    },
-    {
-      id: 'ACT-103',
-      title: 'Complete Q1 2026 Annual Self-Assessment Review',
-      category: 'Performance',
-      description: 'Submit your self-ratings and key technical milestones for managerial review.',
-      deadline: '31-Mar-2026',
-      priority: 'medium',
-      status: 'pending',
-      action_label: 'Fill Assessment'
-    }
-  ]);
+  const [actionList, setActionList] = useState<ActionItem[]>([]);
 
   // Notifications Data State
-  const [notifList, setNotifList] = useState<NotificationItem[]>([
-    {
-      id: 'notif-1',
-      title: 'Leave Request Approved',
-      description: 'Your Casual Leave request for 20-Mar-2026 has been approved by your manager.',
-      category: 'system',
-      created_at: '10 minutes ago',
-      read: false,
-      icon: CheckCircle2,
-      iconColor: 'text-emerald-500'
-    },
-    {
-      id: 'notif-2',
-      title: 'New Kudos Recognition Received! ⭐',
-      description: 'Priya Sharma awarded you the "Star Performer" badge on the company Intranet wall.',
-      category: 'kudos',
-      created_at: '1 hour ago',
-      read: false,
-      icon: Award,
-      iconColor: 'text-amber-500'
-    },
-    {
-      id: 'notif-3',
-      title: 'Referral Drive Bonus Announced 🚀',
-      description: 'Earn up to ₹50,000 for referring senior frontend and backend engineers.',
-      category: 'broadcasts',
-      created_at: 'Yesterday',
-      read: true,
-      icon: Sparkles,
-      iconColor: 'text-indigo-500'
-    },
-    {
-      id: 'notif-4',
-      title: 'March 2026 Payslip Ready for Download 📄',
-      description: 'Your monthly salary payslip has been generated with statutory EPF & ESI breakdown.',
-      category: 'payroll',
-      created_at: '2 days ago',
-      read: true,
-      icon: DollarSign,
-      iconColor: 'text-sky-500'
+  const [notifList, setNotifList] = useState<NotificationItem[]>([]);
+
+  // Fetch live alerts and tasks from Supabase
+  useEffect(() => {
+    async function loadAlerts() {
+      if (!user?.id || !user?.companyId) {
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+
+      try {
+        const [msgRes, taskRes, leaveRes] = await Promise.all([
+          supabase.from('admin_messages')
+            .select('*')
+            .eq('company_id', user.companyId)
+            .or(`receiver_id.eq.${user.id},is_broadcast.eq.true`)
+            .order('created_at', { ascending: false })
+            .limit(20),
+          supabase.from('tasks')
+            .select('*')
+            .eq('assigned_to', user.id)
+            .order('created_at', { ascending: false })
+            .limit(10),
+          supabase.from('leaves')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false })
+            .limit(5)
+        ]);
+
+        const messages = msgRes.data || [];
+        const tasks = taskRes.data || [];
+        const leaves = leaveRes.data || [];
+
+        // Map messages to notifications
+        const liveNotifs: NotificationItem[] = messages.map(m => ({
+          id: m.id,
+          title: m.subject || (m.is_broadcast ? 'Company Announcement' : 'Direct Message'),
+          description: m.body,
+          category: m.is_broadcast ? 'broadcasts' : 'system',
+          created_at: new Date(m.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+          read: !!m.read_at,
+          icon: m.is_broadcast ? Sparkles : Bell,
+          iconColor: m.is_broadcast ? 'text-indigo-500' : 'text-primary'
+        }));
+
+        // Append leaves updates as system notifications
+        leaves.forEach(l => {
+          liveNotifs.push({
+            id: `leave-${l.id}`,
+            title: `Leave Request ${l.status.toUpperCase()}`,
+            description: `Your ${l.leave_type || 'leave'} request from ${l.start_date} to ${l.end_date} is ${l.status}.`,
+            category: 'system',
+            created_at: new Date(l.created_at || Date.now()).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+            read: true,
+            icon: l.status === 'approved' ? CheckCircle2 : l.status === 'rejected' ? AlertTriangle : Clock,
+            iconColor: l.status === 'approved' ? 'text-emerald-500' : l.status === 'rejected' ? 'text-rose-500' : 'text-amber-500'
+          });
+        });
+
+        setNotifList(liveNotifs);
+
+        // Map pending tasks to action items
+        const liveActions: ActionItem[] = tasks.map(t => ({
+          id: t.id,
+          title: t.title,
+          category: 'Tasks',
+          description: t.description || 'Assigned task awaiting completion.',
+          deadline: t.due_date ? new Date(t.due_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'No deadline',
+          priority: t.priority === 'urgent' || t.priority === 'high' ? 'urgent' : t.priority === 'medium' ? 'medium' : 'low',
+          status: t.status === 'completed' ? 'archived' : 'pending',
+          action_label: t.status === 'completed' ? 'Completed' : 'Complete Task'
+        }));
+
+        setActionList(liveActions);
+      } catch (err) {
+        console.error('Error loading live alerts:', err);
+      } finally {
+        setLoading(false);
+      }
     }
-  ]);
+
+    loadAlerts();
+  }, [user?.id, user?.companyId]);
 
   // Action Handlers
-  const handleCompleteAction = (actionId: string, label: string) => {
+  const handleCompleteAction = async (actionId: string, label: string) => {
     setActionList(prev => prev.map(a => a.id === actionId ? { ...a, status: 'archived' } : a));
+    try {
+      await supabase.from('tasks').update({ status: 'completed' }).eq('id', actionId);
+    } catch {}
     toast.success(`Action "${label}" completed successfully!`, {
       description: "Moved to Archived actions list."
     });
   };
 
-  const handleMarkAllRead = () => {
+  const handleMarkAllRead = async () => {
     setNotifList(prev => prev.map(n => ({ ...n, read: true })));
     toast.success("All notifications marked as read.");
   };
@@ -294,13 +311,13 @@ export default function EmployeeAlerts() {
                 </div>
 
                 <h3 className="font-heading font-extrabold text-xl text-foreground mb-1 tracking-tight uppercase">
-                  WOO!
+                  All Clear
                 </h3>
                 
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                   {actionSubTab === 'archived' 
-                    ? 'Seems like there are no pending action notifications for you'
-                    : 'You have cleared all pending action items. Great job!'}
+                    ? 'No archived actions to display.'
+                    : 'No pending actions right now. You\'re up to date.'}
                 </p>
               </div>
             </Card>

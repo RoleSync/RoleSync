@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Clock, CheckSquare, CalendarDays, TrendingUp,
   User, Users, FileBarChart, Settings, Building2, Globe, Target, MapPin,
   Award, MessageSquare, LifeBuoy, ToggleLeft, GitBranch, Megaphone, Mail, HeartPulse, DollarSign, Shield, IdCard,
-  ArrowLeftRight, Receipt, UserMinus, Bell
+  ArrowLeftRight, Receipt, UserMinus, Bell, BookOpen
 } from 'lucide-react';
 import {
   Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent,
@@ -48,17 +48,19 @@ export function AppSidebar() {
 
   const employeeMenu = [
     { title: 'Dashboard', url: '/employee', icon: LayoutDashboard, show: true },
-    { title: 'Attendance', url: '/employee/attendance', icon: Clock, show: true },
-    { title: 'Tasks', url: '/employee/tasks', icon: CheckSquare, show: isEnabled('tasks_enabled') },
-    { title: 'My Targets', url: '/employee/targets', icon: Target, show: true },
-    { title: 'Leave', url: '/employee/leave', icon: CalendarDays, show: true },
-    { title: 'Expenses', url: '/employee/expenses', icon: Receipt, show: true },
-    { title: 'Performance', url: '/employee/performance', icon: TrendingUp, show: true },
+    { title: 'My Leave', url: '/employee/leave', icon: CalendarDays, show: true },
+    { title: 'My Attendance', url: '/employee/attendance', icon: Clock, show: true },
+    { title: 'My Compensation', url: '/employee/compensation', icon: DollarSign, show: true },
+    { title: 'My Expenses', url: '/employee/expenses', icon: Receipt, show: true },
+    { title: 'My Performance', url: '/employee/performance', icon: TrendingUp, show: true },
     { title: 'My Separation', url: '/employee/separation', icon: UserMinus, show: true },
     { title: 'Intranet', url: '/employee/intranet', icon: Globe, show: true },
-    { title: 'People', url: '/employee/people', icon: Users, show: true },
     { title: 'Alerts', url: '/employee/alerts', icon: Bell, show: true },
     { title: 'My Calendar', url: '/employee/calendar', icon: CalendarDays, show: true },
+    { title: 'People', url: '/employee/people', icon: Users, show: true },
+    { title: 'Knowledge Base', url: '/employee/knowledge-base', icon: BookOpen, show: true },
+    { title: 'Tasks', url: '/employee/tasks', icon: CheckSquare, show: isEnabled('tasks_enabled') },
+    { title: 'My Targets', url: '/employee/targets', icon: Target, show: true },
     { title: 'Kudos', url: '/employee/kudos', icon: Award, show: isEnabled('kudos_enabled') },
     { title: 'Chat', url: '/employee/chat', icon: MessageSquare, show: isEnabled('chat_enabled') },
     { title: 'Birthdays', url: '/employee/birthdays', icon: CalendarDays, show: isEnabled('birthdays_enabled') },

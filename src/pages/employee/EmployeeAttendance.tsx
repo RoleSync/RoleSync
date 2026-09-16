@@ -1610,9 +1610,9 @@ export default function EmployeeAttendance() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="work_from_home">🏠 Work From Home (WFH)</SelectItem>
-                  <SelectItem value="missed_punch">⏱️ Missed Punch / Attendance Correction</SelectItem>
-                  <SelectItem value="on_duty">🏢 On Duty / Client Visit (OD)</SelectItem>
+                  <SelectItem value="work_from_home">Work From Home (WFH)</SelectItem>
+                  <SelectItem value="missed_punch">Missed Punch / Attendance Correction</SelectItem>
+                  <SelectItem value="on_duty">On Duty / Client Visit (OD)</SelectItem>
                 </SelectContent>
               </Select>
             </div>

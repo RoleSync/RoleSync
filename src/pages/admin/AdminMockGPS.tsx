@@ -62,7 +62,7 @@ export default function AdminMockGPS() {
     
     setTimeout(() => {
       setScanning(false);
-      toast.success('Radar scan completed. No active location anomalies detected! 🛰️✅');
+      toast.success('Radar scan completed. No active location anomalies detected.');
     }, 3000);
   };
 

@@ -86,98 +86,104 @@ export default function EmployeePerformance() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchDropdownOpen, setSearchDropdownOpen] = useState(false);
 
-  // Performance Stats
-  const [stats, setStats] = useState({ taskRate: 88, attendanceRate: 96, completed: 14, onTime: 22 });
+  // Performance Stats from live queries
+  const [stats, setStats] = useState({ taskRate: 0, attendanceRate: 100, completed: 0, onTime: 0 });
   const [taskBreakdown, setTaskBreakdown] = useState<{ name: string; value: number }[]>([
-    { name: 'Completed', value: 14 },
-    { name: 'In Progress', value: 4 },
-    { name: 'Pending', value: 2 },
+    { name: 'Completed', value: 0 },
+    { name: 'In Progress', value: 0 },
+    { name: 'Pending', value: 0 },
   ]);
+  const [loadingLiveStats, setLoadingLiveStats] = useState(true);
 
-  // Data States
-  const [oneOnOnes, setOneOnOnes] = useState<OneOnOneSession[]>([
-    {
-      id: '1-1-1',
-      manager_name: 'Sarah Jenkins (Eng Lead)',
-      scheduled_date: '20-Mar-2026',
-      time_slot: '03:00 PM – 03:45 PM',
-      agenda: 'Q1 Sprint deliverables, backend latency optimization, and career progression roadmap',
-      status: 'upcoming',
-      action_items: ['Complete Swagger API docs', 'Review Supabase RLS policies']
-    },
-    {
-      id: '1-1-2',
-      manager_name: 'Sarah Jenkins (Eng Lead)',
-      scheduled_date: '27-Feb-2026',
-      time_slot: '04:00 PM – 04:30 PM',
-      agenda: 'Bi-weekly sync on attendance geolocation module and offline sync',
-      status: 'completed',
-      notes: 'Great work on offline cache handling. Next focus on unit testing.'
+  // Data States scoped to user
+  const [oneOnOnes, setOneOnOnes] = useState<OneOnOneSession[]>(() => {
+    try {
+      const saved = localStorage.getItem(`rolesync_perf_11_${user?.id || 'guest'}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+
+  const [goalUpdates, setGoalUpdates] = useState<GoalUpdate[]>(() => {
+    try {
+      const saved = localStorage.getItem(`rolesync_perf_goals_${user?.id || 'guest'}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+
+  const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>(() => {
+    try {
+      const saved = localStorage.getItem(`rolesync_perf_feedback_${user?.id || 'guest'}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+
+  const [appraisalCycles, setAppraisalCycles] = useState<AppraisalCycle[]>(() => {
+    try {
+      const saved = localStorage.getItem(`rolesync_perf_appraisals_${user?.id || 'guest'}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
+
+  // Persist user-scoped data
+  useEffect(() => {
+    if (user?.id) {
+      localStorage.setItem(`rolesync_perf_11_${user.id}`, JSON.stringify(oneOnOnes));
+      localStorage.setItem(`rolesync_perf_goals_${user.id}`, JSON.stringify(goalUpdates));
+      localStorage.setItem(`rolesync_perf_feedback_${user.id}`, JSON.stringify(feedbackList));
+      localStorage.setItem(`rolesync_perf_appraisals_${user.id}`, JSON.stringify(appraisalCycles));
     }
-  ]);
+  }, [oneOnOnes, goalUpdates, feedbackList, appraisalCycles, user?.id]);
 
-  const [goalUpdates, setGoalUpdates] = useState<GoalUpdate[]>([
-    {
-      id: 'GOAL-1',
-      title: 'Complete RoleSync HRMS Module Overhaul',
-      category: 'Core Engineering',
-      progress: 92,
-      target_value: '100%',
-      current_value: '92%',
-      last_updated: '14-Mar-2026',
-      notes: 'Implemented Attendance 4-tabs, Leave 6-tier quotas, and Expense Management.'
-    },
-    {
-      id: 'GOAL-2',
-      title: 'Maintain >99.5% Unit Test & Build Success Rate',
-      category: 'Quality & Reliability',
-      progress: 100,
-      target_value: '99.5%',
-      current_value: '100%',
-      last_updated: '16-Mar-2026',
-      notes: 'All Vite production builds clean with 0 TypeScript/lint errors.'
-    },
-    {
-      id: 'GOAL-3',
-      title: 'Product Engineering Knowledge Sharing',
-      category: 'Team Leadership',
-      progress: 60,
-      target_value: '3 Sessions',
-      current_value: '2 Completed',
-      last_updated: '08-Mar-2026',
-      notes: 'Conducted walkthrough on Supabase RLS and React state patterns.'
+  // Load live tasks and attendance metrics from Supabase
+  useEffect(() => {
+    async function loadLiveMetrics() {
+      if (!user?.id) return;
+      setLoadingLiveStats(true);
+      try {
+        const [tasksRes, attRes] = await Promise.all([
+          supabase.from('tasks').select('id, status').eq('assigned_to', user.id),
+          supabase.from('attendance').select('id, status').eq('user_id', user.id)
+        ]);
+
+        const tasksData = tasksRes.data || [];
+        const attData = attRes.data || [];
+
+        const completedTasks = tasksData.filter(t => t.status === 'completed').length;
+        const inProgressTasks = tasksData.filter(t => t.status === 'in_progress' || t.status === 'in-progress').length;
+        const pendingTasks = tasksData.filter(t => t.status === 'pending' || t.status === 'todo').length;
+        const totalTasks = tasksData.length;
+
+        const taskCompletionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 100;
+        const presentDays = attData.filter(a => a.status === 'present' || a.status === 'late').length;
+        const totalAtt = attData.length;
+        const attendanceRate = totalAtt > 0 ? Math.round((presentDays / totalAtt) * 100) : 100;
+
+        setStats({
+          taskRate: taskCompletionRate,
+          attendanceRate,
+          completed: completedTasks,
+          onTime: presentDays
+        });
+
+        setTaskBreakdown([
+          { name: 'Completed', value: completedTasks },
+          { name: 'In Progress', value: inProgressTasks },
+          { name: 'Pending', value: pendingTasks }
+        ]);
+      } catch (err) {
+        console.error('Error loading live performance stats:', err);
+      } finally {
+        setLoadingLiveStats(false);
+      }
     }
-  ]);
 
-  const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([
-    {
-      id: 'fb-1',
-      from_name: 'Priya Sharma',
-      from_role: 'Senior Product Manager',
-      type: 'positive',
-      date: '14-Mar-2026',
-      content: 'Exceptional speed and precision delivering the new Attendance and Leave workflows ahead of schedule!',
-      tags: ['High Ownership', 'Fast Delivery', 'Attention to Detail'],
-      badge: '⭐ Star Performer'
-    },
-    {
-      id: 'fb-2',
-      from_name: 'Vikram Mehta',
-      from_role: 'Lead Architect',
-      type: 'peer_praise',
-      date: '10-Mar-2026',
-      content: 'Great architectural decoupling for multi-tenant isolation and clean TypeScript typing across the codebase.',
-      tags: ['Architecture', 'Clean Code'],
-      badge: '💡 Innovator'
-    }
-  ]);
-
-  const [appraisalCycles, setAppraisalCycles] = useState<AppraisalCycle[]>([]);
+    loadLiveMetrics();
+  }, [user?.id]);
 
   // Dialog States
   const [schedule11Open, setSchedule11Open] = useState(false);
-  const [new11Manager, setNew11Manager] = useState('Sarah Jenkins (Eng Lead)');
-  const [new11Date, setNew11Date] = useState('2026-03-25');
+  const [new11Manager, setNew11Manager] = useState(user?.company?.name ? `${user.company.name} Team Lead` : 'Reporting Manager');
+  const [new11Date, setNew11Date] = useState(() => new Date().toISOString().split('T')[0]);
   const [new11Time, setNew11Time] = useState('15:00');
   const [new11Agenda, setNew11Agenda] = useState('');
 
@@ -396,56 +402,71 @@ export default function EmployeePerformance() {
             </Button>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            {oneOnOnes.map((item) => (
-              <Card key={item.id} className="p-5 border-border/70 shadow-sm hover:border-primary/40 transition-colors">
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
-                      {item.manager_name.charAt(0)}
-                    </div>
-                    <div>
-                      <h4 className="font-bold text-foreground text-sm">{item.manager_name}</h4>
-                      <p className="text-[11px] text-muted-foreground font-medium">{item.scheduled_date} · {item.time_slot}</p>
-                    </div>
-                  </div>
-                  <Badge variant="outline" className={`capitalize text-[11px] ${
-                    item.status === 'upcoming' 
-                      ? 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20'
-                      : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
-                  }`}>
-                    {item.status}
-                  </Badge>
+          {oneOnOnes.length === 0 ? (
+            <Card className="p-12 text-center border-border/70 shadow-sm">
+              <div className="flex flex-col items-center max-w-sm mx-auto">
+                <div className="h-12 w-12 rounded-2xl bg-primary/10 text-primary flex items-center justify-center mb-3">
+                  <Users className="h-6 w-6" />
                 </div>
+                <h4 className="font-heading font-bold text-base text-foreground mb-1">No 1-on-1 Sessions Scheduled</h4>
+                <p className="text-xs text-muted-foreground mb-4">Book regular check-in meetings with your manager for mentorship and alignment.</p>
+                <Button onClick={() => setSchedule11Open(true)} size="sm" className="text-xs">
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Schedule First 1-on-1
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {oneOnOnes.map((item) => (
+                <Card key={item.id} className="p-5 border-border/70 shadow-sm hover:border-primary/40 transition-colors">
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">
+                        {item.manager_name.charAt(0)}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-foreground text-sm">{item.manager_name}</h4>
+                        <p className="text-[11px] text-muted-foreground font-medium">{item.scheduled_date} · {item.time_slot}</p>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className={`capitalize text-[11px] ${
+                      item.status === 'upcoming' 
+                        ? 'bg-indigo-500/10 text-indigo-600 border-indigo-500/20'
+                        : 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20'
+                    }`}>
+                      {item.status}
+                    </Badge>
+                  </div>
 
-                <div className="space-y-2 pt-2 border-t border-border/50 text-xs">
-                  <div>
-                    <span className="font-semibold text-muted-foreground block mb-0.5">Agenda:</span>
-                    <p className="text-foreground leading-relaxed bg-muted/30 p-2.5 rounded-lg">{item.agenda}</p>
+                  <div className="space-y-2 pt-2 border-t border-border/50 text-xs">
+                    <div>
+                      <span className="font-semibold text-muted-foreground block mb-0.5">Agenda:</span>
+                      <p className="text-foreground leading-relaxed bg-muted/30 p-2.5 rounded-lg">{item.agenda}</p>
+                    </div>
+                    {item.action_items && (
+                      <div className="pt-1">
+                        <span className="font-semibold text-muted-foreground block mb-1">Action Items:</span>
+                        <ul className="space-y-1">
+                          {item.action_items.map((act, i) => (
+                            <li key={i} className="flex items-center gap-1.5 text-foreground">
+                              <CheckCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
+                              <span>{act}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {item.notes && (
+                      <div className="pt-1">
+                        <span className="font-semibold text-muted-foreground block mb-0.5">Manager Notes:</span>
+                        <p className="text-xs text-muted-foreground italic bg-secondary/30 p-2 rounded-md">"{item.notes}"</p>
+                      </div>
+                    )}
                   </div>
-                  {item.action_items && (
-                    <div className="pt-1">
-                      <span className="font-semibold text-muted-foreground block mb-1">Action Items:</span>
-                      <ul className="space-y-1">
-                        {item.action_items.map((act, i) => (
-                          <li key={i} className="flex items-center gap-1.5 text-foreground">
-                            <CheckCircle className="h-3.5 w-3.5 text-emerald-500 shrink-0" />
-                            <span>{act}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                  {item.notes && (
-                    <div className="pt-1">
-                      <span className="font-semibold text-muted-foreground block mb-0.5">Manager Notes:</span>
-                      <p className="text-xs text-muted-foreground italic bg-secondary/30 p-2 rounded-md">"{item.notes}"</p>
-                    </div>
-                  )}
-                </div>
-              </Card>
-            ))}
-          </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -465,38 +486,53 @@ export default function EmployeePerformance() {
             </Button>
           </div>
 
-          <div className="grid gap-4">
-            {goalUpdates.map((goal) => (
-              <Card key={goal.id} className="p-5 border-border/70 shadow-sm hover:border-primary/40 transition-colors">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{goal.category}</span>
-                      <Badge variant="outline" className="text-[10px] font-mono">{goal.id}</Badge>
+          {goalUpdates.length === 0 ? (
+            <Card className="p-12 text-center border-border/70 shadow-sm">
+              <div className="flex flex-col items-center max-w-sm mx-auto">
+                <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 text-indigo-600 flex items-center justify-center mb-3">
+                  <Target className="h-6 w-6" />
+                </div>
+                <h4 className="font-heading font-bold text-base text-foreground mb-1">No Goal Updates Recorded</h4>
+                <p className="text-xs text-muted-foreground mb-4">Set quarterly performance targets and track your personal delivery milestones.</p>
+                <Button onClick={() => setAddGoalOpen(true)} size="sm" className="text-xs">
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add Your First Goal
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {goalUpdates.map((goal) => (
+                <Card key={goal.id} className="p-5 border-border/70 shadow-sm hover:border-primary/40 transition-colors">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{goal.category}</span>
+                        <Badge variant="outline" className="text-[10px] font-mono">{goal.id}</Badge>
+                      </div>
+                      <h4 className="font-bold text-foreground text-sm sm:text-base mt-0.5">{goal.title}</h4>
                     </div>
-                    <h4 className="font-bold text-foreground text-sm sm:text-base mt-0.5">{goal.title}</h4>
+                    <div className="text-right">
+                      <span className="text-lg font-extrabold text-primary">{goal.progress}%</span>
+                      <p className="text-[11px] text-muted-foreground">Target: {goal.target_value}</p>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-lg font-extrabold text-primary">{goal.progress}%</span>
-                    <p className="text-[11px] text-muted-foreground">Target: {goal.target_value}</p>
+
+                  {/* Progress Bar */}
+                  <div className="w-full bg-muted rounded-full h-2.5 mb-3 overflow-hidden">
+                    <div 
+                      className="bg-gradient-to-r from-primary to-indigo-600 h-2.5 rounded-full transition-all duration-500" 
+                      style={{ width: `${goal.progress}%` }}
+                    />
                   </div>
-                </div>
 
-                {/* Progress Bar */}
-                <div className="w-full bg-muted rounded-full h-2.5 mb-3 overflow-hidden">
-                  <div 
-                    className="bg-gradient-to-r from-primary to-indigo-600 h-2.5 rounded-full transition-all duration-500" 
-                    style={{ width: `${goal.progress}%` }}
-                  />
-                </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs pt-2 border-t border-border/50 text-muted-foreground">
-                  <p><strong className="text-foreground">Latest Update:</strong> {goal.notes}</p>
-                  <span className="text-[11px] shrink-0 font-medium">Updated on {goal.last_updated}</span>
-                </div>
-              </Card>
-            ))}
-          </div>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs pt-2 border-t border-border/50 text-muted-foreground">
+                    <p><strong className="text-foreground">Latest Update:</strong> {goal.notes}</p>
+                    <span className="text-[11px] shrink-0 font-medium">Updated on {goal.last_updated}</span>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
 
           {/* Visual Performance Charts */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
@@ -549,40 +585,55 @@ export default function EmployeePerformance() {
             </Button>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            {feedbackList.map((fb) => (
-              <Card key={fb.id} className="p-5 border-border/70 shadow-sm hover:border-primary/40 transition-colors">
-                <div className="flex items-start justify-between gap-2 mb-3">
-                  <div className="flex items-center gap-2.5">
-                    <div className="h-9 w-9 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-xs">
-                      {fb.from_name.charAt(0)}
+          {feedbackList.length === 0 ? (
+            <Card className="p-12 text-center border-border/70 shadow-sm">
+              <div className="flex flex-col items-center max-w-sm mx-auto">
+                <div className="h-12 w-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center mb-3">
+                  <MessageSquare className="h-6 w-6" />
+                </div>
+                <h4 className="font-heading font-bold text-base text-foreground mb-1">No 360 Feedback Yet</h4>
+                <p className="text-xs text-muted-foreground mb-4">Give continuous feedback to teammates or request feedback from your peers and manager.</p>
+                <Button onClick={() => setGiveFeedbackOpen(true)} size="sm" className="text-xs">
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Give First Feedback
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2">
+              {feedbackList.map((fb) => (
+                <Card key={fb.id} className="p-5 border-border/70 shadow-sm hover:border-primary/40 transition-colors">
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-9 w-9 rounded-full bg-emerald-500/10 text-emerald-600 flex items-center justify-center font-bold text-xs">
+                        {fb.from_name.charAt(0)}
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-foreground text-sm">{fb.from_name}</h4>
+                        <p className="text-[11px] text-muted-foreground">{fb.from_role} · {fb.date}</p>
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="font-bold text-foreground text-sm">{fb.from_name}</h4>
-                      <p className="text-[11px] text-muted-foreground">{fb.from_role} · {fb.date}</p>
-                    </div>
+                    {fb.badge && (
+                      <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-[11px]">
+                        {fb.badge}
+                      </Badge>
+                    )}
                   </div>
-                  {fb.badge && (
-                    <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/20 text-[11px]">
-                      {fb.badge}
-                    </Badge>
-                  )}
-                </div>
 
-                <p className="text-xs sm:text-sm text-foreground leading-relaxed bg-muted/20 p-3 rounded-xl mb-3 border border-border/40 italic">
-                  "{fb.content}"
-                </p>
+                  <p className="text-xs sm:text-sm text-foreground leading-relaxed bg-muted/20 p-3 rounded-xl mb-3 border border-border/40 italic">
+                    "{fb.content}"
+                  </p>
 
-                <div className="flex flex-wrap gap-1.5">
-                  {fb.tags.map((tag, idx) => (
-                    <span key={idx} className="text-[10px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              </Card>
-            ))}
-          </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {fb.tags.map((tag, idx) => (
+                      <span key={idx} className="text-[10px] font-semibold bg-primary/10 text-primary px-2 py-0.5 rounded-full">
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -609,11 +660,11 @@ export default function EmployeePerformance() {
                 </div>
 
                 <h3 className="font-heading font-extrabold text-xl sm:text-2xl text-foreground mb-1 tracking-tight uppercase">
-                  WOO!
+                  No Active Cycles
                 </h3>
                 
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-6">
-                  Seems like there are no performance related activities mapped to you
+                  No review cycles or goals assigned for this quarter.
                 </p>
 
                 <Button 
@@ -819,10 +870,10 @@ export default function EmployeePerformance() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Team Player">🤝 Team Player</SelectItem>
-                  <SelectItem value="High Ownership">🚀 High Ownership</SelectItem>
-                  <SelectItem value="Clean Architecture">💻 Clean Architecture</SelectItem>
-                  <SelectItem value="Helpful & Supportive">🌟 Helpful & Supportive</SelectItem>
+                  <SelectItem value="Team Player">Team Player</SelectItem>
+                  <SelectItem value="High Ownership">High Ownership</SelectItem>
+                  <SelectItem value="Clean Architecture">Clean Architecture</SelectItem>
+                  <SelectItem value="Helpful & Supportive">Helpful & Supportive</SelectItem>
                 </SelectContent>
               </Select>
             </div>
