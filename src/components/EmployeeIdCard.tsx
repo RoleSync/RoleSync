@@ -24,12 +24,34 @@ export function EmployeeIdCard() {
   useEffect(() => {
     if (!profile) return;
     if (profile.avatar_url) {
-      supabase.storage.from('avatars').createSignedUrl(profile.avatar_url, 3600)
-        .then(({ data }) => setAvatarUrl(data?.signedUrl ?? null));
+      if (profile.avatar_url.startsWith('http://') || profile.avatar_url.startsWith('https://')) {
+        setAvatarUrl(profile.avatar_url);
+      } else {
+        const { data: pubData } = supabase.storage.from('avatars').getPublicUrl(profile.avatar_url);
+        if (pubData?.publicUrl) {
+          setAvatarUrl(pubData.publicUrl);
+        }
+        supabase.storage.from('avatars').createSignedUrl(profile.avatar_url, 3600)
+          .then(({ data }) => {
+            if (data?.signedUrl) setAvatarUrl(data.signedUrl);
+          })
+          .catch(() => {});
+      }
     }
     if (profile.id_card_url) {
-      supabase.storage.from('id-cards').createSignedUrl(profile.id_card_url, 3600)
-        .then(({ data }) => setIdCardUrl(data?.signedUrl ?? null));
+      if (profile.id_card_url.startsWith('http://') || profile.id_card_url.startsWith('https://')) {
+        setIdCardUrl(profile.id_card_url);
+      } else {
+        const { data: pubData } = supabase.storage.from('id-cards').getPublicUrl(profile.id_card_url);
+        if (pubData?.publicUrl) {
+          setIdCardUrl(pubData.publicUrl);
+        }
+        supabase.storage.from('id-cards').createSignedUrl(profile.id_card_url, 3600)
+          .then(({ data }) => {
+            if (data?.signedUrl) setIdCardUrl(data.signedUrl);
+          })
+          .catch(() => {});
+      }
     }
   }, [profile]);
 

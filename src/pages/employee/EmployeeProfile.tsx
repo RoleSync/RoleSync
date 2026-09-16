@@ -63,12 +63,26 @@ export default function EmployeeProfile() {
     if (data) {
       setProfile(data as ProfileData);
       if (data.id_card_url) {
-        const { data: signed } = await supabase.storage.from('id-cards').createSignedUrl(data.id_card_url, 3600);
-        setIdCardPreview(signed?.signedUrl ?? null);
+        if (data.id_card_url.startsWith('http://') || data.id_card_url.startsWith('https://')) {
+          setIdCardPreview(data.id_card_url);
+        } else {
+          const { data: pubData } = supabase.storage.from('id-cards').getPublicUrl(data.id_card_url);
+          if (pubData?.publicUrl) setIdCardPreview(pubData.publicUrl);
+          supabase.storage.from('id-cards').createSignedUrl(data.id_card_url, 3600)
+            .then(({ data: signed }) => { if (signed?.signedUrl) setIdCardPreview(signed.signedUrl); })
+            .catch(() => {});
+        }
       }
       if (data.avatar_url) {
-        const { data: signed } = await supabase.storage.from('avatars').createSignedUrl(data.avatar_url, 3600);
-        setAvatarPreview(signed?.signedUrl ?? null);
+        if (data.avatar_url.startsWith('http://') || data.avatar_url.startsWith('https://')) {
+          setAvatarPreview(data.avatar_url);
+        } else {
+          const { data: pubData } = supabase.storage.from('avatars').getPublicUrl(data.avatar_url);
+          if (pubData?.publicUrl) setAvatarPreview(pubData.publicUrl);
+          supabase.storage.from('avatars').createSignedUrl(data.avatar_url, 3600)
+            .then(({ data: signed }) => { if (signed?.signedUrl) setAvatarPreview(signed.signedUrl); })
+            .catch(() => {});
+        }
       }
     }
     
