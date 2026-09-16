@@ -28,14 +28,7 @@ export function EmployeeIdCard() {
         setAvatarUrl(profile.avatar_url);
       } else {
         const { data: pubData } = supabase.storage.from('avatars').getPublicUrl(profile.avatar_url);
-        if (pubData?.publicUrl) {
-          setAvatarUrl(pubData.publicUrl);
-        }
-        supabase.storage.from('avatars').createSignedUrl(profile.avatar_url, 3600)
-          .then(({ data }) => {
-            if (data?.signedUrl) setAvatarUrl(data.signedUrl);
-          })
-          .catch(() => {});
+        setAvatarUrl(pubData?.publicUrl ?? null);
       }
     }
     if (profile.id_card_url) {
@@ -43,14 +36,7 @@ export function EmployeeIdCard() {
         setIdCardUrl(profile.id_card_url);
       } else {
         const { data: pubData } = supabase.storage.from('id-cards').getPublicUrl(profile.id_card_url);
-        if (pubData?.publicUrl) {
-          setIdCardUrl(pubData.publicUrl);
-        }
-        supabase.storage.from('id-cards').createSignedUrl(profile.id_card_url, 3600)
-          .then(({ data }) => {
-            if (data?.signedUrl) setIdCardUrl(data.signedUrl);
-          })
-          .catch(() => {});
+        setIdCardUrl(pubData?.publicUrl ?? null);
       }
     }
   }, [profile]);

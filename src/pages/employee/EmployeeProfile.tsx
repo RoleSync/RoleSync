@@ -67,10 +67,7 @@ export default function EmployeeProfile() {
           setIdCardPreview(data.id_card_url);
         } else {
           const { data: pubData } = supabase.storage.from('id-cards').getPublicUrl(data.id_card_url);
-          if (pubData?.publicUrl) setIdCardPreview(pubData.publicUrl);
-          supabase.storage.from('id-cards').createSignedUrl(data.id_card_url, 3600)
-            .then(({ data: signed }) => { if (signed?.signedUrl) setIdCardPreview(signed.signedUrl); })
-            .catch(() => {});
+          setIdCardPreview(pubData?.publicUrl ?? null);
         }
       }
       if (data.avatar_url) {
@@ -78,10 +75,7 @@ export default function EmployeeProfile() {
           setAvatarPreview(data.avatar_url);
         } else {
           const { data: pubData } = supabase.storage.from('avatars').getPublicUrl(data.avatar_url);
-          if (pubData?.publicUrl) setAvatarPreview(pubData.publicUrl);
-          supabase.storage.from('avatars').createSignedUrl(data.avatar_url, 3600)
-            .then(({ data: signed }) => { if (signed?.signedUrl) setAvatarPreview(signed.signedUrl); })
-            .catch(() => {});
+          setAvatarPreview(pubData?.publicUrl ?? null);
         }
       }
     }
@@ -126,9 +120,8 @@ export default function EmployeeProfile() {
       const path = `${user.id}/${Date.now()}-${file.name}`;
       const { error: uploadError } = await supabase.storage.from('avatars').upload(path, file, { upsert: true });
       if (uploadError) throw uploadError;
-      await supabase.from('profiles').update({ avatar_url: path }).eq('id', user.id);
-      const { data: signed } = await supabase.storage.from('avatars').createSignedUrl(path, 3600);
-      setAvatarPreview(signed?.signedUrl ?? null);
+      const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
+      setAvatarPreview(pub?.publicUrl ?? null);
       toast.success('Profile photo updated successfully');
     } catch (err: any) {
       toast.error(err.message || 'Failed to update photo');

@@ -154,12 +154,12 @@ export default function AdminEmployeeDetail() {
           last_login_device: (pData as any).last_login_device ?? null,
         });
         if ((pData as any).avatar_url) {
-          const { data: signed } = await supabase.storage.from('avatars').createSignedUrl((pData as any).avatar_url, 3600);
-          setAvatarPreview(signed?.signedUrl ?? null);
+          const { data: pub } = supabase.storage.from('avatars').getPublicUrl((pData as any).avatar_url);
+          setAvatarPreview(pub?.publicUrl ?? null);
         }
         if ((pData as any).id_card_url) {
-          const { data: signed } = await supabase.storage.from('id-cards' as any).createSignedUrl((pData as any).id_card_url, 3600);
-          setIdCardPreview(signed?.signedUrl ?? null);
+          const { data: pub } = supabase.storage.from('id-cards' as any).getPublicUrl((pData as any).id_card_url);
+          setIdCardPreview(pub?.publicUrl ?? null);
         }
       }
 
@@ -318,8 +318,8 @@ export default function AdminEmployeeDetail() {
       if (dbErr) throw dbErr;
 
       update('avatar_url', path);
-      const { data: signed } = await supabase.storage.from('avatars').createSignedUrl(path, 3600);
-      setAvatarPreview(signed?.signedUrl ?? null);
+      const { data: pub } = supabase.storage.from('avatars').getPublicUrl(path);
+      setAvatarPreview(pub?.publicUrl ?? null);
       toast.success('Profile photo updated');
       setUploading(false);
     } catch (err: any) {
@@ -374,8 +374,8 @@ export default function AdminEmployeeDetail() {
       if (dbErr) throw dbErr;
 
       update('id_card_url', path);
-      const { data: signed } = await supabase.storage.from('id-cards' as any).createSignedUrl(path, 3600);
-      setIdCardPreview(signed?.signedUrl ?? null);
+      const { data: pub } = supabase.storage.from('id-cards' as any).getPublicUrl(path);
+      setIdCardPreview(pub?.publicUrl ?? null);
       toast.success('ID Card updated successfully');
     } catch (err: any) {
       toast.error(err.message);
