@@ -35,10 +35,20 @@ self.addEventListener('activate', (event) => {
 
 // Fetch Event - network first, fallback to cache for assets, network only for APIs
 self.addEventListener('fetch', (event) => {
-  // Exclude Supabase or external API requests from being cached
+  const url = event.request.url;
+
+  // Exclude Supabase, dev server / HMR, chrome extensions, and non-GET requests from service worker
   if (
-    event.request.url.includes('supabase.co') || 
-    event.request.url.includes('chrome-extension') ||
+    url.includes('supabase.co') || 
+    url.includes('chrome-extension') ||
+    url.includes('localhost') ||
+    url.includes('127.0.0.1') ||
+    url.includes('/@vite/') ||
+    url.includes('/@fs/') ||
+    url.includes('/@id/') ||
+    url.includes('.hot-update.') ||
+    url.endsWith('.ts') ||
+    url.endsWith('.tsx') ||
     event.request.method !== 'GET'
   ) {
     return;
@@ -56,27 +66,22 @@ self.addEventListener('fetch', (event) => {
         }
         return response;
       })
-      .catch(() => {
+      .catch(async () => {
         // Fallback to cache if network fails
-        return caches.match(event.request).then((cachedResponse) => {
-          if (cachedResponse) {
-            return cachedResponse;
-          }
-          // Fallback to home page if not found in cache
-          if (event.request.mode === 'navigate') {
-            return caches.match('/index.html').then((indexResponse) => {
-              if (indexResponse) return indexResponse;
-              return new Response('Network error and offline fallback not available.', {
-                status: 503,
-                headers: { 'Content-Type': 'text/plain' },
-              });
-            });
-          }
-          
-          return new Response('Network error or resource not cached', {
-            status: 408,
-            headers: { 'Content-Type': 'text/plain' },
-          });
+        const cachedResponse = await caches.match(event.request);
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        // Fallback to index.html for navigation requests
+        if (event.request.mode === 'navigate') {
+          const indexResponse = await caches.match('/index.html');
+          if (indexResponse) return indexResponse;
+        }
+        
+        // Return 503 Service Unavailable when offline instead of synthetic 408
+        return new Response('Network unavailable and resource is not cached.', {
+          status: 503,
+          headers: { 'Content-Type': 'text/plain' },
         });
       })
   );

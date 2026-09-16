@@ -2,14 +2,22 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-// Register Service Worker for PWA
+// Service Worker registration: only active in production to prevent interfering with Vite HMR/dev server
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      // .then((reg) => console.log('Service Worker registered successfully:', reg.scope))
-      .then((reg) => {}) // Silently register without logging
-      .catch((err) => console.error('Service Worker registration failed:', err));
-  });
+  if (import.meta.env.PROD) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(() => {})
+        .catch((err) => console.error('Service Worker registration failed:', err));
+    });
+  } else {
+    // In development mode, unregister any existing service worker to avoid stale caching & 408 timeouts
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        registration.unregister();
+      }
+    });
+  }
 }
 
 createRoot(document.getElementById("root")!).render(<App />);
