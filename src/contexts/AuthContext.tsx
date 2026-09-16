@@ -164,12 +164,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { error: 'Account profile not found.' };
     }
 
-    // 3. Reset failed count and update login info (shared for all roles)
+    // 3. Reset failed count and unlock (valid schema columns)
     await supabase.from('profiles').update({
-      failed_login_count: 0, locked_until: null,
-      last_login_at: new Date().toISOString(),
-      last_login_device: navigator.userAgent,
-    } as any).eq('id', u.id);
+      failed_login_count: 0,
+      locked_until: null,
+    }).eq('id', u.id);
+
+    // Record login telemetry in login_logs
+    if (u.companyId) {
+      await supabase.from('login_logs' as any).insert({
+        user_id: u.id,
+        company_id: u.companyId,
+        email: u.email,
+        success: true,
+        user_agent: navigator.userAgent,
+        created_at: new Date().toISOString(),
+      });
+    }
 
     // 4. Check for Super Admin bypass
     if (u.role === 'super_admin') {
