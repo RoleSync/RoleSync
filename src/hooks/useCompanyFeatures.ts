@@ -82,7 +82,53 @@ export function gateFeaturesByRole(
   return gated;
 }
 
-const PLAN_DEFAULTS: Record<'basic' | 'pro' | 'enterprise', (keyof Omit<CompanyFeatures, 'company_id'>)[]> = {
+export const PLAN_LEVELS: Record<'basic' | 'pro' | 'enterprise', number> = {
+  basic: 1,
+  pro: 2,
+  enterprise: 3,
+};
+
+export const FEATURE_MIN_PLAN: Record<keyof Omit<CompanyFeatures, 'company_id' | 'feature_visibility'>, 'basic' | 'pro' | 'enterprise'> = {
+  // Basic Tier (Core HRMS & Shifts)
+  tasks_enabled: 'basic',
+  birthdays_enabled: 'basic',
+  attendance_regularization_enabled: 'basic',
+  leave_management_enabled: 'basic',
+  profile_vault_enabled: 'basic',
+  org_directory_enabled: 'basic',
+
+  // Pro Tier (Collaboration, Policies, Expenses & Workflows)
+  chat_enabled: 'pro',
+  kudos_enabled: 'pro',
+  helpdesk_enabled: 'pro',
+  knowledge_base_enabled: 'pro',
+  travel_expenses_enabled: 'pro',
+  org_chart_tree_enabled: 'pro',
+  google_calendar_enabled: 'pro',
+  multi_level_approvals_enabled: 'pro',
+
+  // Enterprise Tier (Statutory Payroll, AI, Security & Exit Governance)
+  compensation_enabled: 'enterprise',
+  payroll_export_enabled: 'enterprise',
+  separation_enabled: 'enterprise',
+  performance_enabled: 'enterprise',
+  ai_analytics_enabled: 'enterprise',
+  ip_whitelist_enabled: 'enterprise',
+  mock_gps_detection_enabled: 'enterprise',
+  wellbeing_enabled: 'enterprise',
+};
+
+export const PHYSICAL_FEATURE_KEYS = [
+  'birthdays_enabled',
+  'chat_enabled',
+  'helpdesk_enabled',
+  'ip_whitelist_enabled',
+  'kudos_enabled',
+  'mock_gps_detection_enabled',
+  'multi_level_approvals_enabled'
+] as const;
+
+export const PLAN_DEFAULTS: Record<'basic' | 'pro' | 'enterprise', (keyof Omit<CompanyFeatures, 'company_id'>)[]> = {
   basic: [
     'tasks_enabled',
     'birthdays_enabled',
@@ -135,11 +181,13 @@ const PLAN_DEFAULTS: Record<'basic' | 'pro' | 'enterprise', (keyof Omit<CompanyF
 
 export function getDefaultsForPlan(plan: string): Omit<CompanyFeatures, 'company_id'> {
   const normPlan = (plan === 'pro' || plan === 'enterprise') ? plan : 'basic';
-  const enabledKeys = PLAN_DEFAULTS[normPlan];
+  const planLevel = PLAN_LEVELS[normPlan] || 1;
   const defaults: any = {};
   
   ALL_FEATURE_KEYS.forEach(k => {
-    defaults[k] = enabledKeys.includes(k);
+    const minTier = FEATURE_MIN_PLAN[k] || 'basic';
+    const minLevel = PLAN_LEVELS[minTier] || 1;
+    defaults[k] = planLevel >= minLevel;
   });
 
   return defaults;
@@ -147,14 +195,19 @@ export function getDefaultsForPlan(plan: string): Omit<CompanyFeatures, 'company
 
 export function gateFeaturesByPlan(features: CompanyFeatures, plan: string): CompanyFeatures {
   const normPlan = (plan === 'pro' || plan === 'enterprise') ? plan : 'basic';
-  const allowedKeys = PLAN_DEFAULTS[normPlan];
+  const planLevel = PLAN_LEVELS[normPlan] || 1;
   const gated = { ...features };
   
   ALL_FEATURE_KEYS.forEach(k => {
-    // If the database has it enabled, keep it enabled (super-admin override).
-    // Otherwise, if it is not in the plan, force it to false.
-    if (!allowedKeys.includes(k) && !features[k]) {
+    const minTier = FEATURE_MIN_PLAN[k] || 'basic';
+    const minLevel = PLAN_LEVELS[minTier] || 1;
+
+    if (planLevel < minLevel) {
+      // Feature is beyond company's subscription plan tier -> strictly gate to false
       gated[k] = false;
+    } else {
+      // Feature is allowed in this plan tier -> respect custom toggle or default to true
+      gated[k] = features[k] !== undefined ? !!features[k] : true;
     }
   });
 
@@ -205,6 +258,14 @@ function ensureRealtimeChannel(companyId: string, onRefresh: () => void) {
     .on(
       'postgres_changes',
       { event: '*', schema: 'public', table: 'company_features', filter: `company_id=eq.${companyId}` },
+      () => {
+        cachedFeatures = null; // Bust cache
+        onRefresh();           // Force re-fetch for all subscribers
+      }
+    )
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'companies', filter: `id=eq.${companyId}` },
       () => {
         cachedFeatures = null; // Bust cache
         onRefresh();           // Force re-fetch for all subscribers

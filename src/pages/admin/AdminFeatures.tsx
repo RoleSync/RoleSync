@@ -81,16 +81,40 @@ export default function AdminFeatures() {
   const [saving, setSaving] = useState<string | null>(null);
   const [savingVisibility, setSavingVisibility] = useState<string | null>(null);
 
-  const plan = user?.company?.planType || 'basic';
+  const PHYSICAL_KEYS = new Set([
+    'birthdays_enabled', 'chat_enabled', 'helpdesk_enabled',
+    'ip_whitelist_enabled', 'kudos_enabled', 'mock_gps_detection_enabled',
+    'multi_level_approvals_enabled'
+  ]);
 
   const toggle = async (key: string, value: boolean) => {
     if (!user?.companyId) return;
     setSaving(key);
-    const { error } = await supabase.from('company_features' as any).upsert({ company_id: user.companyId, [key]: value });
-    setSaving(null);
-    if (error) return toast.error(error.message);
-    toast.success('Updated');
-    refresh();
+    try {
+      const currentVisibility = (features?.feature_visibility as Record<string, any>) || {};
+      const currentFlags = currentVisibility.flags || {};
+      const updatedFlags = { ...currentFlags, [key]: value };
+      const updatedVisibility = { ...currentVisibility, flags: updatedFlags };
+
+      const payload: any = {
+        company_id: user.companyId,
+        feature_visibility: updatedVisibility,
+        updated_at: new Date().toISOString()
+      };
+
+      if (PHYSICAL_KEYS.has(key)) {
+        payload[key] = value;
+      }
+
+      const { error } = await supabase.from('company_features' as any).upsert(payload);
+      if (error) throw error;
+      toast.success('Updated');
+      refresh();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to update feature');
+    } finally {
+      setSaving(null);
+    }
   };
 
   const updateVisibility = async (key: string, visibility: 'all' | 'admin' | 'employee') => {

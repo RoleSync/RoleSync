@@ -533,11 +533,25 @@ export default function SuperAdminCompanies() {
 
       // Create company features based on plan defaults
       const defaults = PLAN_DEFAULTS[planType] || [];
-      const newFeatures: any = { company_id: company.id };
+      const newFeaturesMap: any = {};
       ALL_FEATURES.forEach(f => {
-        newFeatures[f.key] = defaults.includes(f.key);
+        newFeaturesMap[f.key] = defaults.includes(f.key);
       });
-      const { error: featErr } = await supabase.from('company_features' as any).insert(newFeatures);
+      const featPayload: any = {
+        company_id: company.id,
+        birthdays_enabled: !!newFeaturesMap.birthdays_enabled,
+        chat_enabled: !!newFeaturesMap.chat_enabled,
+        helpdesk_enabled: !!newFeaturesMap.helpdesk_enabled,
+        ip_whitelist_enabled: !!newFeaturesMap.ip_whitelist_enabled,
+        kudos_enabled: !!newFeaturesMap.kudos_enabled,
+        mock_gps_detection_enabled: !!newFeaturesMap.mock_gps_detection_enabled,
+        multi_level_approvals_enabled: !!newFeaturesMap.multi_level_approvals_enabled,
+        feature_visibility: {
+          flags: newFeaturesMap
+        },
+        updated_at: new Date().toISOString()
+      };
+      const { error: featErr } = await supabase.from('company_features' as any).insert(featPayload);
       if (featErr) console.error('Error inserting default company features:', featErr.message);
 
       // 4. If admin details are provided, create via RPC
@@ -610,22 +624,40 @@ export default function SuperAdminCompanies() {
       // If plan type changed, update the defaults in company_features
       if (editPlanType !== editingCompany.plan_type) {
         const { data: existing } = await supabase
-          .from('company_features' as any).select('company_id')
+          .from('company_features' as any).select('company_id, feature_visibility')
           .eq('company_id', editingCompany.id).maybeSingle();
 
         const defaults = PLAN_DEFAULTS[editPlanType] || [];
-        const newFeatures: any = {};
+        const newFeaturesMap: any = {};
         ALL_FEATURES.forEach(f => {
-          newFeatures[f.key] = defaults.includes(f.key);
+          newFeaturesMap[f.key] = defaults.includes(f.key);
         });
+
+        const existingVis = (existing as any)?.feature_visibility || {};
+        const updatedVis = {
+          ...existingVis,
+          flags: newFeaturesMap
+        };
+
+        const updatePayload: any = {
+          birthdays_enabled: !!newFeaturesMap.birthdays_enabled,
+          chat_enabled: !!newFeaturesMap.chat_enabled,
+          helpdesk_enabled: !!newFeaturesMap.helpdesk_enabled,
+          ip_whitelist_enabled: !!newFeaturesMap.ip_whitelist_enabled,
+          kudos_enabled: !!newFeaturesMap.kudos_enabled,
+          mock_gps_detection_enabled: !!newFeaturesMap.mock_gps_detection_enabled,
+          multi_level_approvals_enabled: !!newFeaturesMap.multi_level_approvals_enabled,
+          feature_visibility: updatedVis,
+          updated_at: new Date().toISOString()
+        };
 
         if (existing) {
           await supabase.from('company_features' as any)
-            .update(newFeatures)
+            .update(updatePayload)
             .eq('company_id', editingCompany.id);
         } else {
           await supabase.from('company_features' as any)
-            .insert({ company_id: editingCompany.id, ...newFeatures });
+            .insert({ company_id: editingCompany.id, ...updatePayload });
         }
       }
       
