@@ -81,6 +81,8 @@ export default function AdminFeatures() {
   const [saving, setSaving] = useState<string | null>(null);
   const [savingVisibility, setSavingVisibility] = useState<string | null>(null);
 
+  const plan = user?.company?.planType || 'basic';
+
   const PHYSICAL_KEYS = new Set([
     'birthdays_enabled', 'chat_enabled', 'helpdesk_enabled',
     'ip_whitelist_enabled', 'kudos_enabled', 'mock_gps_detection_enabled',
