@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,28 +12,53 @@ import {
   Users, GitBranch, Search, Filter, RotateCcw, Eye, Network, 
   Mail, Phone, MapPin, Building2, User, ChevronRight, ChevronLeft, 
   ChevronUp, ChevronDown, UserCheck, MessageSquare, ExternalLink,
-  Briefcase, Calendar as CalendarIcon, Sparkles, CheckCircle2
+  Briefcase, Calendar as CalendarIcon, Sparkles, CheckCircle2, Loader2, Shield
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanyFeatures } from '@/hooks/useCompanyFeatures';
+import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 type ActiveTab = 'org_chart' | 'directory';
 
-interface EmployeeRecord {
+export interface EmployeeRecord {
   id: string;
   name: string;
   designation: string;
   department: string;
   reporting_manager: string;
-  reporting_manager_id?: string;
+  reporting_manager_id?: string | null;
   work_email: string;
   phone: string;
   location: string;
   joined_date: string;
   avatar_initials: string;
+  avatar_url?: string | null;
   direct_reports_count?: number;
+  is_owner?: boolean;
+  status?: string;
+  employee_internal_id?: string | null;
+}
+
+function getInitials(name?: string | null, email?: string): string {
+  if (name && name.trim()) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) return `${parts[0][0]}${parts[1][0]}`.toUpperCase();
+    return name.substring(0, 2).toUpperCase();
+  }
+  if (email) return email.substring(0, 2).toUpperCase();
+  return 'EM';
+}
+
+function formatDate(dateStr?: string | null): string {
+  if (!dateStr) return '—';
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  } catch {
+    return dateStr;
+  }
 }
 
 export default function EmployeePeople() {
@@ -46,179 +71,160 @@ export default function EmployeePeople() {
   // Active Tab: 'org_chart' | 'directory'
   const [activeTab, setActiveTab] = useState<ActiveTab>(() => (showOrgChart ? 'org_chart' : 'directory'));
 
-  // Directory Filters & Search State (Matching screenshots 2 & 3)
+  // Directory Filters & Search State
   const [selectedDept, setSelectedDept] = useState<string>('all');
   const [searchName, setSearchName] = useState<string>('');
   const [sortBy, setSortBy] = useState<string>('name_asc');
 
   // Org Chart Selected Focus Manager
-  const [focusedManagerId, setFocusedManagerId] = useState<string>('emp-lead-1');
+  const [focusedManagerId, setFocusedManagerId] = useState<string>('');
   const [zoomLevel, setZoomLevel] = useState<number>(1);
 
   // Profile Modal State
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeRecord | null>(null);
 
-  // Comprehensive Organization Directory Data (Matching screenshots)
-  const allEmployees: EmployeeRecord[] = [
-    {
-      id: 'emp-exec-1',
-      name: 'Rohit Raju',
-      designation: 'Vice President of Engineering',
-      department: 'Product Engineering',
-      reporting_manager: 'Executive Leadership',
-      work_email: 'rohit.raju@rolesync.in',
-      phone: '+91 98765 00001',
-      location: 'Bengaluru',
-      joined_date: '15-Jan-2022',
-      avatar_initials: 'RR',
-      direct_reports_count: 8
-    },
-    {
-      id: 'emp-lead-1',
-      name: 'Sachin Shetty',
-      designation: 'Technical Lead',
-      department: 'Product Engineering',
-      reporting_manager: 'Rohit Raju',
-      reporting_manager_id: 'emp-exec-1',
-      work_email: 'sachin.shetty@rolesync.in',
-      phone: '+91 98765 11002',
-      location: 'Bengaluru',
-      joined_date: '10-Aug-2022',
-      avatar_initials: 'SS',
-      direct_reports_count: 5
-    },
-    {
-      id: 'emp-1',
-      name: 'Dipendra raj',
-      designation: 'Software Engineer',
-      department: 'Product Engineering',
-      reporting_manager: 'Sachin Shetty',
-      reporting_manager_id: 'emp-lead-1',
-      work_email: 'dipendra.raj@rolesync.in',
-      phone: '+91 98765 11003',
-      location: 'Bengaluru',
-      joined_date: '05-Jun-2023',
-      avatar_initials: 'DR'
-    },
-    {
-      id: 'emp-2',
-      name: 'Abhiraj Kumar',
-      designation: 'Software Engineer',
-      department: 'Product Engineering',
-      reporting_manager: 'Sachin Shetty',
-      reporting_manager_id: 'emp-lead-1',
-      work_email: 'abhiraj.kumar@rolesync.in',
-      phone: '+91 98765 11004',
-      location: 'Bengaluru',
-      joined_date: '12-Jul-2023',
-      avatar_initials: 'AK'
-    },
-    {
-      id: 'emp-3',
-      name: 'Nitesh Khatri',
-      designation: 'Software Engineer',
-      department: 'Product Engineering',
-      reporting_manager: 'Sachin Shetty',
-      reporting_manager_id: 'emp-lead-1',
-      work_email: 'nitesh.khatri@rolesync.in',
-      phone: '+91 98765 11005',
-      location: 'Bengaluru',
-      joined_date: '18-Aug-2023',
-      avatar_initials: 'NK'
-    },
-    {
-      id: 'emp-4',
-      name: 'Ritul Mishra',
-      designation: 'Software Engineer',
-      department: 'Product Engineering',
-      reporting_manager: 'Sachin Shetty',
-      reporting_manager_id: 'emp-lead-1',
-      work_email: 'ritul.mishra@rolesync.in',
-      phone: '+91 98765 11006',
-      location: 'Bengaluru',
-      joined_date: '02-Oct-2023',
-      avatar_initials: 'RM'
-    },
-    {
-      id: 'emp-5',
-      name: 'Anil Dhakar',
-      designation: 'Frontend Developer Intern',
-      department: 'Product Engineering',
-      reporting_manager: 'Sachin Shetty',
-      reporting_manager_id: 'emp-lead-1',
-      work_email: 'anil.dhakar@rolesync.in',
-      phone: '+91 98765 11007',
-      location: 'Bengaluru',
-      joined_date: '01-Feb-2026',
-      avatar_initials: 'AD'
-    },
-    {
-      id: 'emp-6',
-      name: 'Aniket',
-      designation: 'ASM',
-      department: 'Sales',
-      reporting_manager: 'Aniket',
-      work_email: 'aniket@smeowl.com',
-      phone: '+91 98765 22001',
-      location: 'Mumbai',
-      joined_date: '14-Mar-2023',
-      avatar_initials: 'A'
-    },
-    {
-      id: 'emp-7',
-      name: 'Swaraj',
-      designation: 'Assistant Manager - Retention',
-      department: 'Operations',
-      reporting_manager: 'Shantanu Kumar',
-      work_email: 'swaraj@codeyoung.com',
-      phone: '+91 98765 22002',
-      location: 'Bengaluru',
-      joined_date: '20-May-2023',
-      avatar_initials: 'S'
-    },
-    {
-      id: 'emp-8',
-      name: 'Ankit Kumar',
-      designation: 'Senior Manager',
-      department: 'Sales',
-      reporting_manager: 'Rishabh Tripathi',
-      work_email: 'ankit@codeyoung.com',
-      phone: '+91 98765 22003',
-      location: 'Delhi NCR',
-      joined_date: '11-Nov-2022',
-      avatar_initials: 'AK'
-    },
-    {
-      id: 'emp-9',
-      name: 'Swati P',
-      designation: 'Inside Sales Executive',
-      department: 'Growth & Marketing',
-      reporting_manager: 'Somnath Tiwary',
-      work_email: 'swathi.p@smeowl.com',
-      phone: '+91 98765 22004',
-      location: 'Bengaluru',
-      joined_date: '09-Jan-2024',
-      avatar_initials: 'SP'
-    },
-    {
-      id: 'emp-10',
-      name: 'Priyanka Bakhredia',
-      designation: 'Growth Marketing Manager',
-      department: 'Growth & Marketing',
-      reporting_manager: 'ASHIKA SINGH',
-      work_email: 'priyanka@codeyoung.com',
-      phone: '+91 98765 22005',
-      location: 'Bengaluru',
-      joined_date: '19-Sep-2023',
-      avatar_initials: 'PB'
+  // Real Database State
+  const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const slug = user?.company?.slug;
+  const prefix = slug ? `/${slug}` : '';
+
+  // Load Real Company Profiles from Supabase
+  const loadEmployees = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { data: authData } = await supabase.auth.getUser();
+      const currentUserId = authData?.user?.id;
+      if (!currentUserId) {
+        setLoading(false);
+        return;
+      }
+
+      // Get user's company ID
+      const { data: profData } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', currentUserId)
+        .maybeSingle() as any;
+
+      const companyId = profData?.company_id || user?.companyId;
+
+      // 1. Fetch Company Owner info
+      let ownerId: string | null = null;
+      let companyName = user?.company?.name || 'Main Office';
+      if (companyId) {
+        const { data: comp } = await supabase
+          .from('companies')
+          .select('owner_id, name')
+          .eq('id', companyId)
+          .maybeSingle();
+        if (comp) {
+          ownerId = comp.owner_id;
+          if (comp.name) companyName = comp.name;
+        }
+      }
+
+      // 2. Fetch all profiles for this company
+      let query = supabase
+        .from('profiles')
+        .select('id, full_name, email, phone, department, job_title, status, employee_internal_id, created_at, avatar_url, address, manager_id');
+
+      if (companyId) {
+        query = query.eq('company_id', companyId);
+      }
+      const { data: profiles, error } = await query.order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      const rawList = profiles || [];
+      const profMap = new Map(rawList.map(p => [p.id, p]));
+
+      // 3. Count direct reports
+      const reportsCount = new Map<string, number>();
+      rawList.forEach(p => {
+        if (p.manager_id) {
+          reportsCount.set(p.manager_id, (reportsCount.get(p.manager_id) || 0) + 1);
+        }
+      });
+
+      // 4. Map to clean EmployeeRecord
+      const records: EmployeeRecord[] = rawList.map(p => {
+        const isOwner = p.id === ownerId;
+        const managerProf = p.manager_id ? profMap.get(p.manager_id) : null;
+        let reportingManagerName = 'Executive Leadership';
+
+        if (managerProf) {
+          reportingManagerName = managerProf.full_name || managerProf.email;
+        } else if (isOwner) {
+          reportingManagerName = 'Company Owner / Board';
+        } else if (ownerId && profMap.has(ownerId) && p.id !== ownerId) {
+          const ownerProf = profMap.get(ownerId);
+          reportingManagerName = ownerProf?.full_name || ownerProf?.email || 'Leadership';
+        }
+
+        return {
+          id: p.id,
+          name: p.full_name || p.email.split('@')[0],
+          designation: p.job_title || (isOwner ? 'Company Administrator' : 'Staff Member'),
+          department: p.department || 'General',
+          reporting_manager: reportingManagerName,
+          reporting_manager_id: p.manager_id || (isOwner ? null : ownerId),
+          work_email: p.email,
+          phone: p.phone || '—',
+          location: p.address || companyName,
+          joined_date: formatDate(p.created_at),
+          avatar_initials: getInitials(p.full_name, p.email),
+          avatar_url: p.avatar_url,
+          direct_reports_count: reportsCount.get(p.id) || (isOwner && !p.manager_id ? Math.max(0, rawList.length - 1) : 0),
+          is_owner: isOwner,
+          status: p.status,
+          employee_internal_id: p.employee_internal_id,
+        };
+      });
+
+      setEmployees(records);
+
+      // Default focused manager in Org Chart to Owner or first manager/user
+      if (records.length > 0) {
+        const defaultFocus = records.find(r => r.is_owner) || records.find(r => (r.direct_reports_count || 0) > 0) || records[0];
+        setFocusedManagerId(prev => prev && records.some(r => r.id === prev) ? prev : defaultFocus.id);
+      }
+    } catch (err: any) {
+      console.error('Failed to load employee directory:', err);
+      toast.error('Failed to load company directory');
+    } finally {
+      setLoading(false);
     }
-  ];
+  }, [user?.companyId, user?.company?.name]);
+
+  useEffect(() => {
+    loadEmployees();
+  }, [loadEmployees]);
+
+  // Distinct Departments from Real Data
+  const availableDepartments = useMemo(() => {
+    const depts = new Set<string>();
+    employees.forEach(emp => {
+      if (emp.department && emp.department.trim()) {
+        depts.add(emp.department.trim());
+      }
+    });
+    return Array.from(depts);
+  }, [employees]);
 
   // Filtered & Sorted Directory
   const filteredDirectory = useMemo(() => {
-    return allEmployees.filter(emp => {
+    return employees.filter(emp => {
       if (selectedDept !== 'all' && emp.department !== selectedDept) return false;
-      if (searchName.trim() && !emp.name.toLowerCase().includes(searchName.toLowerCase()) && !emp.designation.toLowerCase().includes(searchName.toLowerCase())) return false;
+      if (searchName.trim()) {
+        const term = searchName.toLowerCase();
+        const matchesName = emp.name.toLowerCase().includes(term);
+        const matchesEmail = emp.work_email.toLowerCase().includes(term);
+        const matchesDesignation = emp.designation.toLowerCase().includes(term);
+        const matchesCode = emp.employee_internal_id ? emp.employee_internal_id.toLowerCase().includes(term) : false;
+        if (!matchesName && !matchesEmail && !matchesDesignation && !matchesCode) return false;
+      }
       return true;
     }).sort((a, b) => {
       if (sortBy === 'name_asc') return a.name.localeCompare(b.name);
@@ -226,16 +232,21 @@ export default function EmployeePeople() {
       if (sortBy === 'dept') return a.department.localeCompare(b.department);
       return 0;
     });
-  }, [allEmployees, selectedDept, searchName, sortBy]);
+  }, [employees, selectedDept, searchName, sortBy]);
 
   // Focused Manager and Direct Reports for Org Chart
   const currentFocusedManager = useMemo(() => {
-    return allEmployees.find(e => e.id === focusedManagerId) || allEmployees[1];
-  }, [allEmployees, focusedManagerId]);
+    if (employees.length === 0) return null;
+    return employees.find(e => e.id === focusedManagerId) || employees[0];
+  }, [employees, focusedManagerId]);
 
   const directReports = useMemo(() => {
-    return allEmployees.filter(e => e.reporting_manager_id === currentFocusedManager.id || e.reporting_manager === currentFocusedManager.name);
-  }, [allEmployees, currentFocusedManager]);
+    if (!currentFocusedManager) return [];
+    return employees.filter(e => 
+      e.id !== currentFocusedManager.id && 
+      (e.reporting_manager_id === currentFocusedManager.id || e.reporting_manager === currentFocusedManager.name)
+    );
+  }, [employees, currentFocusedManager]);
 
   // Reset Filters
   const handleResetFilters = () => {
@@ -247,7 +258,7 @@ export default function EmployeePeople() {
 
   // Switch to Org Chart focused on specific employee
   const handleJumpToOrgChart = (emp: EmployeeRecord) => {
-    if (emp.reporting_manager_id) {
+    if (emp.reporting_manager_id && employees.some(e => e.id === emp.reporting_manager_id)) {
       setFocusedManagerId(emp.reporting_manager_id);
     } else {
       setFocusedManagerId(emp.id);
@@ -262,14 +273,27 @@ export default function EmployeePeople() {
       {/* ─── Top Header ─── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-heading font-bold text-foreground">People</h1>
+          <h1 className="text-2xl sm:text-3xl font-heading font-bold text-foreground flex items-center gap-2.5">
+            <Users className="h-7 w-7 text-primary" />
+            <span>People & Org Chart</span>
+          </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Organization reporting hierarchy chart and searchable employee directory
+            Real-time organization reporting hierarchy and active employee directory
           </p>
         </div>
+
+        {user?.role === 'admin' || user?.isOwner || user?.role === 'super_admin' ? (
+          <Button 
+            onClick={() => navigate(`${prefix}/admin/employees`)}
+            className="gap-2 self-start sm:self-auto"
+            size="sm"
+          >
+            <Shield className="h-4 w-4" /> Manage Employees
+          </Button>
+        ) : null}
       </div>
 
-      {/* ─── Main Tabs: Organization Chart vs Organization Directory (Matching screenshot) ─── */}
+      {/* ─── Main Tabs: Organization Chart vs Organization Directory ─── */}
       <div className="border-b border-border/70">
         <div className="flex gap-8 overflow-x-auto pb-1">
           {showOrgChart && (
@@ -295,314 +319,357 @@ export default function EmployeePeople() {
             }`}
           >
             <Users className="h-4 w-4" />
-            Organization Directory
+            Organization Directory ({employees.length})
           </button>
         </div>
       </div>
 
-      {/* ─── TAB 1: ORGANIZATION CHART (Exact match to screenshot 1) ─── */}
-      {showOrgChart && activeTab === 'org_chart' && (
-        <div className="space-y-6 animate-in fade-in duration-200">
-          
-          {/* Select Employee Filter Bar */}
-          <Card className="p-4 border-border/70 shadow-sm bg-card">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="w-full sm:max-w-md space-y-1">
-                <Label className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Select Employee</Label>
-                <Select value={focusedManagerId} onValueChange={setFocusedManagerId}>
-                  <SelectTrigger className="h-10 text-xs">
-                    <SelectValue placeholder="Select Employee" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {allEmployees.map(emp => (
-                      <SelectItem key={emp.id} value={emp.id}>
-                        {emp.name} — {emp.designation} ({emp.department})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center gap-2 self-end sm:self-center">
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className="h-8 w-8"
-                  onClick={() => setZoomLevel(prev => Math.max(0.7, prev - 0.1))}
-                  title="Zoom Out"
-                >
-                  -
-                </Button>
-                <span className="text-xs font-mono font-semibold text-muted-foreground px-1">{Math.round(zoomLevel * 100)}%</span>
-                <Button 
-                  variant="outline" 
-                  size="icon" 
-                  className="h-8 w-8"
-                  onClick={() => setZoomLevel(prev => Math.min(1.3, prev + 0.1))}
-                  title="Zoom In"
-                >
-                  +
-                </Button>
-                {currentFocusedManager.reporting_manager_id && (
-                  <Button 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => setFocusedManagerId(currentFocusedManager.reporting_manager_id!)}
-                    className="h-8 text-xs gap-1 ml-2"
-                  >
-                    <ChevronUp className="h-3.5 w-3.5" /> Up to Manager
-                  </Button>
-                )}
-              </div>
-            </div>
-          </Card>
-
-          {/* Interactive Hierarchy Canvas Tree */}
-          <div 
-            className="p-8 sm:p-12 rounded-3xl border border-border/70 bg-gradient-to-b from-muted/20 via-background to-secondary/10 shadow-inner overflow-x-auto min-h-[500px] flex flex-col items-center justify-start transition-all"
-            style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center' }}
-          >
-            
-            {/* Top / Focused Manager Node (Matching Sachin Shetty card in screenshot 1) */}
-            <div className="relative flex flex-col items-center mb-8">
-              <div className="w-64 sm:w-72 p-5 rounded-2xl border border-border/80 bg-card shadow-xl relative hover:border-primary/50 transition-all text-center group">
-                
-                {/* Avatar with count badge */}
-                <div className="relative inline-block mb-3">
-                  <div className="h-16 w-16 rounded-full bg-primary/10 text-primary border-2 border-primary/30 flex items-center justify-center font-bold text-lg mx-auto shadow-sm">
-                    {currentFocusedManager.avatar_initials}
-                  </div>
-                  <span className="absolute bottom-0 right-0 h-5 w-5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold flex items-center justify-center shadow-md">
-                    {directReports.length || 6}
-                  </span>
-                </div>
-
-                <h4 className="font-heading font-extrabold text-base text-foreground">
-                  {currentFocusedManager.name}
-                </h4>
-                <p className="text-xs text-muted-foreground font-medium mt-0.5">{currentFocusedManager.designation}</p>
-                <p className="text-[11px] text-muted-foreground">{currentFocusedManager.department}</p>
-                <p className="text-[10px] text-muted-foreground font-mono mt-1">Reports to: {currentFocusedManager.reporting_manager}</p>
-
-                {/* Location Footer Bar (Matching blue bar in screenshot) */}
-                <div className="mt-4 py-1.5 px-3 rounded-lg bg-[#2979FF]/10 text-[#2979FF] border border-[#2979FF]/20 text-xs font-semibold">
-                  {currentFocusedManager.location}
-                </div>
-
-                {/* Left / Right Nav Arrows on manager card */}
-                <button 
-                  onClick={() => setFocusedManagerId('emp-exec-1')}
-                  className="absolute -left-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:scale-110 transition-transform"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                <button 
-                  onClick={() => setFocusedManagerId('emp-lead-1')}
-                  className="absolute -right-3 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-md hover:scale-110 transition-transform"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-
-              {/* Connecting Tree Stem Down */}
-              <div className="h-10 w-0.5 bg-primary/40 mt-0" />
-            </div>
-
-            {/* Direct Reports Row (Matching Dipendra, Abhiraj, Nitesh, Ritul, Anil cards in screenshot 1) */}
-            <div className="w-full relative flex flex-col items-center">
+      {loading ? (
+        <Card className="p-16 text-center border-border/60">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />
+          <p className="text-sm font-medium text-muted-foreground">Loading real organization directory…</p>
+        </Card>
+      ) : (
+        <>
+          {/* ─── TAB 1: ORGANIZATION CHART ─── */}
+          {showOrgChart && activeTab === 'org_chart' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
               
-              {/* Horizontal Connecting Crossbar */}
-              {directReports.length > 1 && (
-                <div className="w-[85%] max-w-5xl h-0.5 bg-primary/40 mb-6" />
-              )}
+              {/* Select Employee Filter Bar */}
+              <Card className="p-4 border-border/70 shadow-sm bg-card">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="w-full sm:max-w-md space-y-1">
+                    <Label className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Select Focus Leader</Label>
+                    <Select value={focusedManagerId} onValueChange={setFocusedManagerId}>
+                      <SelectTrigger className="h-10 text-xs">
+                        <SelectValue placeholder="Select Employee" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {employees.map(emp => (
+                          <SelectItem key={emp.id} value={emp.id}>
+                            {emp.name} — {emp.designation} ({emp.department}) {emp.is_owner ? '👑' : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-              {/* Child Nodes Grid */}
-              <div className="flex flex-wrap items-stretch justify-center gap-4 sm:gap-6 max-w-6xl">
-                {directReports.map((report) => (
-                  <div
-                    key={report.id}
-                    className="w-52 sm:w-56 p-4 rounded-2xl border border-border/70 bg-card shadow-lg hover:border-amber-500/50 hover:shadow-xl transition-all flex flex-col justify-between text-center relative group cursor-pointer"
-                    onClick={() => setSelectedEmployee(report)}
-                  >
-                    <div>
-                      {/* Avatar */}
-                      <div className="h-12 w-12 rounded-full bg-muted/70 text-foreground border border-border/80 flex items-center justify-center font-bold text-sm mx-auto mb-2.5">
-                        {report.avatar_initials}
+                  <div className="flex items-center gap-2 self-end sm:self-center">
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => setZoomLevel(prev => Math.max(0.7, prev - 0.1))}
+                      title="Zoom Out"
+                    >
+                      -
+                    </Button>
+                    <span className="text-xs font-mono font-semibold text-muted-foreground px-1">{Math.round(zoomLevel * 100)}%</span>
+                    <Button 
+                      variant="outline" 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => setZoomLevel(prev => Math.min(1.3, prev + 0.1))}
+                      title="Zoom In"
+                    >
+                      +
+                    </Button>
+                    {currentFocusedManager?.reporting_manager_id && employees.some(e => e.id === currentFocusedManager.reporting_manager_id) && (
+                      <Button 
+                        variant="outline" 
+                        size="sm"
+                        onClick={() => setFocusedManagerId(currentFocusedManager.reporting_manager_id!)}
+                        className="h-8 text-xs gap-1 ml-2"
+                      >
+                        <ChevronUp className="h-3.5 w-3.5" /> Up to Manager
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </Card>
+
+              {/* Interactive Hierarchy Canvas Tree */}
+              {currentFocusedManager ? (
+                <div 
+                  className="p-8 sm:p-12 rounded-3xl border border-border/70 bg-gradient-to-b from-muted/20 via-background to-secondary/10 shadow-inner overflow-x-auto min-h-[480px] flex flex-col items-center justify-start transition-all"
+                  style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top center' }}
+                >
+                  
+                  {/* Top / Focused Manager Node */}
+                  <div className="relative flex flex-col items-center mb-8">
+                    <div className="w-64 sm:w-72 p-5 rounded-2xl border border-border/80 bg-card shadow-xl relative hover:border-primary/50 transition-all text-center group">
+                      
+                      {/* Avatar with count badge */}
+                      <div className="relative inline-block mb-3">
+                        <div className="h-16 w-16 rounded-full bg-primary/10 text-primary border-2 border-primary/30 flex items-center justify-center font-bold text-lg mx-auto shadow-sm overflow-hidden">
+                          {currentFocusedManager.avatar_url ? (
+                            <img src={currentFocusedManager.avatar_url} alt={currentFocusedManager.name} className="h-full w-full object-cover" />
+                          ) : (
+                            currentFocusedManager.avatar_initials
+                          )}
+                        </div>
+                        {directReports.length > 0 && (
+                          <span className="absolute bottom-0 right-0 h-5 w-5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold flex items-center justify-center shadow-md">
+                            {directReports.length}
+                          </span>
+                        )}
                       </div>
 
-                      <h5 className="font-heading font-bold text-sm text-foreground">{report.name}</h5>
-                      <p className="text-[11px] text-muted-foreground font-medium mt-0.5">{report.designation}</p>
-                      <p className="text-[10px] text-muted-foreground">{report.department}</p>
-                      <p className="text-[9px] text-muted-foreground font-mono mt-0.5">Lead: {report.reporting_manager}</p>
+                      <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                        <h4 className="font-heading font-extrabold text-base text-foreground">
+                          {currentFocusedManager.name}
+                        </h4>
+                        {currentFocusedManager.is_owner && (
+                          <Badge className="bg-amber-500 text-white text-[9px] px-1.5 py-0 h-4 border-none">
+                            Owner
+                          </Badge>
+                        )}
+                      </div>
+
+                      <p className="text-xs text-primary font-medium mt-0.5">{currentFocusedManager.designation}</p>
+                      <p className="text-[11px] text-muted-foreground">{currentFocusedManager.department}</p>
+                      <p className="text-[10px] text-muted-foreground font-mono mt-1">Reports to: {currentFocusedManager.reporting_manager}</p>
+
+                      {/* Location Footer Bar */}
+                      <div className="mt-4 py-1.5 px-3 rounded-lg bg-primary/10 text-primary border border-primary/20 text-xs font-semibold truncate">
+                        {currentFocusedManager.location}
+                      </div>
                     </div>
 
-                    {/* Bottom Location Bar (Matching orange bar in screenshot 1) */}
-                    <div className="mt-3 py-1 px-2 rounded-md bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 text-[11px] font-semibold">
-                      {report.location}
-                    </div>
+                    {/* Connecting Tree Stem Down */}
+                    {directReports.length > 0 && (
+                      <div className="h-10 w-0.5 bg-primary/40 mt-0" />
+                    )}
                   </div>
-                ))}
-              </div>
 
-            </div>
+                  {/* Direct Reports Row */}
+                  {directReports.length > 0 ? (
+                    <div className="w-full relative flex flex-col items-center">
+                      
+                      {/* Horizontal Connecting Crossbar */}
+                      {directReports.length > 1 && (
+                        <div className="w-[85%] max-w-5xl h-0.5 bg-primary/40 mb-6" />
+                      )}
 
-          </div>
-        </div>
-      )}
-
-      {/* ─── TAB 2: ORGANIZATION DIRECTORY (Exact match to screenshots 2 & 3) ─── */}
-      {activeTab === 'directory' && (
-        <div className="space-y-6 animate-in fade-in duration-200">
-          
-          {/* Department Filter & Search Bar */}
-          <Card className="p-4 border-border/70 shadow-sm bg-card">
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-              
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
-                {/* Department Select */}
-                <div className="space-y-1">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Department</Label>
-                    <button 
-                      onClick={handleResetFilters}
-                      className="text-xs text-rose-500 font-semibold flex items-center gap-1 hover:underline"
-                    >
-                      <RotateCcw className="h-3 w-3" /> Reset
-                    </button>
-                  </div>
-                  <Select value={selectedDept} onValueChange={setSelectedDept}>
-                    <SelectTrigger className="h-9 text-xs">
-                      <SelectValue placeholder="Select Department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Departments</SelectItem>
-                      <SelectItem value="Product Engineering">Product Engineering</SelectItem>
-                      <SelectItem value="Sales">Sales</SelectItem>
-                      <SelectItem value="Growth & Marketing">Growth & Marketing</SelectItem>
-                      <SelectItem value="Operations">Operations</SelectItem>
-                      <SelectItem value="Human Resources">Human Resources</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Search by Name */}
-                <div className="space-y-1">
-                  <Label className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Search</Label>
-                  <div className="relative flex items-center">
-                    <Search className="h-4 w-4 text-muted-foreground absolute left-3" />
-                    <Input 
-                      placeholder="Search by Name, designation…" 
-                      value={searchName} 
-                      onChange={e => setSearchName(e.target.value)} 
-                      className="h-9 text-xs pl-9"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Sort By Dropdown */}
-              <div className="space-y-1 sm:w-44">
-                <Label className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Sort by</Label>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="h-9 text-xs">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="name_asc">Name (A – Z)</SelectItem>
-                    <SelectItem value="name_desc">Name (Z – A)</SelectItem>
-                    <SelectItem value="dept">Department</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-            </div>
-          </Card>
-
-          {/* Directory Data Table (Matching screenshot columns) */}
-          <Card className="p-0 overflow-hidden border-border/70 shadow-sm bg-card">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border/70 bg-muted/30 text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
-                    <th className="py-3.5 px-4">Name</th>
-                    <th className="py-3.5 px-4">Department & Location</th>
-                    <th className="py-3.5 px-4">Designation & Reporting Manager</th>
-                    <th className="py-3.5 px-4 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredDirectory.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="py-12 text-center text-muted-foreground text-sm">
-                        No employees found matching the selected filters.
-                      </td>
-                    </tr>
-                  ) : (
-                    filteredDirectory.map((emp) => (
-                      <tr key={emp.id} className="border-b border-border/40 last:border-0 hover:bg-muted/15 transition-colors">
-                        
-                        {/* Name & Designation Column */}
-                        <td className="py-4 px-4">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-muted text-foreground border border-border/80 flex items-center justify-center font-bold text-xs shrink-0">
-                              {emp.avatar_initials}
-                            </div>
+                      {/* Child Nodes Grid */}
+                      <div className="flex flex-wrap items-stretch justify-center gap-4 sm:gap-6 max-w-6xl">
+                        {directReports.map((report) => (
+                          <div
+                            key={report.id}
+                            className="w-52 sm:w-56 p-4 rounded-2xl border border-border/70 bg-card shadow-lg hover:border-primary/50 hover:shadow-xl transition-all flex flex-col justify-between text-center relative group cursor-pointer"
+                            onClick={() => setSelectedEmployee(report)}
+                          >
                             <div>
-                              <p className="font-bold text-foreground text-sm">{emp.name}</p>
-                              <p className="text-xs text-muted-foreground"><strong>Designation:</strong> {emp.designation}</p>
-                              <p className="text-[11px] text-muted-foreground"><strong>Department:</strong> {emp.department}</p>
+                              {/* Avatar */}
+                              <div className="h-12 w-12 rounded-full bg-muted/70 text-foreground border border-border/80 flex items-center justify-center font-bold text-sm mx-auto mb-2.5 overflow-hidden">
+                                {report.avatar_url ? (
+                                  <img src={report.avatar_url} alt={report.name} className="h-full w-full object-cover" />
+                                ) : (
+                                  report.avatar_initials
+                                )}
+                              </div>
+
+                              <h5 className="font-heading font-bold text-sm text-foreground">{report.name}</h5>
+                              <p className="text-[11px] text-primary font-medium mt-0.5">{report.designation}</p>
+                              <p className="text-[10px] text-muted-foreground">{report.department}</p>
+                              <p className="text-[9px] text-muted-foreground font-mono mt-0.5">Lead: {report.reporting_manager}</p>
+                            </div>
+
+                            {/* Bottom Location Bar */}
+                            <div className="mt-3 py-1 px-2 rounded-md bg-muted text-muted-foreground border border-border/50 text-[11px] font-semibold truncate">
+                              {report.location}
                             </div>
                           </div>
-                        </td>
+                        ))}
+                      </div>
 
-                        {/* Department & Location Column */}
-                        <td className="py-4 px-4 text-xs space-y-1">
-                          <p className="text-foreground"><strong>Reporting Manager:</strong> {emp.reporting_manager}</p>
-                          <p className="text-muted-foreground"><strong>Work Email:</strong> <span className="text-primary font-mono">{emp.work_email}</span></p>
-                          <p className="text-muted-foreground"><strong>Location:</strong> {emp.location}</p>
-                        </td>
-
-                        {/* Designation & Manager Summary Column */}
-                        <td className="py-4 px-4 text-xs space-y-1">
-                          <p className="text-muted-foreground"><strong>Work Email:</strong> <span className="font-mono text-foreground">{emp.work_email}</span></p>
-                          <p className="text-muted-foreground"><strong>Joined:</strong> {emp.joined_date}</p>
-                        </td>
-
-                        {/* Actions Column (Matching buttons in screenshot 2 & 3) */}
-                        <td className="py-4 px-4 text-right space-y-1.5">
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setSelectedEmployee(emp)}
-                            className="h-8 w-28 text-xs font-semibold gap-1.5 border-primary/30 text-primary hover:bg-primary/10 justify-center block ml-auto"
-                          >
-                            <User className="h-3.5 w-3.5 inline" /> View Profile
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => handleJumpToOrgChart(emp)}
-                            className="h-8 w-28 text-xs font-semibold gap-1.5 border-border/80 hover:border-primary/40 justify-center block ml-auto"
-                          >
-                            <GitBranch className="h-3.5 w-3.5 inline" /> Org Chart
-                          </Button>
-                        </td>
-
-                      </tr>
-                    ))
+                    </div>
+                  ) : (
+                    <div className="text-center py-6 text-muted-foreground text-xs">
+                      No direct reports assigned under {currentFocusedManager.name}.
+                    </div>
                   )}
-                </tbody>
-              </table>
-            </div>
 
-            {/* Table Footer */}
-            <div className="flex items-center justify-between px-4 py-3 border-t border-border/70 bg-muted/20 text-xs text-muted-foreground">
-              <span>Showing {filteredDirectory.length} total employees</span>
-              <span className="font-semibold text-foreground">RoleSync Directory Active</span>
+                </div>
+              ) : (
+                <Card className="p-8 text-center text-muted-foreground">
+                  No company records found for hierarchy mapping.
+                </Card>
+              )}
             </div>
-          </Card>
+          )}
 
-        </div>
+          {/* ─── TAB 2: ORGANIZATION DIRECTORY ─── */}
+          {activeTab === 'directory' && (
+            <div className="space-y-6 animate-in fade-in duration-200">
+              
+              {/* Department Filter & Search Bar */}
+              <Card className="p-4 border-border/70 shadow-sm bg-card">
+                <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
+                    {/* Department Select */}
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Department</Label>
+                        <button 
+                          onClick={handleResetFilters}
+                          className="text-xs text-rose-500 font-semibold flex items-center gap-1 hover:underline"
+                        >
+                          <RotateCcw className="h-3 w-3" /> Reset
+                        </button>
+                      </div>
+                      <Select value={selectedDept} onValueChange={setSelectedDept}>
+                        <SelectTrigger className="h-9 text-xs">
+                          <SelectValue placeholder="Select Department" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Departments ({employees.length})</SelectItem>
+                          {availableDepartments.map(dept => (
+                            <SelectItem key={dept} value={dept}>{dept}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Search by Name */}
+                    <div className="space-y-1">
+                      <Label className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Search</Label>
+                      <div className="relative flex items-center">
+                        <Search className="h-4 w-4 text-muted-foreground absolute left-3" />
+                        <Input 
+                          placeholder="Search by name, email, employee code…" 
+                          value={searchName} 
+                          onChange={e => setSearchName(e.target.value)} 
+                          className="h-9 text-xs pl-9"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Sort By Dropdown */}
+                  <div className="space-y-1 sm:w-44">
+                    <Label className="text-[11px] text-muted-foreground uppercase font-bold tracking-wider">Sort by</Label>
+                    <Select value={sortBy} onValueChange={setSortBy}>
+                      <SelectTrigger className="h-9 text-xs">
+                        <SelectValue placeholder="Sort by" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="name_asc">Name (A – Z)</SelectItem>
+                        <SelectItem value="name_desc">Name (Z – A)</SelectItem>
+                        <SelectItem value="dept">Department</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                </div>
+              </Card>
+
+              {/* Directory Data Table */}
+              <Card className="p-0 overflow-hidden border-border/70 shadow-sm bg-card">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-border/70 bg-muted/30 text-left text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+                        <th className="py-3.5 px-4">Employee</th>
+                        <th className="py-3.5 px-4">Department & Location</th>
+                        <th className="py-3.5 px-4">Reporting Manager</th>
+                        <th className="py-3.5 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {filteredDirectory.length === 0 ? (
+                        <tr>
+                          <td colSpan={4} className="py-12 text-center text-muted-foreground text-sm">
+                            {employees.length === 0 
+                              ? 'No employee profiles registered under this company yet.' 
+                              : 'No employees found matching the selected filters.'}
+                          </td>
+                        </tr>
+                      ) : (
+                        filteredDirectory.map((emp) => (
+                          <tr key={emp.id} className="border-b border-border/40 last:border-0 hover:bg-muted/15 transition-colors">
+                            
+                            {/* Name & Designation Column */}
+                            <td className="py-4 px-4">
+                              <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-full bg-primary/10 text-primary border border-primary/20 flex items-center justify-center font-bold text-xs shrink-0 overflow-hidden">
+                                  {emp.avatar_url ? (
+                                    <img src={emp.avatar_url} alt={emp.name} className="h-full w-full object-cover" />
+                                  ) : (
+                                    emp.avatar_initials
+                                  )}
+                                </div>
+                                <div>
+                                  <div className="flex items-center gap-1.5">
+                                    <p className="font-bold text-foreground text-sm">{emp.name}</p>
+                                    {emp.is_owner && (
+                                      <Badge className="bg-amber-500 text-white text-[8px] px-1 py-0 h-3.5 border-none">
+                                        Owner
+                                      </Badge>
+                                    )}
+                                  </div>
+                                  <p className="text-xs text-primary font-medium">{emp.designation}</p>
+                                  {emp.employee_internal_id && (
+                                    <p className="text-[10px] font-mono text-muted-foreground">ID: {emp.employee_internal_id}</p>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Department & Location Column */}
+                            <td className="py-4 px-4 text-xs space-y-1">
+                              <p className="text-foreground"><strong>Department:</strong> {emp.department}</p>
+                              <p className="text-muted-foreground"><strong>Location:</strong> {emp.location}</p>
+                              <p className="text-muted-foreground"><strong>Joined:</strong> {emp.joined_date}</p>
+                            </td>
+
+                            {/* Reporting Manager Column */}
+                            <td className="py-4 px-4 text-xs space-y-1">
+                              <p className="text-foreground font-medium"><strong>Manager:</strong> {emp.reporting_manager}</p>
+                              <p className="text-muted-foreground"><strong>Work Email:</strong> <span className="font-mono text-primary">{emp.work_email}</span></p>
+                              <p className="text-muted-foreground"><strong>Phone:</strong> {emp.phone}</p>
+                            </td>
+
+                            {/* Actions Column */}
+                            <td className="py-4 px-4 text-right space-y-1.5">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => setSelectedEmployee(emp)}
+                                className="h-8 w-28 text-xs font-semibold gap-1.5 border-primary/30 text-primary hover:bg-primary/10 justify-center block ml-auto"
+                              >
+                                <User className="h-3.5 w-3.5 inline" /> View Details
+                              </Button>
+                              {showOrgChart && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleJumpToOrgChart(emp)}
+                                  className="h-8 w-28 text-xs font-semibold gap-1.5 border-border/80 hover:border-primary/40 justify-center block ml-auto"
+                                >
+                                  <GitBranch className="h-3.5 w-3.5 inline" /> Org Chart
+                                </Button>
+                              )}
+                            </td>
+
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Table Footer */}
+                <div className="flex items-center justify-between px-4 py-3 border-t border-border/70 bg-muted/20 text-xs text-muted-foreground">
+                  <span>Showing {filteredDirectory.length} total active employees</span>
+                  <span className="font-semibold text-foreground">RoleSync Directory Active</span>
+                </div>
+              </Card>
+
+            </div>
+          )}
+        </>
       )}
 
       {/* ─── View Profile Modal Dialog ─── */}
@@ -611,24 +678,41 @@ export default function EmployeePeople() {
           <DialogHeader>
             <DialogTitle className="font-heading text-base font-bold flex items-center gap-2">
               <UserCheck className="h-5 w-5 text-primary" />
-              Employee Profile
+              Employee Profile Details
             </DialogTitle>
           </DialogHeader>
 
           {selectedEmployee && (
             <div className="space-y-4 py-2 text-xs sm:text-sm">
               <div className="flex items-center gap-3.5 p-4 rounded-2xl bg-muted/30 border border-border/60">
-                <div className="h-14 w-14 rounded-full bg-primary/10 text-primary border-2 border-primary/30 flex items-center justify-center font-extrabold text-lg shrink-0">
-                  {selectedEmployee.avatar_initials}
+                <div className="h-14 w-14 rounded-full bg-primary/10 text-primary border-2 border-primary/30 flex items-center justify-center font-extrabold text-lg shrink-0 overflow-hidden">
+                  {selectedEmployee.avatar_url ? (
+                    <img src={selectedEmployee.avatar_url} alt={selectedEmployee.name} className="h-full w-full object-cover" />
+                  ) : (
+                    selectedEmployee.avatar_initials
+                  )}
                 </div>
                 <div>
-                  <h4 className="font-bold text-foreground text-base">{selectedEmployee.name}</h4>
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="font-bold text-foreground text-base">{selectedEmployee.name}</h4>
+                    {selectedEmployee.is_owner && (
+                      <Badge className="bg-amber-500 text-white text-[9px] px-1.5 py-0 h-4 border-none">
+                        Owner
+                      </Badge>
+                    )}
+                  </div>
                   <p className="text-xs text-primary font-medium">{selectedEmployee.designation}</p>
                   <p className="text-[11px] text-muted-foreground">{selectedEmployee.department} · {selectedEmployee.location}</p>
                 </div>
               </div>
 
               <div className="space-y-2.5 p-3 rounded-xl bg-card border border-border/50 text-xs">
+                {selectedEmployee.employee_internal_id && (
+                  <div className="flex justify-between py-1 border-b border-border/30">
+                    <span className="text-muted-foreground">Employee ID:</span>
+                    <span className="font-mono font-semibold text-foreground">{selectedEmployee.employee_internal_id}</span>
+                  </div>
+                )}
                 <div className="flex justify-between py-1 border-b border-border/30">
                   <span className="text-muted-foreground">Reporting Manager:</span>
                   <span className="font-semibold text-foreground">{selectedEmployee.reporting_manager}</span>
@@ -648,25 +732,39 @@ export default function EmployeePeople() {
               </div>
 
               <div className="flex gap-2">
-                <Button 
-                  onClick={() => {
-                    setSelectedEmployee(null);
-                    handleJumpToOrgChart(selectedEmployee);
-                  }}
-                  variant="outline" 
-                  className="w-1/2 text-xs font-semibold gap-1.5"
-                >
-                  <Network className="h-3.5 w-3.5" /> View in Org Tree
-                </Button>
-                <Button 
-                  onClick={() => {
-                    setSelectedEmployee(null);
-                    navigate('/employee/chat');
-                  }}
-                  className="w-1/2 text-xs font-semibold bg-gradient-to-r from-primary to-indigo-600 gap-1.5"
-                >
-                  <MessageSquare className="h-3.5 w-3.5" /> Send Message
-                </Button>
+                {showOrgChart && (
+                  <Button 
+                    onClick={() => {
+                      const emp = selectedEmployee;
+                      setSelectedEmployee(null);
+                      handleJumpToOrgChart(emp);
+                    }}
+                    variant="outline" 
+                    className="w-1/2 text-xs font-semibold gap-1.5"
+                  >
+                    <Network className="h-3.5 w-3.5" /> View in Org Tree
+                  </Button>
+                )}
+                {user?.role === 'admin' || user?.isOwner || user?.role === 'super_admin' ? (
+                  <Button 
+                    onClick={() => {
+                      navigate(`${prefix}/admin/employees/${selectedEmployee.id}`);
+                    }}
+                    className="w-full text-xs font-semibold bg-primary gap-1.5"
+                  >
+                    <Shield className="h-3.5 w-3.5" /> Manage In Admin Hub
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={() => {
+                      setSelectedEmployee(null);
+                      navigate(`${prefix}/employee/chat`);
+                    }}
+                    className="w-full text-xs font-semibold bg-gradient-to-r from-primary to-indigo-600 gap-1.5"
+                  >
+                    <MessageSquare className="h-3.5 w-3.5" /> Send Message
+                  </Button>
+                )}
               </div>
             </div>
           )}
