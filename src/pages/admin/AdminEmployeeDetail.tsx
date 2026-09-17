@@ -84,6 +84,7 @@ export default function AdminEmployeeDetail() {
   const [passwordMode, setPasswordMode] = useState<'direct' | 'link'>('direct');
   const [busyAction, setBusyAction] = useState<string | null>(null);
   const [resettingPassword, setResettingPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const isSuperAdmin = user?.role === 'super_admin';
   const isCompanyOwner = user?.isOwner;
