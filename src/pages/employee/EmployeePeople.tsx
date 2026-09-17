@@ -161,62 +161,93 @@ export default function EmployeePeople() {
 
       setCurrentCompanyName(targetCompanyName);
 
-      // 4. Fetch all profiles for this company
+      // 4. Fetch all profiles for this company (using only existing columns)
       let query = supabase
         .from('profiles')
-        .select('id, full_name, email, phone, department, job_title, status, employee_internal_id, created_at, avatar_url, address, manager_id');
+        .select('id, full_name, email, phone, department, job_title, status, employee_internal_id, created_at, avatar_url, address');
 
       if (targetCompanyId) {
         query = query.eq('company_id', targetCompanyId);
       }
       const { data: profiles, error } = await query.order('created_at', { ascending: true });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase profiles query error:', error);
+        throw error;
+      }
 
       const rawList = profiles || [];
+      if (rawList.length === 0) {
+        setEmployees([]);
+        setLoading(false);
+        return;
+      }
+
+      // 5. Fetch user roles to structure reporting hierarchy
+      const { data: rolesData } = await supabase
+        .from('user_roles')
+        .select('user_id, role')
+        .in('user_id', rawList.map(p => p.id));
+
+      const roleMap = new Map((rolesData || []).map(r => [r.user_id, r.role]));
       const profMap = new Map(rawList.map(p => [p.id, p]));
+      const ownerProf = targetOwnerId ? profMap.get(targetOwnerId) : null;
+      const adminList = rawList.filter(p => p.id !== targetOwnerId && roleMap.get(p.id) === 'admin');
 
-      // 5. Count direct reports
-      const reportsCount = new Map<string, number>();
-      rawList.forEach(p => {
-        if (p.manager_id) {
-          reportsCount.set(p.manager_id, (reportsCount.get(p.manager_id) || 0) + 1);
-        }
-      });
-
-      // 6. Map to clean EmployeeRecord
+      // 6. Map to clean EmployeeRecord with hierarchical reporting relationships
       const records: EmployeeRecord[] = rawList.map(p => {
         const isOwner = p.id === targetOwnerId;
-        const managerProf = p.manager_id ? profMap.get(p.manager_id) : null;
+        const userRole = roleMap.get(p.id) || 'employee';
         let reportingManagerName = 'Executive Leadership';
+        let reportingManagerId: string | null = null;
 
-        if (managerProf) {
-          reportingManagerName = managerProf.full_name || managerProf.email;
-        } else if (isOwner) {
+        if (isOwner) {
           reportingManagerName = 'Company Owner / Board';
-        } else if (targetOwnerId && profMap.has(targetOwnerId) && p.id !== targetOwnerId) {
-          const ownerProf = profMap.get(targetOwnerId);
-          reportingManagerName = ownerProf?.full_name || ownerProf?.email || 'Leadership';
+          reportingManagerId = null;
+        } else if (userRole === 'admin') {
+          reportingManagerName = ownerProf?.full_name || ownerProf?.email || 'Company Owner';
+          reportingManagerId = targetOwnerId;
+        } else {
+          // Employee / Staff
+          const deptAdmin = adminList.find(a => a.department && a.department === p.department) || adminList[0];
+          if (deptAdmin) {
+            reportingManagerName = deptAdmin.full_name || deptAdmin.email;
+            reportingManagerId = deptAdmin.id;
+          } else if (ownerProf) {
+            reportingManagerName = ownerProf.full_name || ownerProf.email;
+            reportingManagerId = targetOwnerId;
+          }
         }
 
         return {
           id: p.id,
           name: p.full_name || p.email.split('@')[0],
-          designation: p.job_title || (isOwner ? 'Company Administrator' : 'Staff Member'),
+          designation: p.job_title || (isOwner ? 'Company Administrator' : userRole === 'admin' ? 'Operations Admin' : 'Staff Member'),
           department: p.department || 'General',
           reporting_manager: reportingManagerName,
-          reporting_manager_id: p.manager_id || (isOwner ? null : targetOwnerId),
+          reporting_manager_id: reportingManagerId,
           work_email: p.email,
           phone: p.phone || '—',
           location: p.address || targetCompanyName,
           joined_date: formatDate(p.created_at),
           avatar_initials: getInitials(p.full_name, p.email),
           avatar_url: p.avatar_url,
-          direct_reports_count: reportsCount.get(p.id) || (isOwner && !p.manager_id ? Math.max(0, rawList.length - 1) : 0),
+          direct_reports_count: 0,
           is_owner: isOwner,
           status: p.status,
           employee_internal_id: p.employee_internal_id,
         };
+      });
+
+      // 7. Calculate direct reports count
+      const reportsCount = new Map<string, number>();
+      records.forEach(r => {
+        if (r.reporting_manager_id) {
+          reportsCount.set(r.reporting_manager_id, (reportsCount.get(r.reporting_manager_id) || 0) + 1);
+        }
+      });
+      records.forEach(r => {
+        r.direct_reports_count = reportsCount.get(r.id) || 0;
       });
 
       setEmployees(records);
