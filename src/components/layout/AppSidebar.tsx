@@ -198,22 +198,32 @@ export function AppSidebar() {
               </div>
             )}
 
-             <SidebarMenu>
-              {menu.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild>
-                    <NavLink
-                      to={item.url}
-                      end={item.url === '/admin' || item.url === '/employee' || item.url === '/super-admin'}
-                      className="hover:bg-sidebar-accent/50 group flex items-center w-full px-3 py-2 rounded-md transition-all duration-200"
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium border-l-2 border-primary shadow-sm"
-                    >
-                      <item.icon className="mr-2 h-4 w-4 text-muted-foreground group-hover:text-primary transition-all duration-300 group-hover:scale-110" />
-                      {!collapsed && <span className="group-hover:translate-x-0.5 transition-transform duration-200">{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              <SidebarMenu>
+              {menu.map((item) => {
+                const isDashboard = 
+                  item.title === 'Dashboard' || 
+                  item.url === '/admin' || 
+                  item.url === '/employee' || 
+                  item.url === '/super-admin' ||
+                  item.url === `${prefix}/admin` || 
+                  item.url === `${prefix}/employee`;
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <NavLink
+                        to={item.url}
+                        end={isDashboard}
+                        className="hover:bg-sidebar-accent/50 group flex items-center w-full px-3 py-2 rounded-md transition-all duration-200"
+                        activeClassName="bg-sidebar-accent text-sidebar-accent-foreground font-medium border-l-2 border-primary shadow-sm"
+                      >
+                        <item.icon className="mr-2 h-4 w-4 text-muted-foreground group-hover:text-primary transition-all duration-300 group-hover:scale-110" />
+                        {!collapsed && <span className="group-hover:translate-x-0.5 transition-transform duration-200">{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
