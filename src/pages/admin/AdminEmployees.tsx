@@ -13,13 +13,20 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+import { useAuth } from '@/contexts/AuthContext';
+import { Badge } from '@/components/ui/badge';
+import { Shield, ShieldAlert } from 'lucide-react';
+
 type Profile = {
   id: string; full_name: string; email: string; phone: string | null;
   department: string | null; job_title: string | null; status: 'pending'|'approved'|'rejected'|'suspended';
   employee_internal_id: string | null;
+  role?: 'employee' | 'admin' | 'super_admin';
+  isOwner?: boolean;
 };
 
 export default function AdminEmployees() {
+  const { user: currentUser } = useAuth();
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
@@ -54,7 +61,25 @@ export default function AdminEmployees() {
       query = query.eq('company_id', companyId);
     }
     const { data } = await query.order('created_at', { ascending: false });
-    setProfiles((data as Profile[]) ?? []);
+    const profs = (data as Profile[]) ?? [];
+
+    if (profs.length > 0) {
+      const [rolesRes, companyRes] = await Promise.all([
+        supabase.from('user_roles').select('user_id, role').in('user_id', profs.map(p => p.id)),
+        companyId ? supabase.from('companies').select('owner_id').eq('id', companyId).maybeSingle() : Promise.resolve({ data: null })
+      ]);
+
+      const ownerId = (companyRes?.data as any)?.owner_id;
+      const roleMap = new Map((rolesRes.data ?? []).map((r: any) => [r.user_id, r.role]));
+
+      setProfiles(profs.map(p => ({
+        ...p,
+        role: (roleMap.get(p.id) || 'employee') as any,
+        isOwner: p.id === ownerId
+      })));
+    } else {
+      setProfiles([]);
+    }
     setLoading(false);
   }, []);
 
@@ -228,40 +253,63 @@ export default function AdminEmployees() {
                   <th className="py-2 pr-4">Status</th><th className="py-2">Actions</th>
                 </tr></thead>
                 <tbody>
-                  {filtered.map((p) => (
-                    <tr key={p.id} className="border-b last:border-0">
-                      <td className="py-3 pr-4 font-mono text-[10px] text-muted-foreground">{p.employee_internal_id ?? '—'}</td>
-                      <td className="py-3 pr-4 font-medium">{p.full_name}</td>
-                      <td className="py-3 pr-4 text-muted-foreground">{p.email}</td>
-                      <td className="py-3 pr-4">{p.department ?? '—'}</td>
-                      <td className="py-3 pr-4"><StatusBadge status={p.status === 'approved' ? 'Active' : p.status === 'pending' ? 'Pending' : p.status === 'suspended' ? 'Suspended' : 'Rejected'} /></td>
-                      <td className="py-3">
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => navigate(`/admin/employees/${p.id}`)}>
-                            <Eye className="h-3 w-3 mr-1" />View
-                          </Button>
-                          {p.status === 'pending' ? (
-                            <div className="flex gap-1">
-                              <Button size="sm" disabled={busyId === p.id} onClick={() => changeStatus(p.id, 'approved')}>
-                                {busyId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Check className="h-3 w-3 mr-1" />Approve</>}
-                              </Button>
-                              <Button size="sm" variant="outline" disabled={busyId === p.id} onClick={() => changeStatus(p.id, 'rejected')}>
-                                <X className="h-3 w-3 mr-1" />Reject
-                              </Button>
-                            </div>
-                          ) : p.status === 'approved' ? (
-                            <Button size="sm" variant="outline" disabled={busyId === p.id} onClick={() => changeStatus(p.id, 'suspended')}>
-                              <UserMinus className="h-3 w-3 mr-1" />Suspend
+                  {filtered.map((p) => {
+                    const isSuperAdmin = currentUser?.role === 'super_admin';
+                    const isOwner = currentUser?.isOwner;
+                    const isSelf = currentUser?.id === p.id;
+                    const canManageTarget = isSuperAdmin || (isOwner && !isSelf) || (!p.isOwner && p.role !== 'admin' && !isSelf);
+
+                    return (
+                      <tr key={p.id} className="border-b last:border-0 hover:bg-muted/20">
+                        <td className="py-3 pr-4 font-mono text-[10px] text-muted-foreground">{p.employee_internal_id ?? '—'}</td>
+                        <td className="py-3 pr-4 font-medium">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span>{p.full_name}</span>
+                            {p.isOwner && (
+                              <Badge className="bg-amber-500 hover:bg-amber-600 text-white text-[9px] px-1.5 py-0 h-4 border-none flex items-center gap-0.5">
+                                <Shield className="h-2.5 w-2.5" /> Owner
+                              </Badge>
+                            )}
+                            {p.role === 'admin' && !p.isOwner && (
+                              <Badge variant="secondary" className="text-[9px] px-1.5 py-0 h-4">Admin</Badge>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 pr-4 text-muted-foreground text-xs">{p.email}</td>
+                        <td className="py-3 pr-4 text-xs">{p.department ?? '—'}</td>
+                        <td className="py-3 pr-4"><StatusBadge status={p.status === 'approved' ? 'Active' : p.status === 'pending' ? 'Pending' : p.status === 'suspended' ? 'Suspended' : 'Rejected'} /></td>
+                        <td className="py-3">
+                          <div className="flex gap-2 items-center">
+                            <Button size="sm" variant="outline" onClick={() => navigate(`/admin/employees/${p.id}`)}>
+                              <Eye className="h-3 w-3 mr-1" />View
                             </Button>
-                          ) : p.status === 'suspended' || p.status === 'rejected' ? (
-                            <Button size="sm" disabled={busyId === p.id} onClick={() => changeStatus(p.id, 'approved')}>
-                              <Check className="h-3 w-3 mr-1" />Reactivate
-                            </Button>
-                          ) : null}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
+                            {canManageTarget ? (
+                              p.status === 'pending' ? (
+                                <div className="flex gap-1">
+                                  <Button size="sm" disabled={busyId === p.id} onClick={() => changeStatus(p.id, 'approved')}>
+                                    {busyId === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Check className="h-3 w-3 mr-1" />Approve</>}
+                                  </Button>
+                                  <Button size="sm" variant="outline" disabled={busyId === p.id} onClick={() => changeStatus(p.id, 'rejected')}>
+                                    <X className="h-3 w-3 mr-1" />Reject
+                                  </Button>
+                                </div>
+                              ) : p.status === 'approved' ? (
+                                <Button size="sm" variant="outline" disabled={busyId === p.id} onClick={() => changeStatus(p.id, 'suspended')}>
+                                  <UserMinus className="h-3 w-3 mr-1" />Suspend
+                                </Button>
+                              ) : p.status === 'suspended' || p.status === 'rejected' ? (
+                                <Button size="sm" disabled={busyId === p.id} onClick={() => changeStatus(p.id, 'approved')}>
+                                  <Check className="h-3 w-3 mr-1" />Reactivate
+                                </Button>
+                              ) : null
+                            ) : p.isOwner && !isSuperAdmin ? (
+                              <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">Owner (Protected)</span>
+                            ) : null}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>

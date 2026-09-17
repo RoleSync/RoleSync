@@ -79,9 +79,22 @@ export default function AdminEmployeeDetail() {
   const [newPassword, setNewPassword] = useState('');
   const [uploadingIdCard, setUploadingIdCard] = useState(false);
   const [idCardPreview, setIdCardPreview] = useState<string | null>(null);
-  const [resettingPassword, setResettingPassword] = useState(false);
-  const [busyAction, setBusyAction] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
+  const [isTargetOwner, setIsTargetOwner] = useState(false);
+  const [targetCompany, setTargetCompany] = useState<any | null>(null);
+  const [passwordMode, setPasswordMode] = useState<'direct' | 'link'>('direct');
+
+  const isSuperAdmin = user?.role === 'super_admin';
+  const isCompanyOwner = user?.isOwner;
+  const isSelf = user?.id === id;
+  const isTargetAdmin = role === 'admin';
+
+  // Hierarchy rules:
+  // Super Admin: Full control over everyone
+  // Company Owner: Full control over Admins & Staff in their company
+  // Regular Admin: Can manage Staff, but protected from modifying Company Owner or peer Admins
+  const canModifyTarget = isSuperAdmin || isCompanyOwner || (!isTargetOwner && !isTargetAdmin);
+  const canChangeRole = isSuperAdmin || (isCompanyOwner && !isSelf);
+  const canResetPassword = isSuperAdmin || isCompanyOwner || (!isTargetOwner && !isTargetAdmin);
 
   const handlePasswordReset = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +112,7 @@ export default function AdminEmployeeDetail() {
         throw new Error(error?.message || data?.error || 'Failed to reset password');
       }
 
-      toast.success(`Password for ${data.email} updated successfully. They can now log in.`);
+      toast.success(`Password for ${data.email} updated successfully to new password.`);
       setResetDialogOpen(false);
       setNewPassword('');
     } catch (err: any) {
@@ -108,7 +121,6 @@ export default function AdminEmployeeDetail() {
       setResettingPassword(false);
     }
   };
-
 
   const loadDocs = useCallback(async () => {
     if (!id) return;
@@ -153,6 +165,17 @@ export default function AdminEmployeeDetail() {
           last_login_at: (pData as any).last_login_at ?? null,
           last_login_device: (pData as any).last_login_device ?? null,
         });
+
+        if ((pData as any).company_id) {
+          const { data: comp } = await supabase.from('companies').select('id, name, owner_id').eq('id', (pData as any).company_id).maybeSingle();
+          if (comp) {
+            setTargetCompany(comp);
+            if (comp.owner_id === id) {
+              setIsTargetOwner(true);
+            }
+          }
+        }
+
         if ((pData as any).avatar_url) {
           const { data: pub } = supabase.storage.from('avatars').getPublicUrl((pData as any).avatar_url);
           setAvatarPreview(pub?.publicUrl ?? null);
@@ -471,37 +494,137 @@ export default function AdminEmployeeDetail() {
           </div>
         </div>
 
+        {/* Protection Banner if target has higher authority */}
+        {!canModifyTarget && (
+          <div className="p-4 rounded-xl border border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-300 flex items-center gap-3">
+            <ShieldAlert className="h-5 w-5 text-amber-500 shrink-0" />
+            <div className="text-xs space-y-0.5">
+              <p className="font-semibold text-sm">
+                {isTargetOwner ? 'Company Owner Account (Protected)' : 'Administrator Account (Protected)'}
+              </p>
+              <p className="opacity-90">
+                You have view-only access to this profile. Modifications, role changes, and password updates for this account require Company Owner or Super Admin privileges.
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Admin Actions Bar */}
         <Card className="p-4">
-          <h3 className="font-heading font-semibold text-sm mb-3 flex items-center gap-2"><Shield className="h-4 w-4 text-primary" /> Admin Controls</h3>
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="font-heading font-semibold text-sm flex items-center gap-2">
+              <Shield className="h-4 w-4 text-primary" /> Admin Controls
+            </h3>
+            <div className="flex items-center gap-2">
+              {isTargetOwner && (
+                <Badge className="bg-amber-500 hover:bg-amber-600 border-none text-[10px] text-white">
+                  👑 Company Owner
+                </Badge>
+              )}
+              <Badge variant={role === 'admin' ? 'secondary' : role === 'super_admin' ? 'default' : 'outline'} className="capitalize text-[10px]">
+                {role.replace('_', ' ')}
+              </Badge>
+            </div>
+          </div>
+
           <div className="flex flex-wrap gap-2">
-            <Button size="sm" variant={meta.is_active ? "destructive" : "default"} disabled={busyAction === 'toggle-active'} onClick={toggleActive}>
-              {busyAction === 'toggle-active' ? <Loader2 className="h-3 w-3 animate-spin" /> :
-                meta.is_active ? <><PowerOff className="h-3 w-3 mr-1" />Deactivate</> : <><Power className="h-3 w-3 mr-1" />Activate</>}
-            </Button>
+            {canModifyTarget && (
+              <Button size="sm" variant={meta.is_active ? "destructive" : "default"} disabled={busyAction === 'toggle-active'} onClick={toggleActive}>
+                {busyAction === 'toggle-active' ? <Loader2 className="h-3 w-3 animate-spin" /> :
+                  meta.is_active ? <><PowerOff className="h-3 w-3 mr-1" />Deactivate</> : <><Power className="h-3 w-3 mr-1" />Activate</>}
+              </Button>
+            )}
 
-            <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm" variant="outline"><KeyRound className="h-3 w-3 mr-1" />Reset Password</Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-sm">
-                <DialogHeader><DialogTitle>Reset Employee Password</DialogTitle></DialogHeader>
-                <p className="text-sm text-muted-foreground">A password reset link will be sent to <strong>{email}</strong>. The employee will be required to change their password on next login.</p>
-                <div className="flex justify-end gap-2 mt-4">
-                  <Button variant="outline" onClick={() => setResetDialogOpen(false)}>Cancel</Button>
-                  <Button onClick={sendPasswordReset} disabled={busyAction === 'reset-pwd'}>
-                    {busyAction === 'reset-pwd' ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Send Reset Link'}
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
+            {canResetPassword && (
+              <Dialog open={resetDialogOpen} onOpenChange={setResetDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button size="sm" variant="outline"><KeyRound className="h-3 w-3 mr-1" />Reset Password</Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <KeyRound className="h-5 w-5 text-primary" />
+                      Manage Password — {form.full_name || email}
+                    </DialogTitle>
+                  </DialogHeader>
 
-            <Button size="sm" variant={meta.profile_frozen ? "default" : "outline"} disabled={busyAction === 'freeze'} onClick={toggleFreeze}>
-              {busyAction === 'freeze' ? <Loader2 className="h-3 w-3 animate-spin" /> :
-                meta.profile_frozen ? <><Snowflake className="h-3 w-3 mr-1" />Unfreeze Profile</> : <><Snowflake className="h-3 w-3 mr-1" />Freeze Profile</>}
-            </Button>
+                  <div className="space-y-4 pt-2">
+                    <div className="flex rounded-lg bg-muted p-1 gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setPasswordMode('direct')}
+                        className={`flex-1 text-xs py-1.5 font-medium rounded-md transition-all ${passwordMode === 'direct' ? 'bg-background shadow text-foreground' : 'text-muted-foreground'}`}
+                      >
+                        Set New Password Directly
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPasswordMode('link')}
+                        className={`flex-1 text-xs py-1.5 font-medium rounded-md transition-all ${passwordMode === 'link' ? 'bg-background shadow text-foreground' : 'text-muted-foreground'}`}
+                      >
+                        Send Reset Email Link
+                      </button>
+                    </div>
 
-            {isLocked && (
+                    {passwordMode === 'direct' ? (
+                      <form onSubmit={handlePasswordReset} className="space-y-3">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold">New Password (minimum 6 characters)</Label>
+                          <div className="relative">
+                            <Input 
+                              type={showPassword ? "text" : "password"}
+                              minLength={6} 
+                              required 
+                              placeholder="Enter new password" 
+                              value={newPassword} 
+                              onChange={(e) => setNewPassword(e.target.value)} 
+                              className="pr-10"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setShowPassword(!showPassword)}
+                              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                            >
+                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">This immediately updates their credentials so they can log in instantly with this password.</p>
+                        <div className="flex justify-end gap-2 pt-2">
+                          <Button type="button" variant="outline" onClick={() => setResetDialogOpen(false)}>Cancel</Button>
+                          <Button type="submit" disabled={resettingPassword}>
+                            {resettingPassword ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <KeyRound className="h-4 w-4 mr-1" />}
+                            Save New Password
+                          </Button>
+                        </div>
+                      </form>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-sm text-muted-foreground">
+                          A secure password reset link will be dispatched to <strong>{email}</strong>.
+                        </p>
+                        <div className="flex justify-end gap-2 pt-2">
+                          <Button variant="outline" onClick={() => setResetDialogOpen(false)}>Cancel</Button>
+                          <Button onClick={sendPasswordReset} disabled={busyAction === 'reset-pwd'}>
+                            {busyAction === 'reset-pwd' ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : <Mail className="h-4 w-4 mr-1" />}
+                            Send Reset Email
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            )}
+
+            {canModifyTarget && (
+              <Button size="sm" variant={meta.profile_frozen ? "default" : "outline"} disabled={busyAction === 'freeze'} onClick={toggleFreeze}>
+                {busyAction === 'freeze' ? <Loader2 className="h-3 w-3 animate-spin" /> :
+                  meta.profile_frozen ? <><Snowflake className="h-3 w-3 mr-1" />Unfreeze Profile</> : <><Snowflake className="h-3 w-3 mr-1" />Freeze Profile</>}
+              </Button>
+            )}
+
+            {canModifyTarget && isLocked && (
               <Button size="sm" variant="outline" disabled={busyAction === 'unlock'} onClick={unlockAccount}>
                 {busyAction === 'unlock' ? <Loader2 className="h-3 w-3 animate-spin" /> : <><Lock className="h-3 w-3 mr-1" />Unlock Account</>}
               </Button>
@@ -894,7 +1017,7 @@ export default function AdminEmployeeDetail() {
               <Textarea rows={2} value={form.address} onChange={(e) => update('address', e.target.value)} />
             </div>
           </div>
-          <Button className="mt-6" onClick={save} disabled={saving}>
+          <Button className="mt-6" onClick={save} disabled={saving || !canModifyTarget}>
             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Changes'}
           </Button>
         </Card>
@@ -917,7 +1040,7 @@ export default function AdminEmployeeDetail() {
             <div>
               <input id="doc-input" type="file" className="hidden"
                 onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadDocument(f); }} />
-              <Button variant="outline" disabled={uploadingDoc} onClick={() => document.getElementById('doc-input')?.click()}>
+              <Button variant="outline" disabled={uploadingDoc || !canModifyTarget} onClick={() => document.getElementById('doc-input')?.click()}>
                 {uploadingDoc ? <Loader2 className="h-4 w-4 animate-spin" /> : <><Upload className="h-4 w-4 mr-2" /> Upload Document</>}
               </Button>
             </div>
@@ -939,52 +1062,16 @@ export default function AdminEmployeeDetail() {
                     <Button size="sm" variant="outline" onClick={() => downloadDoc(doc)}>
                       <Download className="h-3 w-3" />
                     </Button>
-                    <Button size="sm" variant="outline" className="text-destructive" onClick={() => deleteDoc(doc)}>
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
+                    {canModifyTarget && (
+                      <Button size="sm" variant="outline" className="text-destructive" onClick={() => deleteDoc(doc)}>
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               ))}
             </div>
           )}
-        </Card>
-
-        {/* Security Management */}
-        <Card className="p-6 border-warning/20 bg-warning/5">
-          <h3 className="font-heading font-semibold flex items-center gap-2 mb-1 text-warning-foreground">
-            <ShieldAlert className="h-4 w-4" /> Security Management
-          </h3>
-          <p className="text-sm text-muted-foreground mb-4">Directly update this user's password. They will be able to log in with the new password immediately.</p>
-
-          <div className="flex gap-2 max-w-md">
-            <div className="relative flex-1">
-              <Input 
-                type={showPassword ? "text" : "password"} 
-                placeholder="Enter new password" 
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="pr-10"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-muted-foreground" />}
-              </Button>
-            </div>
-            <Button 
-              onClick={handlePasswordReset}
-              disabled={resettingPassword || !newPassword}
-              variant="destructive"
-              className="whitespace-nowrap"
-            >
-              {resettingPassword ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <KeyRound className="h-4 w-4 mr-2" />}
-              Change Password
-            </Button>
-          </div>
         </Card>
       </div>
     </DashboardLayout>

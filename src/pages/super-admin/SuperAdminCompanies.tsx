@@ -12,7 +12,7 @@ import {
   Trash2, Check, X, Star, Zap, Crown, Search, RotateCcw, Filter, CheckCircle2,
   ClipboardList, Cake, CalendarDays, FolderLock, MessageSquare, Award, Headphones, 
   BookOpen, Plane, Network, Calendar, CheckSquare, IndianRupee, Receipt, UserX, 
-  Target, Cpu, MapPin, HeartPulse, Save, LucideIcon
+  Target, Cpu, MapPin, HeartPulse, Save, LucideIcon, Edit2, Mail, KeyRound, Briefcase
 } from 'lucide-react';
 import { toast } from 'sonner';
 import {
@@ -224,14 +224,98 @@ export default function SuperAdminCompanies() {
   const [deletingCompany, setDeletingCompany] = useState<CompanyRow | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Super Admin Comprehensive User Edit State
+  const [userSearchQ, setUserSearchQ] = useState('');
+  const [editUserModalOpen, setEditUserModalOpen] = useState(false);
+  const [editingUser, setEditingUser] = useState<any | null>(null);
+  const [editUserFullName, setEditUserFullName] = useState('');
+  const [editUserEmail, setEditUserEmail] = useState('');
+  const [editUserJobTitle, setEditUserJobTitle] = useState('');
+  const [editUserDepartment, setEditUserDepartment] = useState('');
+  const [editUserStatus, setEditUserStatus] = useState<'pending' | 'approved' | 'rejected' | 'suspended'>('approved');
+  const [editUserInternalId, setEditUserInternalId] = useState('');
+  const [editUserRole, setEditUserRole] = useState<'employee' | 'admin' | 'super_admin'>('employee');
+  const [editUserPassword, setEditUserPassword] = useState('');
+  const [savingUserEdit, setSavingUserEdit] = useState(false);
+
+  const handleOpenEditUser = (u: any) => {
+    setEditingUser(u);
+    setEditUserFullName(u.full_name || '');
+    setEditUserEmail(u.email || '');
+    setEditUserJobTitle(u.job_title || '');
+    setEditUserDepartment(u.department || '');
+    setEditUserStatus(u.status || 'approved');
+    setEditUserInternalId(u.employee_internal_id || '');
+    setEditUserRole(u.role || 'employee');
+    setEditUserPassword('');
+    setEditUserModalOpen(true);
+  };
+
+  const handleSaveSuperAdminUserEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+    setSavingUserEdit(true);
+    try {
+      // 1. If email, password, or name changed, update via update_company_admin RPC
+      const emailChanged = editUserEmail.trim() !== editingUser.email;
+      const nameChanged = editUserFullName.trim() !== editingUser.full_name;
+      const pwdChanged = editUserPassword.trim().length >= 6;
+
+      if (emailChanged || nameChanged || pwdChanged) {
+        const { data: updateRes, error: rpcErr } = await (supabase as any).rpc('update_company_admin', {
+          p_user_id: editingUser.id,
+          p_email: editUserEmail.trim() || null,
+          p_password: pwdChanged ? editUserPassword.trim() : null,
+          p_full_name: editUserFullName.trim() || null,
+        });
+        if (rpcErr || updateRes?.success === false) {
+          throw new Error(rpcErr?.message || updateRes?.error || 'Failed to update credentials/name');
+        }
+      }
+
+      // 2. Update profile fields
+      const { error: profErr } = await supabase.from('profiles').update({
+        full_name: editUserFullName.trim(),
+        email: editUserEmail.trim(),
+        job_title: editUserJobTitle.trim() || null,
+        department: editUserDepartment.trim() || null,
+        status: editUserStatus,
+        employee_internal_id: editUserInternalId.trim() || null,
+      } as any).eq('id', editingUser.id);
+
+      if (profErr) throw profErr;
+
+      // 3. Update role in user_roles if changed
+      if (editUserRole !== editingUser.role) {
+        await supabase.from('user_roles').delete().eq('user_id', editingUser.id);
+        const { error: roleErr } = await supabase.from('user_roles').insert({
+          user_id: editingUser.id,
+          role: editUserRole,
+        } as any);
+        if (roleErr) throw roleErr;
+      }
+
+      toast.success(`User "${editUserFullName}" updated successfully by Super Admin!`);
+      setEditUserModalOpen(false);
+      setEditingUser(null);
+      if (managingCompany) loadCompanyUsers(managingCompany);
+    } catch (err: any) {
+      console.error('Super Admin User Save Error:', err);
+      toast.error(err.message || 'Failed to update user details');
+    } finally {
+      setSavingUserEdit(false);
+    }
+  };
+
   const loadCompanyUsers = async (company: CompanyRow) => {
     setManagingCompany(company);
     setUsersOpen(true);
     setUsersLoading(true);
+    setUserSearchQ('');
     
     const { data: profs } = await supabase
       .from('profiles')
-      .select('id, full_name, email, job_title, status')
+      .select('id, full_name, email, job_title, department, status, employee_internal_id')
       .eq('company_id', company.id);
     
     const { data: roles } = await supabase
@@ -1083,80 +1167,248 @@ export default function SuperAdminCompanies() {
 
         {/* User Management Dialog */}
         <Dialog open={usersOpen} onOpenChange={setUsersOpen}>
-          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <UserCog className="h-5 w-5 text-primary" /> 
-                Manage Users - {managingCompany?.name}
-              </DialogTitle>
+              <div className="flex items-center justify-between pr-6">
+                <DialogTitle className="flex items-center gap-2 text-xl font-[Poppins]">
+                  <UserCog className="h-5 w-5 text-primary" /> 
+                  Manage Users & Roles — <span className="text-primary">{managingCompany?.name}</span>
+                </DialogTitle>
+                <Badge variant="outline" className="font-mono text-xs">
+                  {companyUsers.length} Users
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">Super Admin authority: view, edit credentials, switch roles, change passwords, and promote company owners.</p>
             </DialogHeader>
+
+            {/* Search filter */}
+            <div className="relative pt-2">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search users by name, email, department, or job title…"
+                value={userSearchQ}
+                onChange={(e) => setUserSearchQ(e.target.value)}
+                className="pl-9 bg-muted/30"
+              />
+            </div>
+
             {usersLoading ? (
               <div className="py-12 text-center"><Loader2 className="h-6 w-6 animate-spin mx-auto text-primary" /></div>
             ) : (
               <div className="space-y-4">
                 <div className="grid gap-3">
-                  {companyUsers.map((u) => {
-                    const isOwner = managingCompany?.owner_id === u.id;
-                    return (
-                      <div key={u.id} className="flex items-center justify-between p-4 rounded-xl border bg-muted/20">
-                        <div className="min-w-0">
-                          <div className="font-semibold flex items-center gap-2">
-                            {u.full_name} 
-                            {isOwner && <Badge className="bg-amber-500 hover:bg-amber-600 border-none flex items-center gap-1"><Shield className="h-3 w-3" /> Owner</Badge>}
+                  {companyUsers
+                    .filter((u) => {
+                      const q = userSearchQ.toLowerCase().trim();
+                      if (!q) return true;
+                      return (
+                        u.full_name?.toLowerCase().includes(q) ||
+                        u.email?.toLowerCase().includes(q) ||
+                        u.department?.toLowerCase().includes(q) ||
+                        u.job_title?.toLowerCase().includes(q) ||
+                        u.employee_internal_id?.toLowerCase().includes(q)
+                      );
+                    })
+                    .map((u) => {
+                      const isOwner = managingCompany?.owner_id === u.id;
+                      return (
+                        <div key={u.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 rounded-xl border bg-muted/20 gap-3 hover:border-primary/30 transition-all">
+                          <div className="min-w-0 space-y-1">
+                            <div className="font-semibold flex items-center gap-2 flex-wrap">
+                              <span>{u.full_name}</span>
+                              {isOwner && (
+                                <Badge className="bg-amber-500 hover:bg-amber-600 border-none text-[10px] text-white flex items-center gap-1">
+                                  <Shield className="h-3 w-3" /> Company Owner
+                                </Badge>
+                              )}
+                              <Badge variant={u.role === 'super_admin' ? 'default' : u.role === 'admin' ? 'secondary' : 'outline'} className="capitalize text-[10px]">
+                                {u.role === 'super_admin' ? '👑 Super Admin' : u.role === 'admin' ? '🛡️ Admin' : '👤 Staff'}
+                              </Badge>
+                              <Badge variant={u.status === 'approved' ? 'outline' : 'destructive'} className="text-[9px] uppercase tracking-wider">
+                                {u.status}
+                              </Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground flex items-center gap-2 flex-wrap font-mono">
+                              <span>{u.email}</span>
+                              {u.job_title && <span>· {u.job_title}</span>}
+                              {u.department && <span>· {u.department}</span>}
+                              {u.employee_internal_id && <span>· ID: {u.employee_internal_id}</span>}
+                            </p>
                           </div>
-                          <p className="text-xs text-muted-foreground">{u.email} · {u.job_title}</p>
-                        </div>
-                        <div className="flex flex-col items-end gap-2">
-                          <div className="flex items-center gap-2">
-                            <Badge variant={u.role === 'admin' ? 'default' : 'outline'} className="capitalize">
-                              {u.role}
-                            </Badge>
-                            
-                            {!isOwner && (
-                              <Button size="sm" variant="ghost" className="h-8 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-50" onClick={() => makeOwner(u.id)}>
-                                <UserCheck className="h-3 w-3 mr-1" /> Make Owner
+                          
+                          <div className="flex flex-col items-end gap-2 shrink-0">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <Button size="sm" variant="default" className="h-8 text-xs gap-1 bg-primary text-primary-foreground" onClick={() => handleOpenEditUser(u)}>
+                                <Edit2 className="h-3 w-3" /> Edit Details
                               </Button>
-                            )}
-                            
-                            {u.role === 'employee' ? (
-                              <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => promoteToAdmin(u.id)}>
-                                Promote to Admin
-                              </Button>
-                            ) : (
-                              !isOwner && (
-                                <Button size="sm" variant="ghost" className="h-8 text-xs text-destructive" onClick={() => demoteToEmployee(u.id)}>
-                                  Demote to Employee
-                                </Button>
-                              )
-                            )}
-                            
-                            <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setResettingUserId(resettingUserId === u.id ? null : u.id)}>
-                              <Lock className="h-3 w-3 mr-1" /> Reset
-                            </Button>
-                          </div>
 
-                          {resettingUserId === u.id && (
-                            <div className="flex items-center gap-2 mt-2 animate-in fade-in slide-in-from-top-1">
-                              <Input 
-                                size={1} 
-                                className="h-8 text-xs w-32" 
-                                placeholder="New password" 
-                                type="password"
-                                value={resetPassword}
-                                onChange={(e) => setResetPassword(e.target.value)}
-                              />
-                              <Button size="sm" className="h-8 text-xs" onClick={handleUserPasswordReset} disabled={isResetting}>
-                                {isResetting ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Update'}
+                              {!isOwner && (
+                                <Button size="sm" variant="outline" className="h-8 text-xs text-amber-600 border-amber-500/30 hover:bg-amber-50 dark:hover:bg-amber-950/20" onClick={() => makeOwner(u.id)}>
+                                  <UserCheck className="h-3 w-3 mr-1" /> Make Owner
+                                </Button>
+                              )}
+                              
+                              {u.role === 'employee' ? (
+                                <Button size="sm" variant="outline" className="h-8 text-xs" onClick={() => promoteToAdmin(u.id)}>
+                                  Promote Admin
+                                </Button>
+                              ) : (
+                                !isOwner && (
+                                  <Button size="sm" variant="outline" className="h-8 text-xs text-destructive border-destructive/30" onClick={() => demoteToEmployee(u.id)}>
+                                    Demote Staff
+                                  </Button>
+                                )
+                              )}
+                              
+                              <Button size="sm" variant="ghost" className="h-8 text-xs" onClick={() => setResettingUserId(resettingUserId === u.id ? null : u.id)}>
+                                <Lock className="h-3 w-3 mr-1" /> Password
                               </Button>
                             </div>
-                          )}
+
+                            {resettingUserId === u.id && (
+                              <div className="flex items-center gap-2 mt-2 animate-in fade-in slide-in-from-top-1 bg-card p-2 rounded-lg border shadow-sm">
+                                <Input 
+                                  className="h-8 text-xs w-36" 
+                                  placeholder="New password (min 6)" 
+                                  type="password"
+                                  value={resetPassword}
+                                  onChange={(e) => setResetPassword(e.target.value)}
+                                />
+                                <Button size="sm" className="h-8 text-xs" onClick={handleUserPasswordReset} disabled={isResetting}>
+                                  {isResetting ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Update Password'}
+                                </Button>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
                 </div>
               </div>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Super Admin Comprehensive Edit User Dialog */}
+        <Dialog open={editUserModalOpen} onOpenChange={setEditUserModalOpen}>
+          <DialogContent className="max-w-xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-lg font-bold">
+                <Edit2 className="h-5 w-5 text-primary" />
+                Edit User Details (Super Admin Authority)
+              </DialogTitle>
+              <p className="text-xs text-muted-foreground">
+                Updating user <strong>{editingUser?.email}</strong> in <strong>{managingCompany?.name}</strong>.
+              </p>
+            </DialogHeader>
+
+            <form onSubmit={handleSaveSuperAdminUserEdit} className="space-y-4 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Full Name</Label>
+                  <Input 
+                    required 
+                    value={editUserFullName} 
+                    onChange={(e) => setEditUserFullName(e.target.value)} 
+                    placeholder="e.g. John Doe" 
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Login Email</Label>
+                  <Input 
+                    required 
+                    type="email" 
+                    value={editUserEmail} 
+                    onChange={(e) => setEditUserEmail(e.target.value)} 
+                    placeholder="e.g. user@company.com" 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Job Title</Label>
+                  <Input 
+                    value={editUserJobTitle} 
+                    onChange={(e) => setEditUserJobTitle(e.target.value)} 
+                    placeholder="e.g. Senior Software Engineer" 
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Department</Label>
+                  <Input 
+                    value={editUserDepartment} 
+                    onChange={(e) => setEditUserDepartment(e.target.value)} 
+                    placeholder="e.g. Engineering, Sales" 
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Employee Internal ID</Label>
+                  <Input 
+                    value={editUserInternalId} 
+                    onChange={(e) => setEditUserInternalId(e.target.value.toUpperCase())} 
+                    placeholder="e.g. TML-26-001" 
+                    className="font-mono uppercase"
+                  />
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Account Role</Label>
+                  <Select value={editUserRole} onValueChange={(v: any) => setEditUserRole(v)}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="employee">Staff / Employee</SelectItem>
+                      <SelectItem value="admin">Company Admin</SelectItem>
+                      <SelectItem value="super_admin">👑 Super Admin</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Account Status</Label>
+                  <Select value={editUserStatus} onValueChange={(v: any) => setEditUserStatus(v)}>
+                    <SelectTrigger className="h-9 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="approved">Approved (Active)</SelectItem>
+                      <SelectItem value="pending">Pending Approval</SelectItem>
+                      <SelectItem value="suspended">Suspended</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5 pt-2 border-t">
+                <Label className="text-xs font-semibold flex items-center justify-between">
+                  <span>Reset / Change Password</span>
+                  <span className="text-[10px] text-muted-foreground font-normal">Leave blank to keep unchanged</span>
+                </Label>
+                <Input 
+                  type="password" 
+                  minLength={6} 
+                  value={editUserPassword} 
+                  onChange={(e) => setEditUserPassword(e.target.value)} 
+                  placeholder="Enter new password (optional)" 
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-3 border-t">
+                <Button type="button" variant="outline" onClick={() => setEditUserModalOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={savingUserEdit} className="bg-primary gap-1">
+                  {savingUserEdit ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                  Save All Changes
+                </Button>
+              </div>
+            </form>
           </DialogContent>
         </Dialog>
 
