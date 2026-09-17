@@ -77,11 +77,11 @@ const FLAGS: { key: string; label: string; desc: string }[] = [
 
 export default function AdminFeatures() {
   const { user } = useAuth();
-  const { rawFeatures: features, refresh } = useCompanyFeatures();
+  const { rawFeatures: features, plan: livePlan, refresh } = useCompanyFeatures();
   const [saving, setSaving] = useState<string | null>(null);
   const [savingVisibility, setSavingVisibility] = useState<string | null>(null);
 
-  const plan = user?.company?.planType || 'basic';
+  const plan = ((livePlan || user?.company?.planType || 'basic').toLowerCase()) as 'basic' | 'pro' | 'enterprise';
 
   const PHYSICAL_KEYS = new Set([
     'birthdays_enabled', 'chat_enabled', 'helpdesk_enabled',
@@ -180,7 +180,9 @@ export default function AdminFeatures() {
           const isChecked = !!(features as any)?.[f.key];
           const isSaving = saving === f.key;
           const tierInfo = FEATURE_TIERS[f.key] || { tier: 'basic', label: 'Basic' };
-          const isAllowed = PLAN_LEVELS[plan] >= PLAN_LEVELS[tierInfo.tier];
+          const currentPlanLevel = PLAN_LEVELS[plan] ?? 1;
+          const requiredPlanLevel = PLAN_LEVELS[tierInfo.tier] ?? 1;
+          const isAllowed = currentPlanLevel >= requiredPlanLevel;
           
           // Switch is disabled if it's currently saving OR if the feature is not allowed in their plan
           const isDisabled = isSaving || !isAllowed;
