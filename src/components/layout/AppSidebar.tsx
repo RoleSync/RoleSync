@@ -21,11 +21,11 @@ import { RoleSyncLogo } from '@/components/RoleSyncLogo';
 export function AppSidebar() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { features, loading } = useCompanyFeatures();
+  const { features, plan: livePlan, loading } = useCompanyFeatures();
   const { state } = useSidebar();
   const collapsed = state === 'collapsed';
   
-  const plan = user?.company?.planType || 'basic';
+  const plan = livePlan || user?.company?.planType || 'basic';
   const isPro = plan === 'pro' || plan === 'enterprise';
   const isEnterprise = plan === 'enterprise';
 

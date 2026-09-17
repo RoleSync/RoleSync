@@ -906,8 +906,8 @@ export default function EmployeeDashboard() {
         {/* ═══════════════════════════════════════════════════════════════ */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           
-          {/* Left 8 Cols: Request Status Summary with Circular Donut Rings */}
-          <div className="lg:col-span-8 space-y-4">
+          {/* Request Status Summary */}
+          <div className={`${features?.birthdays_enabled ? 'lg:col-span-8' : 'lg:col-span-12'} space-y-4`}>
             <Card className="p-6 sm:p-8 rounded-3xl shadow-sm border bg-card">
               <div className="flex items-center justify-between mb-6">
                 <div>
@@ -1085,132 +1085,136 @@ export default function EmployeeDashboard() {
           </div>
 
           {/* Right 4 Cols: Celebrations Widget */}
-          <div className="lg:col-span-4">
-            <Card className="p-6 rounded-3xl shadow-sm border bg-[#EBF3FE] dark:bg-card h-full flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-2 border-b border-blue-200 dark:border-border pb-3 mb-4">
-                  <button
-                    onClick={() => setCelebrationTab('birthdays')}
-                    className={`text-xs font-bold px-3 py-1.5 rounded-xl transition-all ${
-                      celebrationTab === 'birthdays'
-                        ? 'bg-[#0078FF] text-white shadow-sm'
-                        : 'text-slate-600 dark:text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    Birthday(s) {companyProfiles.length > 0 ? 1 : 0}
-                  </button>
-                  <button
-                    onClick={() => setCelebrationTab('anniversaries')}
-                    className={`text-xs font-bold px-3 py-1.5 rounded-xl transition-all ${
-                      celebrationTab === 'anniversaries'
-                        ? 'bg-[#0078FF] text-white shadow-sm'
-                        : 'text-slate-600 dark:text-muted-foreground hover:text-foreground'
-                    }`}
-                  >
-                    Work Anniversaries
-                  </button>
+          {features?.birthdays_enabled && (
+            <div className="lg:col-span-4">
+              <Card className="p-6 rounded-3xl shadow-sm border bg-[#EBF3FE] dark:bg-card h-full flex flex-col justify-between">
+                <div>
+                  <div className="flex items-center gap-2 border-b border-blue-200 dark:border-border pb-3 mb-4">
+                    <button
+                      onClick={() => setCelebrationTab('birthdays')}
+                      className={`text-xs font-bold px-3 py-1.5 rounded-xl transition-all ${
+                        celebrationTab === 'birthdays'
+                          ? 'bg-[#0078FF] text-white shadow-sm'
+                          : 'text-slate-600 dark:text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Birthday(s) {companyProfiles.length > 0 ? 1 : 0}
+                    </button>
+                    <button
+                      onClick={() => setCelebrationTab('anniversaries')}
+                      className={`text-xs font-bold px-3 py-1.5 rounded-xl transition-all ${
+                        celebrationTab === 'anniversaries'
+                          ? 'bg-[#0078FF] text-white shadow-sm'
+                          : 'text-slate-600 dark:text-muted-foreground hover:text-foreground'
+                      }`}
+                    >
+                      Work Anniversaries
+                    </button>
+                  </div>
+
+                  {/* Main Celebrant Showcase */}
+                  <div className="text-center py-4 space-y-3">
+                    <div className="h-16 w-16 rounded-full bg-white dark:bg-muted shadow-md mx-auto flex items-center justify-center border-2 border-primary/20 text-primary overflow-hidden">
+                      {companyProfiles[0]?.avatar_url ? (
+                        <img src={companyProfiles[0].avatar_url} alt={companyProfiles[0].full_name} className="h-full w-full object-cover" />
+                      ) : (
+                        <User className="h-8 w-8" />
+                      )}
+                    </div>
+                    <div>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-primary/20 text-[#0078FF] text-[10px] font-bold mb-1">
+                        <Cake className="h-3 w-3" /> Team Celebration
+                      </span>
+                      <h4 className="font-extrabold text-base text-slate-900 dark:text-foreground">
+                        {companyProfiles[0]?.full_name || user?.name || 'Team Member'}
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-muted-foreground">
+                        {companyProfiles[0]?.job_title || user?.jobTitle || 'Employee'} · {companyProfiles[0]?.department || user?.department || user?.company?.name || 'RoleSync'}
+                      </p>
+                    </div>
+
+                    <Button
+                      size="sm"
+                      onClick={() => toast.success(`Celebration wishes sent to ${companyProfiles[0]?.full_name || user?.name}!`)}
+                      className="h-8 text-xs font-bold bg-[#0078FF] hover:bg-[#0066DB] text-white rounded-xl shadow-md shadow-blue-500/20"
+                    >
+                      <PartyPopper className="h-3.5 w-3.5 mr-1.5" /> Send Wishes
+                    </Button>
+                  </div>
                 </div>
 
-                {/* Main Celebrant Showcase */}
-                <div className="text-center py-4 space-y-3">
-                  <div className="h-16 w-16 rounded-full bg-white dark:bg-muted shadow-md mx-auto flex items-center justify-center border-2 border-primary/20 text-primary overflow-hidden">
-                    {companyProfiles[0]?.avatar_url ? (
-                      <img src={companyProfiles[0].avatar_url} alt={companyProfiles[0].full_name} className="h-full w-full object-cover" />
-                    ) : (
-                      <User className="h-8 w-8" />
-                    )}
-                  </div>
-                  <div>
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-blue-100 dark:bg-primary/20 text-[#0078FF] text-[10px] font-bold mb-1">
-                      <Cake className="h-3 w-3" /> Team Celebration
-                    </span>
-                    <h4 className="font-extrabold text-base text-slate-900 dark:text-foreground">
-                      {companyProfiles[0]?.full_name || user?.name || 'Team Member'}
-                    </h4>
-                    <p className="text-xs text-slate-500 dark:text-muted-foreground">
-                      {companyProfiles[0]?.job_title || user?.jobTitle || 'Employee'} · {companyProfiles[0]?.department || user?.department || user?.company?.name || 'RoleSync'}
+                {/* Upcoming Celebrations Footer List */}
+                {companyProfiles.length > 1 && (
+                  <div className="pt-3 border-t border-blue-200/60 dark:border-border text-xs">
+                    <p className="text-[10px] font-bold text-slate-500 dark:text-muted-foreground uppercase tracking-wider mb-2">
+                      Company Colleagues
                     </p>
-                  </div>
-
-                  <Button
-                    size="sm"
-                    onClick={() => toast.success(`Celebration wishes sent to ${companyProfiles[0]?.full_name || user?.name}!`)}
-                    className="h-8 text-xs font-bold bg-[#0078FF] hover:bg-[#0066DB] text-white rounded-xl shadow-md shadow-blue-500/20"
-                  >
-                    <PartyPopper className="h-3.5 w-3.5 mr-1.5" /> Send Wishes
-                  </Button>
-                </div>
-              </div>
-
-              {/* Upcoming Celebrations Footer List */}
-              {companyProfiles.length > 1 && (
-                <div className="pt-3 border-t border-blue-200/60 dark:border-border text-xs">
-                  <p className="text-[10px] font-bold text-slate-500 dark:text-muted-foreground uppercase tracking-wider mb-2">
-                    Company Colleagues
-                  </p>
-                  <div className="flex items-center justify-between gap-2">
-                    {companyProfiles.slice(1, 3).map((prof) => (
-                      <div key={prof.id} className="flex items-center gap-2 min-w-0">
-                        <div className="h-6 w-6 rounded-full bg-blue-200 dark:bg-muted flex items-center justify-center text-xs font-bold">
-                          {prof.full_name?.charAt(0)?.toUpperCase() ?? 'U'}
+                    <div className="flex items-center justify-between gap-2">
+                      {companyProfiles.slice(1, 3).map((prof) => (
+                        <div key={prof.id} className="flex items-center gap-2 min-w-0">
+                          <div className="h-6 w-6 rounded-full bg-blue-200 dark:bg-muted flex items-center justify-center text-xs font-bold">
+                            {prof.full_name?.charAt(0)?.toUpperCase() ?? 'U'}
+                          </div>
+                          <div className="truncate">
+                            <p className="font-semibold text-slate-800 dark:text-foreground truncate text-[11px]">{prof.full_name}</p>
+                            <p className="text-[9px] text-slate-500 truncate">{prof.department || 'Team'}</p>
+                          </div>
                         </div>
-                        <div className="truncate">
-                          <p className="font-semibold text-slate-800 dark:text-foreground truncate text-[11px]">{prof.full_name}</p>
-                          <p className="text-[9px] text-slate-500 truncate">{prof.department || 'Team'}</p>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
-            </Card>
-          </div>
+                )}
+              </Card>
+            </div>
+          )}
         </div>
 
         {/* ═══════════════════════════════════════════════════════════════ */}
-        {/* 5. PERFORMANCE MANAGEMENT WIDGET (Screenshot 3)                 */}
+        {/* 5. PERFORMANCE MANAGEMENT WIDGET (Enterprise Tier)             */}
         {/* ═══════════════════════════════════════════════════════════════ */}
-        <Card className="p-6 sm:p-8 rounded-3xl shadow-sm border bg-card">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-            <div>
-              <h2 className="text-xl font-bold font-heading text-foreground flex items-center gap-2">
-                <Award className="h-5 w-5 text-primary" /> Performance Management
-              </h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                You can view all the review cycles for which you are a part, as a reviewer or/and reviewee
-              </p>
-            </div>
-            <Button variant="outline" size="sm" asChild className="text-xs font-semibold rounded-xl">
-              <Link to="/employee/performance">
-                View Performance Hub <ArrowRight className="h-3.5 w-3.5 ml-1" />
-              </Link>
-            </Button>
-          </div>
-
-          <div className="space-y-6">
-            <div className="relative max-w-sm">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-              <Input
-                value={performanceSearch}
-                onChange={(e) => setPerformanceSearch(e.target.value)}
-                placeholder="Search review cycles..."
-                className="pl-9 h-10 bg-muted/30 rounded-xl text-xs"
-              />
-            </div>
-
-            <div className="py-12 flex flex-col items-center justify-center text-center space-y-3 bg-muted/10 rounded-2xl border border-dashed">
-              <div className="h-12 w-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
-                <AlertCircle className="h-6 w-6" />
-              </div>
+        {features?.performance_enabled && (
+          <Card className="p-6 sm:p-8 rounded-3xl shadow-sm border bg-card">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
-                <h4 className="font-bold text-sm text-foreground">No Active Review Cycles Found</h4>
-                <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-                  There are currently no active performance appraisal cycles assigned to your profile for this period.
+                <h2 className="text-xl font-bold font-heading text-foreground flex items-center gap-2">
+                  <Award className="h-5 w-5 text-primary" /> Performance Management
+                </h2>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  You can view all the review cycles for which you are a part, as a reviewer or/and reviewee
                 </p>
               </div>
+              <Button variant="outline" size="sm" asChild className="text-xs font-semibold rounded-xl">
+                <Link to="/employee/performance">
+                  View Performance Hub <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                </Link>
+              </Button>
             </div>
-          </div>
-        </Card>
+
+            <div className="space-y-6">
+              <div className="relative max-w-sm">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                <Input
+                  value={performanceSearch}
+                  onChange={(e) => setPerformanceSearch(e.target.value)}
+                  placeholder="Search review cycles..."
+                  className="pl-9 h-10 bg-muted/30 rounded-xl text-xs"
+                />
+              </div>
+
+              <div className="py-12 flex flex-col items-center justify-center text-center space-y-3 bg-muted/10 rounded-2xl border border-dashed">
+                <div className="h-12 w-12 rounded-2xl bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                  <AlertCircle className="h-6 w-6" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm text-foreground">No Active Review Cycles Found</h4>
+                  <p className="text-xs text-muted-foreground mt-1 max-w-sm">
+                    There are currently no active performance appraisal cycles assigned to your profile for this period.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* ═══════════════════════════════════════════════════════════════ */}
         {/* 6. IDENTITY & WORKSPACE SHORTCUTS                              */}
@@ -1229,21 +1233,27 @@ export default function EmployeeDashboard() {
                   <Clock className="h-4 w-4 text-primary" /> Attendance
                 </Link>
               </Button>
-              <Button variant="outline" className="h-14 flex flex-col items-center justify-center rounded-2xl text-xs font-semibold gap-1" asChild>
-                <Link to="/employee/leave">
-                  <CalendarDays className="h-5 w-5 text-emerald-600" /> Leaves
-                </Link>
-              </Button>
-              <Button variant="outline" className="h-14 flex flex-col items-center justify-center rounded-2xl text-xs font-semibold gap-1" asChild>
-                <Link to="/employee/tasks">
-                  <CheckSquare className="h-4 w-4 text-blue-600" /> Tasks ({taskCounts.inProgress})
-                </Link>
-              </Button>
-              <Button variant="outline" className="h-14 flex flex-col items-center justify-center rounded-2xl text-xs font-semibold gap-1" asChild>
-                <Link to="/employee/helpdesk">
-                  <Briefcase className="h-4 w-4 text-purple-600" /> Helpdesk
-                </Link>
-              </Button>
+              {features?.leave_management_enabled !== false && (
+                <Button variant="outline" className="h-14 flex flex-col items-center justify-center rounded-2xl text-xs font-semibold gap-1" asChild>
+                  <Link to="/employee/leave">
+                    <CalendarDays className="h-5 w-5 text-emerald-600" /> Leaves
+                  </Link>
+                </Button>
+              )}
+              {features?.tasks_enabled && (
+                <Button variant="outline" className="h-14 flex flex-col items-center justify-center rounded-2xl text-xs font-semibold gap-1" asChild>
+                  <Link to="/employee/tasks">
+                    <CheckSquare className="h-4 w-4 text-blue-600" /> Tasks ({taskCounts.inProgress})
+                  </Link>
+                </Button>
+              )}
+              {features?.helpdesk_enabled && (
+                <Button variant="outline" className="h-14 flex flex-col items-center justify-center rounded-2xl text-xs font-semibold gap-1" asChild>
+                  <Link to="/employee/helpdesk">
+                    <Briefcase className="h-4 w-4 text-purple-600" /> Helpdesk
+                  </Link>
+                </Button>
+              )}
             </div>
           </Card>
         </div>

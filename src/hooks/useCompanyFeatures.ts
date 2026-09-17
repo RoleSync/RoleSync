@@ -276,9 +276,11 @@ export function useCompanyFeatures() {
   const { user } = useAuth();
   const [features, setFeatures] = useState<CompanyFeatures | null>(cachedFeatures);
   const [loading, setLoading] = useState(cachedFeatures === null);
+  const [livePlan, setLivePlan] = useState<'basic' | 'pro' | 'enterprise'>(
+    user?.company?.planType || 'basic'
+  );
 
-  const plan = user?.company?.planType || 'basic';
-  const defaults = getDefaultsForPlan(plan);
+  const defaults = getDefaultsForPlan(livePlan);
   const fallbackFeatures = { company_id: user?.companyId || '', ...defaults } as CompanyFeatures;
 
   const fetchFeatures = useCallback(async (force = false) => {
@@ -307,20 +309,21 @@ export function useCompanyFeatures() {
       return;
     }
 
-    activeFetchPromise = supabase
-      .from('company_features' as any)
-      .select('*')
-      .eq('company_id', user.companyId)
-      .maybeSingle();
+    activeFetchPromise = Promise.all([
+      supabase.from('company_features' as any).select('*').eq('company_id', user.companyId).maybeSingle(),
+      supabase.from('companies').select('plan_type').eq('id', user.companyId).maybeSingle()
+    ]);
 
     try {
-      const { data, error } = await activeFetchPromise;
-      const plan = user?.company?.planType || 'basic';
+      const [{ data: featData }, { data: compData }] = await activeFetchPromise;
+      const plan = ((compData as any)?.plan_type || user?.company?.planType || 'basic') as 'basic' | 'pro' | 'enterprise';
+      setLivePlan(plan);
+
       const planDefaults = getDefaultsForPlan(plan);
       let resolvedDb: CompanyFeatures;
-      if (data) {
-        const jsonFlags = (data as any)?.feature_visibility?.flags || {};
-        const merged: any = { ...planDefaults, ...data, ...jsonFlags, company_id: user.companyId };
+      if (featData) {
+        const jsonFlags = (featData as any)?.feature_visibility?.flags || {};
+        const merged: any = { ...planDefaults, ...featData, ...jsonFlags, company_id: user.companyId };
         resolvedDb = merged as CompanyFeatures;
       } else {
         resolvedDb = { company_id: user.companyId, ...planDefaults } as CompanyFeatures;
@@ -375,6 +378,7 @@ export function useCompanyFeatures() {
   return {
     features: roleGatedFeatures,
     rawFeatures: resolvedFeatures,
+    plan: livePlan,
     loading,
     refresh: () => fetchFeatures(true),
   };

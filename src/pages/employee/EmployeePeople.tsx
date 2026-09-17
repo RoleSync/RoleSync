@@ -15,6 +15,7 @@ import {
   Briefcase, Calendar as CalendarIcon, Sparkles, CheckCircle2
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useCompanyFeatures } from '@/hooks/useCompanyFeatures';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
@@ -37,10 +38,13 @@ interface EmployeeRecord {
 
 export default function EmployeePeople() {
   const { user } = useAuth();
+  const { features } = useCompanyFeatures();
   const navigate = useNavigate();
 
+  const showOrgChart = !!features?.org_chart_tree_enabled;
+
   // Active Tab: 'org_chart' | 'directory'
-  const [activeTab, setActiveTab] = useState<ActiveTab>('org_chart');
+  const [activeTab, setActiveTab] = useState<ActiveTab>(() => (showOrgChart ? 'org_chart' : 'directory'));
 
   // Directory Filters & Search State (Matching screenshots 2 & 3)
   const [selectedDept, setSelectedDept] = useState<string>('all');
@@ -268,22 +272,24 @@ export default function EmployeePeople() {
       {/* ─── Main Tabs: Organization Chart vs Organization Directory (Matching screenshot) ─── */}
       <div className="border-b border-border/70">
         <div className="flex gap-8 overflow-x-auto pb-1">
-          <button
-            onClick={() => setActiveTab('org_chart')}
-            className={`relative pb-3 pt-1 text-sm font-semibold transition-all flex items-center gap-2 ${
-              activeTab === 'org_chart'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            <Network className="h-4 w-4" />
-            Organization Chart
-          </button>
+          {showOrgChart && (
+            <button
+              onClick={() => setActiveTab('org_chart')}
+              className={`relative pb-3 pt-1 text-sm font-semibold transition-all flex items-center gap-2 ${
+                activeTab === 'org_chart'
+                  ? 'text-primary border-b-2 border-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              <Network className="h-4 w-4" />
+              Organization Chart
+            </button>
+          )}
 
           <button
             onClick={() => setActiveTab('directory')}
             className={`relative pb-3 pt-1 text-sm font-semibold transition-all flex items-center gap-2 ${
-              activeTab === 'directory'
+              activeTab === 'directory' || !showOrgChart
                 ? 'text-primary border-b-2 border-primary'
                 : 'text-muted-foreground hover:text-foreground'
             }`}
@@ -295,7 +301,7 @@ export default function EmployeePeople() {
       </div>
 
       {/* ─── TAB 1: ORGANIZATION CHART (Exact match to screenshot 1) ─── */}
-      {activeTab === 'org_chart' && (
+      {showOrgChart && activeTab === 'org_chart' && (
         <div className="space-y-6 animate-in fade-in duration-200">
           
           {/* Select Employee Filter Bar */}
