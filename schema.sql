@@ -2134,6 +2134,112 @@ CREATE POLICY user_roles_write_policy ON public.user_roles USING (((public.check
 
 
 --
+-- Name: get_user_role_rank(uuid); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE OR REPLACE FUNCTION public.get_user_role_rank(p_user_id uuid) 
+RETURNS integer
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public', 'auth'
+AS $$
+DECLARE
+  v_role text;
+  v_is_owner boolean := false;
+  v_company_id uuid;
+BEGIN
+  IF p_user_id IS NULL THEN
+    RETURN 0;
+  END IF;
+
+  SELECT role INTO v_role 
+  FROM public.user_roles 
+  WHERE user_id = p_user_id 
+  ORDER BY 
+    CASE role
+      WHEN 'super_admin' THEN 1
+      WHEN 'admin' THEN 2
+      ELSE 3
+    END
+  LIMIT 1;
+
+  IF v_role = 'super_admin' THEN
+    RETURN 4;
+  END IF;
+
+  SELECT company_id INTO v_company_id FROM public.profiles WHERE id = p_user_id;
+  IF v_company_id IS NOT NULL THEN
+    SELECT (owner_id = p_user_id) INTO v_is_owner 
+    FROM public.companies 
+    WHERE id = v_company_id;
+  END IF;
+
+  IF v_is_owner THEN
+    RETURN 3;
+  END IF;
+
+  IF v_role = 'admin' THEN
+    RETURN 2;
+  END IF;
+
+  RETURN 1;
+END;
+$$;
+
+
+--
+-- Name: rbac_can_manage_user(uuid, uuid, text); Type: FUNCTION; Schema: public; Owner: -
+--
+
+CREATE OR REPLACE FUNCTION public.rbac_can_manage_user(
+  p_actor_id uuid,
+  p_target_id uuid,
+  p_action text DEFAULT 'edit'
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO 'public'
+AS $$
+DECLARE
+  v_actor_rank integer;
+  v_target_rank integer;
+  v_actor_company uuid;
+  v_target_company uuid;
+BEGIN
+  IF p_actor_id IS NULL OR p_target_id IS NULL THEN
+    RETURN false;
+  END IF;
+
+  v_actor_rank := public.get_user_role_rank(p_actor_id);
+  v_target_rank := public.get_user_role_rank(p_target_id);
+
+  IF v_actor_rank = 4 THEN
+    IF p_actor_id = p_target_id AND p_action IN ('delete', 'demote', 'suspend') THEN
+      RETURN false;
+    END IF;
+    RETURN true;
+  END IF;
+
+  SELECT company_id INTO v_actor_company FROM public.profiles WHERE id = p_actor_id;
+  SELECT company_id INTO v_target_company FROM public.profiles WHERE id = p_target_id;
+
+  IF v_actor_company IS NULL OR v_target_company IS NULL OR v_actor_company <> v_target_company THEN
+    RETURN false;
+  END IF;
+
+  IF p_actor_id = p_target_id THEN
+    IF p_action IN ('view', 'edit_profile') THEN
+      RETURN true;
+    END IF;
+    RETURN false;
+  END IF;
+
+  RETURN v_actor_rank > v_target_rank;
+END;
+$$;
+
+--
 -- PostgreSQL database dump complete
 --
 
