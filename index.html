@@ -24,6 +24,23 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:site" content="@RoleSync" />
     <meta name="twitter:image" content="/logo.svg" />
+
+    <script>
+      // Suppress noisy unhandled errors originating from injected browser extensions (e.g. Web Vitals / profilers)
+      window.addEventListener('error', function(event) {
+        if (
+          event?.message && (
+            event.message.includes("Cannot read properties of undefined (reading 'startTime')") ||
+            event.message.includes('reportAllChanges') ||
+            (typeof event.filename === 'string' && event.filename.includes('chrome-extension'))
+          )
+        ) {
+          event.stopImmediatePropagation();
+          event.preventDefault();
+          return true;
+        }
+      }, true);
+    </script>
   </head>
 
   <body>
