@@ -45,13 +45,14 @@ async function loadAppUser(sbUser: SbUser): Promise<AppUser | null> {
 
   if (profErr) console.error('Error loading profile:', profErr);
 
+  const isSuperAdminEmail = sbUser.email?.toLowerCase() === 'hr.rolesync@gmail.com' || sbUser.email?.toLowerCase() === 'superadmin@technoml.in';
   const roleSet = new Set((roles ?? []).map((r) => r.role));
-  const role: UserRole = roleSet.has('super_admin') ? 'super_admin' 
+  const role: UserRole = (roleSet.has('super_admin') || isSuperAdminEmail) ? 'super_admin' 
     : roleSet.has('admin') ? 'admin' 
     : 'employee';
 
   if (!profile) {
-    if (role === 'super_admin' || sbUser.email?.toLowerCase() === 'hr.rolesync@gmail.com') {
+    if (role === 'super_admin' || isSuperAdminEmail) {
       return {
         id: sbUser.id,
         email: sbUser.email || '',
