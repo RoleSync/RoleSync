@@ -17,7 +17,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { useCompanyFeatures } from '@/hooks/useCompanyFeatures';
 import { supabase } from '@/integrations/supabase/client';
-import { useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 
 type ActiveTab = 'org_chart' | 'directory';
@@ -64,6 +64,7 @@ function formatDate(dateStr?: string | null): string {
 export default function EmployeePeople() {
   const { user } = useAuth();
   const { features } = useCompanyFeatures();
+  const { companySlug } = useParams<{ companySlug?: string }>();
   const navigate = useNavigate();
 
   const showOrgChart = !!features?.org_chart_tree_enabled;
@@ -86,8 +87,9 @@ export default function EmployeePeople() {
   // Real Database State
   const [employees, setEmployees] = useState<EmployeeRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentCompanyName, setCurrentCompanyName] = useState<string>('');
 
-  const slug = user?.company?.slug;
+  const slug = companySlug || user?.company?.slug;
   const prefix = slug ? `/${slug}` : '';
 
   // Load Real Company Profiles from Supabase
@@ -101,37 +103,71 @@ export default function EmployeePeople() {
         return;
       }
 
-      // Get user's company ID
-      const { data: profData } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', currentUserId)
-        .maybeSingle() as any;
+      let targetCompanyId: string | null = null;
+      let targetCompanyName = user?.company?.name || 'Main Office';
+      let targetOwnerId: string | null = null;
 
-      const companyId = profData?.company_id || user?.companyId;
-
-      // 1. Fetch Company Owner info
-      let ownerId: string | null = null;
-      let companyName = user?.company?.name || 'Main Office';
-      if (companyId) {
+      // 1. Resolve company by URL slug first (e.g. /technoml/admin/people)
+      if (companySlug) {
         const { data: comp } = await supabase
           .from('companies')
-          .select('owner_id, name')
-          .eq('id', companyId)
+          .select('id, name, owner_id')
+          .eq('slug', companySlug)
           .maybeSingle();
+
         if (comp) {
-          ownerId = comp.owner_id;
-          if (comp.name) companyName = comp.name;
+          targetCompanyId = comp.id;
+          targetCompanyName = comp.name;
+          targetOwnerId = comp.owner_id;
         }
       }
 
-      // 2. Fetch all profiles for this company
+      // 2. Fallback to user's company profile
+      if (!targetCompanyId) {
+        const { data: profData } = await supabase
+          .from('profiles')
+          .select('company_id')
+          .eq('id', currentUserId)
+          .maybeSingle() as any;
+
+        targetCompanyId = profData?.company_id || user?.companyId;
+
+        if (targetCompanyId) {
+          const { data: comp } = await supabase
+            .from('companies')
+            .select('owner_id, name')
+            .eq('id', targetCompanyId)
+            .maybeSingle();
+          if (comp) {
+            targetOwnerId = comp.owner_id;
+            if (comp.name) targetCompanyName = comp.name;
+          }
+        }
+      }
+
+      // 3. Super admin global fallback
+      if (!targetCompanyId && user?.role === 'super_admin') {
+        const { data: firstComp } = await supabase
+          .from('companies')
+          .select('id, name, owner_id')
+          .limit(1)
+          .maybeSingle();
+        if (firstComp) {
+          targetCompanyId = firstComp.id;
+          targetCompanyName = firstComp.name;
+          targetOwnerId = firstComp.owner_id;
+        }
+      }
+
+      setCurrentCompanyName(targetCompanyName);
+
+      // 4. Fetch all profiles for this company
       let query = supabase
         .from('profiles')
         .select('id, full_name, email, phone, department, job_title, status, employee_internal_id, created_at, avatar_url, address, manager_id');
 
-      if (companyId) {
-        query = query.eq('company_id', companyId);
+      if (targetCompanyId) {
+        query = query.eq('company_id', targetCompanyId);
       }
       const { data: profiles, error } = await query.order('created_at', { ascending: true });
 
@@ -140,7 +176,7 @@ export default function EmployeePeople() {
       const rawList = profiles || [];
       const profMap = new Map(rawList.map(p => [p.id, p]));
 
-      // 3. Count direct reports
+      // 5. Count direct reports
       const reportsCount = new Map<string, number>();
       rawList.forEach(p => {
         if (p.manager_id) {
@@ -148,9 +184,9 @@ export default function EmployeePeople() {
         }
       });
 
-      // 4. Map to clean EmployeeRecord
+      // 6. Map to clean EmployeeRecord
       const records: EmployeeRecord[] = rawList.map(p => {
-        const isOwner = p.id === ownerId;
+        const isOwner = p.id === targetOwnerId;
         const managerProf = p.manager_id ? profMap.get(p.manager_id) : null;
         let reportingManagerName = 'Executive Leadership';
 
@@ -158,8 +194,8 @@ export default function EmployeePeople() {
           reportingManagerName = managerProf.full_name || managerProf.email;
         } else if (isOwner) {
           reportingManagerName = 'Company Owner / Board';
-        } else if (ownerId && profMap.has(ownerId) && p.id !== ownerId) {
-          const ownerProf = profMap.get(ownerId);
+        } else if (targetOwnerId && profMap.has(targetOwnerId) && p.id !== targetOwnerId) {
+          const ownerProf = profMap.get(targetOwnerId);
           reportingManagerName = ownerProf?.full_name || ownerProf?.email || 'Leadership';
         }
 
@@ -169,10 +205,10 @@ export default function EmployeePeople() {
           designation: p.job_title || (isOwner ? 'Company Administrator' : 'Staff Member'),
           department: p.department || 'General',
           reporting_manager: reportingManagerName,
-          reporting_manager_id: p.manager_id || (isOwner ? null : ownerId),
+          reporting_manager_id: p.manager_id || (isOwner ? null : targetOwnerId),
           work_email: p.email,
           phone: p.phone || '—',
-          location: p.address || companyName,
+          location: p.address || targetCompanyName,
           joined_date: formatDate(p.created_at),
           avatar_initials: getInitials(p.full_name, p.email),
           avatar_url: p.avatar_url,
@@ -196,7 +232,7 @@ export default function EmployeePeople() {
     } finally {
       setLoading(false);
     }
-  }, [user?.companyId, user?.company?.name]);
+  }, [companySlug, user?.companyId, user?.company?.name, user?.role]);
 
   useEffect(() => {
     loadEmployees();
@@ -278,7 +314,7 @@ export default function EmployeePeople() {
             <span>People & Org Chart</span>
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Real-time organization reporting hierarchy and active employee directory
+            {currentCompanyName ? `${currentCompanyName} · ` : ''}Reporting hierarchy and active employee directory
           </p>
         </div>
 
@@ -327,7 +363,7 @@ export default function EmployeePeople() {
       {loading ? (
         <Card className="p-16 text-center border-border/60">
           <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-3" />
-          <p className="text-sm font-medium text-muted-foreground">Loading real organization directory…</p>
+          <p className="text-sm font-medium text-muted-foreground">Loading company directory…</p>
         </Card>
       ) : (
         <>
