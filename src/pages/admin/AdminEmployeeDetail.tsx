@@ -939,14 +939,14 @@ export default function AdminEmployeeDetail() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="flex items-center gap-1"><User className="h-3 w-3" /> Full Name</Label>
-              <Input value={form.full_name} onChange={(e) => update('full_name', e.target.value)} />
+              <Input value={form.full_name ?? ''} onChange={(e) => update('full_name', e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-1 font-bold text-primary"><Shield className="h-3 w-3" /> Employee ID</Label>
               <div className="flex gap-2">
                 <Input 
                   className="flex-1 font-mono uppercase" 
-                  value={form.employee_internal_id} 
+                  value={form.employee_internal_id ?? ''} 
                   onChange={(e) => update('employee_internal_id', e.target.value.toUpperCase())} 
                   placeholder="e.g. TML-26-001" 
                   disabled={isIdPermanent}
@@ -993,31 +993,31 @@ export default function AdminEmployeeDetail() {
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-1"><Mail className="h-3 w-3" /> Email</Label>
-              <Input value={email} disabled />
+              <Input value={email ?? ''} disabled />
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-1"><Building2 className="h-3 w-3" /> Department</Label>
-              <Input value={form.department} onChange={(e) => update('department', e.target.value)} />
+              <Input value={form.department ?? ''} onChange={(e) => update('department', e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-1"><Briefcase className="h-3 w-3" /> Job Title</Label>
-              <Input value={form.job_title} onChange={(e) => update('job_title', e.target.value)} />
+              <Input value={form.job_title ?? ''} onChange={(e) => update('job_title', e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-1"><Phone className="h-3 w-3" /> Phone</Label>
-              <Input value={form.phone} onChange={(e) => update('phone', e.target.value)} />
+              <Input value={form.phone ?? ''} onChange={(e) => update('phone', e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-1"><ShieldAlert className="h-3 w-3" /> Emergency Contact</Label>
-              <Input value={form.emergency_contact} onChange={(e) => update('emergency_contact', e.target.value)} placeholder="Name & number" />
+              <Input value={form.emergency_contact ?? ''} onChange={(e) => update('emergency_contact', e.target.value)} placeholder="Name & number" />
             </div>
             <div className="space-y-2">
               <Label className="flex items-center gap-1"><Calendar className="h-3 w-3" /> Date of Birth</Label>
-              <Input type="date" value={form.date_of_birth} onChange={(e) => update('date_of_birth', e.target.value)} />
+              <Input type="date" value={form.date_of_birth ?? ''} onChange={(e) => update('date_of_birth', e.target.value)} />
             </div>
             <div className="space-y-2 sm:col-span-2">
               <Label className="flex items-center gap-1"><MapPin className="h-3 w-3" /> Address</Label>
-              <Textarea rows={2} value={form.address} onChange={(e) => update('address', e.target.value)} />
+              <Textarea rows={2} value={form.address ?? ''} onChange={(e) => update('address', e.target.value)} />
             </div>
           </div>
           <Button className="mt-6" onClick={save} disabled={saving || !canModifyTarget}>

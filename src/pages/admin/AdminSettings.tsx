@@ -493,27 +493,27 @@ export default function AdminSettings() {
             <Button variant="outline" size="sm" onClick={useMyLocation}><MapPin className="h-3 w-3 mr-1" />Use my location</Button>
           </div>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2"><Label>Latitude</Label><Input type="number" step="0.000001" value={form.office_latitude} onChange={(e) => update('office_latitude', e.target.value)} /></div>
-            <div className="space-y-2"><Label>Longitude</Label><Input type="number" step="0.000001" value={form.office_longitude} onChange={(e) => update('office_longitude', e.target.value)} /></div>
+            <div className="space-y-2"><Label>Latitude</Label><Input type="number" step="0.000001" value={form.office_latitude ?? ''} onChange={(e) => update('office_latitude', e.target.value)} /></div>
+            <div className="space-y-2"><Label>Longitude</Label><Input type="number" step="0.000001" value={form.office_longitude ?? ''} onChange={(e) => update('office_longitude', e.target.value)} /></div>
           </div>
-          <div className="space-y-2"><Label>Geo-fence radius (meters)</Label><Input type="number" min={50} value={form.geofence_radius_m} onChange={(e) => update('geofence_radius_m', e.target.value)} /></div>
+          <div className="space-y-2"><Label>Geo-fence radius (meters)</Label><Input type="number" min={50} value={form.geofence_radius_m ?? ''} onChange={(e) => update('geofence_radius_m', e.target.value)} /></div>
         </Card>
 
         <Card className="p-6 space-y-4">
           <h3 className="font-heading font-semibold">Working Hours</h3>
           <div className="grid grid-cols-2 gap-3">
-            <div className="space-y-2"><Label>Start time</Label><Input type="time" value={form.work_start_time} onChange={(e) => update('work_start_time', e.target.value)} /></div>
-            <div className="space-y-2"><Label>End time</Label><Input type="time" value={form.work_end_time} onChange={(e) => update('work_end_time', e.target.value)} /></div>
+            <div className="space-y-2"><Label>Start time</Label><Input type="time" value={form.work_start_time ?? '09:00'} onChange={(e) => update('work_start_time', e.target.value)} /></div>
+            <div className="space-y-2"><Label>End time</Label><Input type="time" value={form.work_end_time ?? '18:00'} onChange={(e) => update('work_end_time', e.target.value)} /></div>
           </div>
-          <div className="space-y-2"><Label>Late threshold (minutes after start)</Label><Input type="number" min={0} value={form.late_threshold_minutes} onChange={(e) => update('late_threshold_minutes', e.target.value)} /></div>
+          <div className="space-y-2"><Label>Late threshold (minutes after start)</Label><Input type="number" min={0} value={form.late_threshold_minutes ?? ''} onChange={(e) => update('late_threshold_minutes', e.target.value)} /></div>
         </Card>
 
         <Card className="p-6 space-y-4">
           <h3 className="font-heading font-semibold">Leave Policy (days/year)</h3>
           <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-2"><Label>Annual</Label><Input type="number" min={0} value={form.annual_leave_quota} onChange={(e) => update('annual_leave_quota', e.target.value)} /></div>
-            <div className="space-y-2"><Label>Sick</Label><Input type="number" min={0} value={form.sick_leave_quota} onChange={(e) => update('sick_leave_quota', e.target.value)} /></div>
-            <div className="space-y-2"><Label>Casual</Label><Input type="number" min={0} value={form.casual_leave_quota} onChange={(e) => update('casual_leave_quota', e.target.value)} /></div>
+            <div className="space-y-2"><Label>Annual</Label><Input type="number" min={0} value={form.annual_leave_quota ?? ''} onChange={(e) => update('annual_leave_quota', e.target.value)} /></div>
+            <div className="space-y-2"><Label>Sick</Label><Input type="number" min={0} value={form.sick_leave_quota ?? ''} onChange={(e) => update('sick_leave_quota', e.target.value)} /></div>
+            <div className="space-y-2"><Label>Casual</Label><Input type="number" min={0} value={form.casual_leave_quota ?? ''} onChange={(e) => update('casual_leave_quota', e.target.value)} /></div>
           </div>
           <div className="space-y-2 pt-2 border-t">
             <Label>Leave-approval SLA (hours)</Label>
